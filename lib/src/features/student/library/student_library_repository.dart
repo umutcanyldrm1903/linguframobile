@@ -1,94 +1,122 @@
-import '../../../core/localization/app_strings.dart';
 import '../../../core/network/api_client.dart';
 
 class StudentLibraryRepository {
-  Future<LibraryPayload?> fetchLibrary() async {
-    final responses = await Future.wait([
-      ApiClient.dio.get(
-        '/course-main-categories',
-        queryParameters: {'language': AppStrings.code},
-      ),
-      ApiClient.dio.get('/popular-courses'),
-    ]);
-
-    final categoriesData = _extractList(responses[0].data);
-    final coursesData = _extractList(responses[1].data);
-
-    return LibraryPayload(
-      categories:
-          categoriesData.whereType<Map<String, dynamic>>().map(LibraryCategory.fromJson).toList(),
-      popularCourses:
-          coursesData.whereType<Map<String, dynamic>>().map(LibraryCourse.fromJson).toList(),
+  Future<StudentLibraryPayload?> fetchLibrary({String? category}) async {
+    final response = await ApiClient.dio.get(
+      '/library',
+      queryParameters: {
+        if (category != null && category.trim().isNotEmpty) 'category': category,
+      },
     );
-  }
-
-  List<dynamic> _extractList(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      final list = data['data'] ?? data['items'] ?? data['results'];
-      return list is List ? list : [];
+    final data = _extractMap(response.data);
+    if (data == null) {
+      return null;
     }
-    if (data is List) return data;
-    return [];
+    return StudentLibraryPayload.fromJson(data);
+  }
+
+  Map<String, dynamic>? _extractMap(dynamic data) {
+    if (data is Map<String, dynamic>) {
+      final inner = data['data'];
+      if (inner is Map) {
+        return Map<String, dynamic>.from(inner);
+      }
+      return Map<String, dynamic>.from(data);
+    }
+    return null;
   }
 }
 
-class LibraryPayload {
-  const LibraryPayload({
+class StudentLibraryPayload {
+  const StudentLibraryPayload({
     required this.categories,
-    required this.popularCourses,
+    required this.items,
+    required this.selectedCategory,
   });
 
-  final List<LibraryCategory> categories;
-  final List<LibraryCourse> popularCourses;
+  final List<StudentLibraryCategory> categories;
+  final List<StudentLibraryItem> items;
+  final String selectedCategory;
+
+  factory StudentLibraryPayload.fromJson(Map<String, dynamic> json) {
+    return StudentLibraryPayload(
+      categories: _parseCategories(json['categories']),
+      items: _parseItems(json['items']),
+      selectedCategory: (json['selected_category'] ?? '').toString(),
+    );
+  }
+
+  static List<StudentLibraryCategory> _parseCategories(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(StudentLibraryCategory.fromJson)
+        .toList(growable: false);
+  }
+
+  static List<StudentLibraryItem> _parseItems(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map<String, dynamic>>()
+        .map(StudentLibraryItem.fromJson)
+        .toList(growable: false);
+  }
 }
 
-class LibraryCategory {
-  const LibraryCategory({
-    required this.slug,
+class StudentLibraryCategory {
+  const StudentLibraryCategory({
     required this.name,
-    required this.icon,
+    required this.slug,
   });
 
-  final String slug;
   final String name;
-  final String icon;
+  final String slug;
 
-  factory LibraryCategory.fromJson(Map<String, dynamic> json) {
-    return LibraryCategory(
-      slug: (json['slug'] ?? '').toString(),
+  factory StudentLibraryCategory.fromJson(Map<String, dynamic> json) {
+    return StudentLibraryCategory(
       name: (json['name'] ?? '').toString(),
-      icon: (json['icon'] ?? '').toString(),
+      slug: (json['slug'] ?? '').toString(),
     );
   }
 }
 
-class LibraryCourse {
-  const LibraryCourse({
-    required this.slug,
+class StudentLibraryItem {
+  const StudentLibraryItem({
+    required this.id,
+    required this.category,
     required this.title,
-    required this.thumbnail,
+    required this.description,
+    required this.fileName,
+    required this.fileType,
+    required this.filePath,
     required this.instructorName,
-    required this.rating,
+    required this.createdAt,
   });
 
-  final String slug;
+  final int id;
+  final String category;
   final String title;
-  final String thumbnail;
+  final String description;
+  final String fileName;
+  final String fileType;
+  final String filePath;
   final String instructorName;
-  final double rating;
+  final DateTime? createdAt;
 
-  factory LibraryCourse.fromJson(Map<String, dynamic> json) {
-    final instructor = json['instructor'];
-    return LibraryCourse(
-      slug: (json['slug'] ?? '').toString(),
+  factory StudentLibraryItem.fromJson(Map<String, dynamic> json) {
+    final createdAtRaw = (json['created_at'] ?? '').toString();
+    return StudentLibraryItem(
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse('${json['id']}') ?? 0,
+      category: (json['category'] ?? '').toString(),
       title: (json['title'] ?? '').toString(),
-      thumbnail: (json['thumbnail'] ?? '').toString(),
-      instructorName: instructor is Map
-          ? (instructor['name'] ?? '').toString()
-          : '',
-      rating: json['average_rating'] is num
-          ? (json['average_rating'] as num).toDouble()
-          : 0,
+      description: (json['description'] ?? '').toString(),
+      fileName: (json['file_name'] ?? '').toString(),
+      fileType: (json['file_type'] ?? '').toString(),
+      filePath: (json['file_path'] ?? '').toString(),
+      instructorName: (json['instructor_name'] ?? '').toString(),
+      createdAt: DateTime.tryParse(createdAtRaw),
     );
   }
 }

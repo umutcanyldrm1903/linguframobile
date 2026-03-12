@@ -1,8 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
-import '../catalog/student_course_catalog_screen.dart';
-import '../lessons/student_course_detail_screen.dart';
+import '../../../core/utils/content_uri.dart';
+import '../../shared/content_webview_screen.dart';
 import 'student_library_repository.dart';
 
 class StudentLibraryScreen extends StatefulWidget {
@@ -13,24 +15,58 @@ class StudentLibraryScreen extends StatefulWidget {
 }
 
 class _StudentLibraryScreenState extends State<StudentLibraryScreen> {
-  final _searchController = TextEditingController();
+  final StudentLibraryRepository _repo = StudentLibraryRepository();
+  late Future<StudentLibraryPayload?> _future;
+  String _selectedCategory = '';
 
   @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _future = _repo.fetchLibrary();
   }
 
-  void _openCatalog(BuildContext context, {String? search, String? mainCategory, String? title}) {
-    Navigator.push(
+  Future<void> _load({String? category, bool silent = false}) async {
+    final nextCategory = category ?? '';
+    if (!silent) {
+      setState(() {
+        _selectedCategory = nextCategory;
+        _future = _repo.fetchLibrary(category: nextCategory);
+      });
+      return;
+    }
+
+    final payload = await _repo.fetchLibrary(category: nextCategory);
+    if (!mounted) return;
+    setState(() {
+      _selectedCategory = nextCategory;
+      _future = Future<StudentLibraryPayload?>.value(payload);
+    });
+  }
+
+  Future<void> _openFile(StudentLibraryItem item) async {
+    final externalUri = tryResolveWebUri(item.filePath);
+    if (externalUri == null) {
+      _showSnack(AppStrings.t('Link not found.'));
+      return;
+    }
+
+    final loadUri = tryBuildEmbeddedContentUri(item.filePath) ?? externalUri;
+    await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => StudentCourseCatalogScreen(
-          initialSearch: search,
-          mainCategory: mainCategory,
-          title: title,
+        builder: (_) => ContentWebViewScreen(
+          title: item.fileName.isNotEmpty ? item.fileName : item.title,
+          loadUrl: loadUri.toString(),
+          externalUrl: externalUri.toString(),
+          actionLabel: AppStrings.t('Open Externally'),
         ),
       ),
+    );
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
     );
   }
 
@@ -38,98 +74,124 @@ class _StudentLibraryScreenState extends State<StudentLibraryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(AppStrings.t('Library'))),
-      body: FutureBuilder<LibraryPayload?>(
-        future: StudentLibraryRepository().fetchLibrary(),
+      body: FutureBuilder<StudentLibraryPayload?>(
+        future: _future,
         builder: (context, snapshot) {
           final payload = snapshot.data;
-          final categories = payload?.categories ?? const <LibraryCategory>[];
-          final courses = payload?.popularCourses ?? const <LibraryCourse>[];
+          final categories = payload?.categories ?? const <StudentLibraryCategory>[];
+          final items = payload?.items ?? const <StudentLibraryItem>[];
+          final selectedCategory = payload?.selectedCategory ?? _selectedCategory;
 
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (categories.isEmpty && courses.isEmpty) {
-            return Center(child: Text(AppStrings.t('No Data!')));
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(AppStrings.t('Something went wrong')),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: () => _load(category: selectedCategory),
+                    child: Text(AppStrings.t('Try Again')),
+                  ),
+                ],
+              ),
+            );
           }
 
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Text(AppStrings.t('Library'),
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 6),
-              Text(
-                AppStrings.t('Ders içeriklerine hızlı erişim.'),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _searchController,
-                textInputAction: TextInputAction.search,
-                onSubmitted: (value) {
-                  final query = value.trim();
-                  if (query.isEmpty) return;
-                  _openCatalog(context, search: query, title: query);
-                },
-                decoration: InputDecoration(
-                  hintText: AppStrings.t('Search'),
-                  prefixIcon: const Icon(Icons.search),
+          return RefreshIndicator(
+            onRefresh: () => _load(category: selectedCategory, silent: true),
+            child: ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                Text(
+                  AppStrings.t('Library'),
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-              ),
-              const SizedBox(height: 16),
-              if (categories.isNotEmpty)
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: categories
-                      .map(
-                        (category) => _LibraryChip(
-                          label: category.name,
-                          onTap: () => _openCatalog(
-                            context,
-                            mainCategory: category.slug,
-                            title: category.name,
-                          ),
-                        ),
-                      )
-                      .toList(),
-                ),
-              if (courses.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                _SectionCard(
-                  title: AppStrings.t('Popular Courses'),
-                  child: Column(
-                    children: courses
-                        .map(
-                          (course) => Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: _ContentTile(
-                              title: course.title,
-                              subtitle: course.instructorName,
-                              imageUrl: course.thumbnail,
-                              rating: course.rating,
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => StudentCourseDetailScreen(
-                                    title: course.title,
-                                    instructor: course.instructorName,
-                                    rating: course.rating,
-                                    reviews: 0,
-                                    progress: 0,
-                                    courseSlug: course.slug,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                const SizedBox(height: 6),
+                Text(
+                  AppStrings.t(
+                    'Access the materials shared directly by your instructor.',
                   ),
+                  style: Theme.of(context).textTheme.bodyMedium,
                 ),
+                const SizedBox(height: 18),
+                if (categories.isEmpty)
+                  _EmptyState(
+                    icon: Icons.folder_open_outlined,
+                    text: AppStrings.t('No materials shared yet.'),
+                  )
+                else if (selectedCategory.isEmpty)
+                  _CategoryGrid(
+                    categories: categories,
+                    onSelect: (category) => _load(category: category),
+                  )
+                else ...[
+                  Row(
+                    children: [
+                      TextButton.icon(
+                        onPressed: () => _load(category: ''),
+                        icon: const Icon(Icons.arrow_back),
+                        label: Text(AppStrings.t('Back to categories')),
+                      ),
+                      const Spacer(),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.brand.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          categories
+                                  .firstWhere(
+                                    (item) => item.slug == selectedCategory,
+                                    orElse: () => StudentLibraryCategory(
+                                      name: selectedCategory,
+                                      slug: selectedCategory,
+                                    ),
+                                  )
+                                  .name
+                                  .isNotEmpty
+                              ? categories
+                                  .firstWhere(
+                                    (item) => item.slug == selectedCategory,
+                                    orElse: () => StudentLibraryCategory(
+                                      name: selectedCategory,
+                                      slug: selectedCategory,
+                                    ),
+                                  )
+                                  .name
+                              : selectedCategory,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (items.isEmpty)
+                    _EmptyState(
+                      icon: Icons.search_off_outlined,
+                      text: AppStrings.t('No items in this category.'),
+                    )
+                  else
+                    ...items.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _LibraryItemCard(
+                          item: item,
+                          onTap: () => _openFile(item),
+                        ),
+                      ),
+                    ),
+                ],
               ],
-            ],
+            ),
           );
         },
       ),
@@ -137,136 +199,261 @@ class _StudentLibraryScreenState extends State<StudentLibraryScreen> {
   }
 }
 
-class _LibraryChip extends StatelessWidget {
-  const _LibraryChip({required this.label, required this.onTap});
+class _CategoryGrid extends StatelessWidget {
+  const _CategoryGrid({
+    required this.categories,
+    required this.onSelect,
+  });
 
-  final String label;
-  final VoidCallback onTap;
+  final List<StudentLibraryCategory> categories;
+  final ValueChanged<String> onSelect;
+
+  static const _palette = <Color>[
+    Color(0xFFDbe7F5),
+    Color(0xFFF6E9E2),
+    Color(0xFFF5CFD1),
+    Color(0xFFF2D9AE),
+    Color(0xFFE7F3DD),
+    Color(0xFFF5D6E4),
+    Color(0xFFF6D7D7),
+    Color(0xFFD5E8ED),
+    Color(0xFFD7EAD9),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.brand.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: categories.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 14,
+        mainAxisSpacing: 14,
+        childAspectRatio: 1.05,
       ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({required this.title, required this.child});
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+      itemBuilder: (context, index) {
+        final category = categories[index];
+        final color = _palette[index % _palette.length];
+        return InkWell(
+          onTap: () => onSelect(category.slug),
+          borderRadius: BorderRadius.circular(22),
+          child: Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(22),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 74,
+                  height: 74,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.folder_outlined,
+                    color: AppColors.brandDeep,
+                    size: 34,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  category.name,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.brandDeep,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
-          child,
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-class _ContentTile extends StatelessWidget {
-  const _ContentTile({
-    required this.title,
-    required this.subtitle,
-    required this.imageUrl,
-    required this.rating,
+class _LibraryItemCard extends StatelessWidget {
+  const _LibraryItemCard({
+    required this.item,
     required this.onTap,
   });
 
-  final String title;
-  final String subtitle;
-  final String imageUrl;
-  final double rating;
+  final StudentLibraryItem item;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = imageUrl.isNotEmpty;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: hasImage
-                  ? Image.network(
-                      imageUrl,
-                      width: 56,
-                      height: 56,
-                      fit: BoxFit.cover,
-                      webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-                      errorBuilder: (_, __, ___) => _placeholder(),
-                    )
-                  : _placeholder(),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.brand.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    _iconForType(item.fileType),
+                    color: AppColors.brandDeep,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (item.description.trim().isNotEmpty)
+                        Text(
+                          item.description.trim(),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.chevron_right, color: AppColors.muted),
+              ],
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 4),
-                  Text(subtitle, style: const TextStyle(color: AppColors.muted)),
-                  if (rating > 0) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      '${rating.toStringAsFixed(1)} / 5',
-                      style: const TextStyle(color: AppColors.brand),
-                    ),
-                  ],
-                ],
-              ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                if (item.fileName.isNotEmpty)
+                  _MetaPill(label: item.fileName),
+                if (item.instructorName.isNotEmpty)
+                  _MetaPill(
+                    label:
+                        '${AppStrings.t('Instructor')}: ${item.instructorName}',
+                  ),
+                if (item.createdAt != null)
+                  _MetaPill(
+                    label: DateFormat('dd MMM yyyy').format(item.createdAt!),
+                  ),
+              ],
             ),
-            const Icon(Icons.chevron_right, color: AppColors.muted),
           ],
         ),
       ),
     );
   }
 
-  Widget _placeholder() {
+  IconData _iconForType(String fileType) {
+    switch (fileType.toLowerCase()) {
+      case 'pdf':
+        return Icons.picture_as_pdf_outlined;
+      case 'doc':
+      case 'docx':
+        return Icons.description_outlined;
+      case 'ppt':
+      case 'pptx':
+        return Icons.slideshow_outlined;
+      case 'xls':
+      case 'xlsx':
+        return Icons.table_chart_outlined;
+      case 'mp4':
+      case 'mov':
+      case 'webm':
+        return Icons.play_circle_outline;
+      default:
+        return Icons.attach_file;
+    }
+  }
+}
+
+class _MetaPill extends StatelessWidget {
+  const _MetaPill({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width: 56,
-      height: 56,
-      color: const Color(0xFFE2E8F0),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: AppColors.muted,
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({
+    required this.icon,
+    required this.text,
+  });
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 24),
       alignment: Alignment.center,
-      child: const Icon(Icons.menu_book, color: AppColors.muted),
+      child: Column(
+        children: [
+          Container(
+            width: 88,
+            height: 88,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.brand.withValues(alpha: 0.4)),
+            ),
+            child: Icon(icon, color: AppColors.brandDeep, size: 34),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ],
+      ),
     );
   }
 }
