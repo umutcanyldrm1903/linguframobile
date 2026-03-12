@@ -1,0 +1,52 @@
+workflows:
+  ios_testflight_windows:
+    name: LinguFranca iOS TestFlight (Mobile Repo)
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: com.lingufranca.app
+      groups:
+        - app_store_credentials
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.lingufranca.app
+
+    scripts:
+      - name: Flutter packages
+        script: |
+          flutter pub get
+
+      - name: CocoaPods install
+        script: |
+          cd ios
+          pod install
+          cd ..
+
+      - name: Apply provisioning profiles to Xcode project
+        script: |
+          xcode-project use-profiles
+
+      - name: Build IPA
+        script: |
+          BUILD_NO="${BUILD_NUMBER:-1}"
+          flutter build ipa \
+            --release \
+            --build-number="$BUILD_NO" \
+            --export-options-plist="$HOME/export_options.plist"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+
+    publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
