@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/app_config.dart';
@@ -21,7 +21,6 @@ class _InstructorLibraryScreenState extends State<InstructorLibraryScreen> {
   final InstructorLibraryRepository _repo = InstructorLibraryRepository();
   final InstructorStudentsRepository _studentsRepo =
       InstructorStudentsRepository();
-  final ImagePicker _picker = ImagePicker();
 
   late Future<InstructorLibraryPayload?> _libraryFuture;
   String _selectedCategory = '';
@@ -168,7 +167,7 @@ class _InstructorLibraryScreenState extends State<InstructorLibraryScreen> {
     );
     int? selectedStudentId =
         existing == null && _students.isNotEmpty ? _students.first.id : null;
-    XFile? selectedFile;
+    LibraryUploadFile? selectedFile;
     String? validation;
 
     final result = await showDialog<_LibraryFormValue>(
@@ -243,49 +242,41 @@ class _InstructorLibraryScreenState extends State<InstructorLibraryScreen> {
                         ),
                         TextButton(
                           onPressed: () async {
-                            final source = await showModalBottomSheet<String>(
-                              context: context,
-                              builder: (context) => SafeArea(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    ListTile(
-                                      leading: const Icon(Icons.image_outlined),
-                                      title: Text(AppStrings.t('Image')),
-                                      onTap: () =>
-                                          Navigator.pop(context, 'image'),
-                                    ),
-                                    ListTile(
-                                      leading:
-                                          const Icon(Icons.videocam_outlined),
-                                      title: Text(AppStrings.t('Video')),
-                                      onTap: () =>
-                                          Navigator.pop(context, 'video'),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                            final result = await FilePicker.platform.pickFiles(
+                              withData: false,
+                              allowMultiple: false,
+                              type: FileType.any,
                             );
-                            if (source == null) return;
-
-                            XFile? picked;
-                            if (source == 'image') {
-                              picked = await _picker.pickImage(
-                                source: ImageSource.gallery,
-                              );
-                            } else {
-                              picked = await _picker.pickVideo(
-                                source: ImageSource.gallery,
-                              );
+                            final selected =
+                                result == null || result.files.isEmpty
+                                    ? null
+                                    : result.files.first;
+                            if (selected == null || selected.path == null) {
+                              return;
                             }
-                            if (picked == null) return;
                             setModalState(() {
-                              selectedFile = picked;
+                              selectedFile = LibraryUploadFile(
+                                path: selected.path!,
+                                name: selected.name,
+                              );
+                              validation = null;
                             });
                           },
                           child: Text(AppStrings.t('Choose')),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 6),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        AppStrings.t(
+                          'You can upload PDF, DOC, worksheet, spreadsheet, presentation, image, video, or other study materials.',
+                        ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.muted,
+                            ),
+                      ),
                     ),
                     if (validation != null) ...[
                       const SizedBox(height: 8),
@@ -688,5 +679,5 @@ class _LibraryFormValue {
   final String category;
   final String title;
   final String description;
-  final XFile? file;
+  final LibraryUploadFile? file;
 }

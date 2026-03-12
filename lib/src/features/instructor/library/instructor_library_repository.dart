@@ -1,6 +1,15 @@
 import 'package:dio/dio.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../core/network/api_client.dart';
+
+class LibraryUploadFile {
+  const LibraryUploadFile({
+    required this.path,
+    required this.name,
+  });
+
+  final String path;
+  final String name;
+}
 
 class InstructorLibraryRepository {
   Future<InstructorLibraryPayload?> fetchLibrary() async {
@@ -22,7 +31,7 @@ class InstructorLibraryRepository {
     required String category,
     required String title,
     String? description,
-    XFile? file,
+    LibraryUploadFile? file,
   }) async {
     final data = <String, dynamic>{
       'student_id': studentId,
@@ -47,7 +56,7 @@ class InstructorLibraryRepository {
     required String category,
     required String title,
     String? description,
-    XFile? file,
+    LibraryUploadFile? file,
   }) async {
     final data = <String, dynamic>{
       'category': category.trim(),
