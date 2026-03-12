@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../../core/network/api_client.dart';
 
 class StudentHomeworksRepository {
@@ -19,6 +21,36 @@ class StudentHomeworksRepository {
       return Map<String, dynamic>.from(data);
     }
     return null;
+  }
+
+  Future<HomeworkSubmission?> submitHomework({
+    required int homeworkId,
+    String? filePath,
+    String? fileName,
+    String? note,
+  }) async {
+    final formData = FormData.fromMap({
+      if (filePath != null && filePath.trim().isNotEmpty)
+        'submission': await MultipartFile.fromFile(
+          filePath,
+          filename: fileName,
+        ),
+      if (note != null) 'note': note.trim(),
+    });
+
+    final response = await ApiClient.dio.post(
+      '/homeworks/$homeworkId/submit',
+      data: formData,
+      options: Options(
+        headers: {'Accept': 'application/json'},
+      ),
+    );
+
+    final data = _extractMap(response.data);
+    if (data == null) {
+      return null;
+    }
+    return HomeworkSubmission.fromJson(data);
   }
 }
 
@@ -54,6 +86,8 @@ class StudentHomeworkItem {
     required this.description,
     required this.status,
     required this.dueAt,
+    required this.attachmentName,
+    required this.attachmentPath,
     required this.instructorName,
     required this.instructorImage,
     required this.submission,
@@ -64,6 +98,8 @@ class StudentHomeworkItem {
   final String description;
   final String status;
   final DateTime? dueAt;
+  final String attachmentName;
+  final String attachmentPath;
   final String instructorName;
   final String instructorImage;
   final HomeworkSubmission? submission;
@@ -79,6 +115,8 @@ class StudentHomeworkItem {
       description: (json['description'] ?? '').toString(),
       status: (json['status'] ?? 'pending').toString(),
       dueAt: DateTime.tryParse(due),
+      attachmentName: (json['attachment_name'] ?? '').toString(),
+      attachmentPath: (json['attachment_path'] ?? '').toString(),
       instructorName: (json['instructor_name'] ?? '').toString(),
       instructorImage: (json['instructor_image'] ?? '').toString(),
       submission: submissionRaw is Map<String, dynamic>
@@ -95,6 +133,9 @@ class HomeworkSubmission {
     required this.submissionPath,
     required this.submittedAt,
     required this.note,
+    required this.studentNote,
+    required this.instructorNote,
+    required this.reviewedAt,
   });
 
   final String status;
@@ -102,15 +143,22 @@ class HomeworkSubmission {
   final String submissionPath;
   final DateTime? submittedAt;
   final String note;
+  final String studentNote;
+  final String instructorNote;
+  final DateTime? reviewedAt;
 
   factory HomeworkSubmission.fromJson(Map<String, dynamic> json) {
     final submitted = (json['submitted_at'] ?? '').toString();
+    final reviewed = (json['reviewed_at'] ?? '').toString();
     return HomeworkSubmission(
       status: (json['status'] ?? '').toString(),
       submissionName: (json['submission_name'] ?? '').toString(),
       submissionPath: (json['submission_path'] ?? '').toString(),
       submittedAt: DateTime.tryParse(submitted),
       note: (json['note'] ?? '').toString(),
+      studentNote: (json['student_note'] ?? json['note'] ?? '').toString(),
+      instructorNote: (json['instructor_note'] ?? '').toString(),
+      reviewedAt: DateTime.tryParse(reviewed),
     );
   }
 }

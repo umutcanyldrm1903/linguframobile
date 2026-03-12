@@ -58,6 +58,20 @@ class InstructorHomeworksRepository {
   Future<void> archiveHomework(int id) async {
     await ApiClient.dio.post('/instructor/homeworks/$id/archive');
   }
+
+  Future<void> reviewHomework({
+    required int id,
+    required String status,
+    String? instructorNote,
+  }) async {
+    await ApiClient.dio.put(
+      '/instructor/homeworks/$id/review',
+      data: {
+        'status': status,
+        if (instructorNote != null) 'instructor_note': instructorNote.trim(),
+      },
+    );
+  }
 }
 
 class InstructorHomeworksPayload {
@@ -94,6 +108,9 @@ class InstructorHomeworkItem {
     required this.statusLabel,
     required this.studentName,
     required this.dueAt,
+    required this.attachmentName,
+    required this.attachmentPath,
+    required this.submission,
   });
 
   final int id;
@@ -103,9 +120,13 @@ class InstructorHomeworkItem {
   final String statusLabel;
   final String studentName;
   final DateTime? dueAt;
+  final String attachmentName;
+  final String attachmentPath;
+  final InstructorHomeworkSubmission? submission;
 
   factory InstructorHomeworkItem.fromJson(Map<String, dynamic> json) {
     final dueAtRaw = (json['due_at'] ?? '').toString();
+    final submissionRaw = json['submission'];
     return InstructorHomeworkItem(
       id: json['id'] is int
           ? json['id'] as int
@@ -116,6 +137,45 @@ class InstructorHomeworkItem {
       statusLabel: (json['status_label'] ?? '').toString(),
       studentName: (json['student_name'] ?? '').toString(),
       dueAt: DateTime.tryParse(dueAtRaw),
+      attachmentName: (json['attachment_name'] ?? '').toString(),
+      attachmentPath: (json['attachment_path'] ?? '').toString(),
+      submission: submissionRaw is Map<String, dynamic>
+          ? InstructorHomeworkSubmission.fromJson(submissionRaw)
+          : null,
+    );
+  }
+}
+
+class InstructorHomeworkSubmission {
+  const InstructorHomeworkSubmission({
+    required this.status,
+    required this.submissionName,
+    required this.submissionPath,
+    required this.submittedAt,
+    required this.studentNote,
+    required this.instructorNote,
+    required this.reviewedAt,
+  });
+
+  final String status;
+  final String submissionName;
+  final String submissionPath;
+  final DateTime? submittedAt;
+  final String studentNote;
+  final String instructorNote;
+  final DateTime? reviewedAt;
+
+  factory InstructorHomeworkSubmission.fromJson(Map<String, dynamic> json) {
+    final submittedAtRaw = (json['submitted_at'] ?? '').toString();
+    final reviewedAtRaw = (json['reviewed_at'] ?? '').toString();
+    return InstructorHomeworkSubmission(
+      status: (json['status'] ?? '').toString(),
+      submissionName: (json['submission_name'] ?? '').toString(),
+      submissionPath: (json['submission_path'] ?? '').toString(),
+      submittedAt: DateTime.tryParse(submittedAtRaw),
+      studentNote: (json['student_note'] ?? json['note'] ?? '').toString(),
+      instructorNote: (json['instructor_note'] ?? '').toString(),
+      reviewedAt: DateTime.tryParse(reviewedAtRaw),
     );
   }
 }

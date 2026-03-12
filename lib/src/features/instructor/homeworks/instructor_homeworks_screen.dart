@@ -1,8 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/content_uri.dart';
+import '../../shared/content_webview_screen.dart';
 import '../students/instructor_students_repository.dart';
 import 'instructor_homeworks_repository.dart';
 
@@ -142,6 +145,149 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
       await _repo.archiveHomework(homework.id);
       if (!mounted) return;
       _snack(AppStrings.t('Homework archived.'));
+      _reload();
+    } catch (e) {
+      _snack(_errorMessage(e));
+    } finally {
+      if (mounted) {
+        setState(() => _saving = false);
+      }
+    }
+  }
+
+  Future<void> _openContent({
+    required String title,
+    required String rawUrl,
+  }) async {
+    final externalUri = tryResolveWebUri(rawUrl);
+    if (externalUri == null) {
+      _snack(AppStrings.t('Link not found.'));
+      return;
+    }
+
+    final loadUri = tryBuildEmbeddedContentUri(rawUrl) ?? externalUri;
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ContentWebViewScreen(
+          title: title,
+          loadUrl: loadUri.toString(),
+          externalUrl: externalUri.toString(),
+          actionLabel: AppStrings.t('Open Externally'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _reviewHomework(InstructorHomeworkItem homework) async {
+    final submission = homework.submission;
+    if (submission == null) {
+      _snack(AppStrings.t('No submission found for this homework.'));
+      return;
+    }
+
+    String selectedStatus = submission.status.isNotEmpty
+        ? submission.status
+        : 'submitted';
+    final noteController =
+        TextEditingController(text: submission.instructorNote);
+
+    final payload = await showDialog<_ReviewFormValue>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) {
+          return AlertDialog(
+            title: Text(AppStrings.t('Review Submission')),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${AppStrings.t('Student')}: ${homework.studentName}',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  if (submission.studentNote.trim().isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      AppStrings.t('Student Note'),
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(submission.studentNote),
+                  ],
+                  const SizedBox(height: 14),
+                  DropdownButtonFormField<String>(
+                    initialValue: selectedStatus,
+                    decoration: InputDecoration(
+                      labelText: AppStrings.t('Status'),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'submitted',
+                        child: Text('Submitted'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'reviewed',
+                        child: Text('Reviewed'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'needs_revision',
+                        child: Text('Revision Requested'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setModalState(() => selectedStatus = value);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: noteController,
+                    minLines: 3,
+                    maxLines: 5,
+                    decoration: InputDecoration(
+                      labelText: AppStrings.t('Instructor Feedback'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(AppStrings.t('Cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop(
+                    _ReviewFormValue(
+                      status: selectedStatus,
+                      note: noteController.text.trim(),
+                    ),
+                  );
+                },
+                child: Text(AppStrings.t('Save')),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    noteController.dispose();
+    if (payload == null) return;
+
+    setState(() => _saving = true);
+    try {
+      await _repo.reviewHomework(
+        id: homework.id,
+        status: payload.status,
+        instructorNote: payload.note,
+      );
+      if (!mounted) return;
+      _snack(AppStrings.t('Homework review updated.'));
       _reload();
     } catch (e) {
       _snack(_errorMessage(e));
@@ -399,6 +545,24 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
                       homework: hw,
                       onEdit: _saving ? null : () => _editHomework(hw),
                       onArchive: _saving ? null : () => _archiveHomework(hw),
+                      onReview: _saving ? null : () => _reviewHomework(hw),
+                      onOpenAttachment: hw.attachmentPath.isEmpty
+                          ? null
+                          : () => _openContent(
+                                title: hw.attachmentName.isNotEmpty
+                                    ? hw.attachmentName
+                                    : AppStrings.t('Homework File'),
+                                rawUrl: hw.attachmentPath,
+                              ),
+                      onOpenSubmission: hw.submission?.submissionPath.isNotEmpty ==
+                              true
+                          ? () => _openContent(
+                                title: hw.submission!.submissionName.isNotEmpty
+                                    ? hw.submission!.submissionName
+                                    : AppStrings.t('Submission'),
+                                rawUrl: hw.submission!.submissionPath,
+                              )
+                          : null,
                     ),
                   ),
                 ),
@@ -417,6 +581,24 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
                     child: _HomeworkTile(
                       homework: hw,
                       onEdit: _saving ? null : () => _editHomework(hw),
+                      onReview: _saving ? null : () => _reviewHomework(hw),
+                      onOpenAttachment: hw.attachmentPath.isEmpty
+                          ? null
+                          : () => _openContent(
+                                title: hw.attachmentName.isNotEmpty
+                                    ? hw.attachmentName
+                                    : AppStrings.t('Homework File'),
+                                rawUrl: hw.attachmentPath,
+                              ),
+                      onOpenSubmission: hw.submission?.submissionPath.isNotEmpty ==
+                              true
+                          ? () => _openContent(
+                                title: hw.submission!.submissionName.isNotEmpty
+                                    ? hw.submission!.submissionName
+                                    : AppStrings.t('Submission'),
+                                rawUrl: hw.submission!.submissionPath,
+                              )
+                          : null,
                     ),
                   ),
                 ),
@@ -449,18 +631,28 @@ class _HomeworkTile extends StatelessWidget {
     required this.homework,
     this.onEdit,
     this.onArchive,
+    this.onReview,
+    this.onOpenAttachment,
+    this.onOpenSubmission,
   });
 
   final InstructorHomeworkItem homework;
   final VoidCallback? onEdit;
   final VoidCallback? onArchive;
+  final VoidCallback? onReview;
+  final VoidCallback? onOpenAttachment;
+  final VoidCallback? onOpenSubmission;
 
   @override
   Widget build(BuildContext context) {
     final status = homework.status.toLowerCase();
-    final statusColor = status == 'submitted'
-        ? Colors.green
-        : (status == 'archived' ? Colors.blueGrey : AppColors.brand);
+    final statusColor = switch (status) {
+      'reviewed' => Colors.green,
+      'needs_revision' => Colors.deepOrange,
+      'submitted' => AppColors.brand,
+      'archived' => Colors.blueGrey,
+      _ => AppColors.brandDeep,
+    };
 
     final dueLabel = homework.dueAt == null
         ? '-'
@@ -473,64 +665,125 @@ class _HomeworkTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: statusColor.withValues(alpha: 0.15),
-            child: Icon(Icons.assignment, color: statusColor),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(homework.title,
-                    style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 4),
-                Text('${AppStrings.t('Student')}: ${homework.studentName}'),
-                const SizedBox(height: 2),
-                Text('${AppStrings.t('End Date')}: $dueLabel'),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              PopupMenuButton<String>(
-                onSelected: (value) {
-                  if (value == 'edit') {
-                    onEdit?.call();
-                    return;
-                  }
-                  if (value == 'archive') {
-                    onArchive?.call();
-                  }
-                },
-                itemBuilder: (context) {
-                  return [
-                    PopupMenuItem<String>(
-                      value: 'edit',
-                      child: Text(AppStrings.t('Edit')),
-                    ),
-                    if (onArchive != null)
-                      PopupMenuItem<String>(
-                        value: 'archive',
-                        child: Text(AppStrings.t('Archive')),
-                      ),
-                  ];
-                },
+              CircleAvatar(
+                radius: 20,
+                backgroundColor: statusColor.withValues(alpha: 0.15),
+                child: Icon(Icons.assignment, color: statusColor),
               ),
-              Text(
-                homework.statusLabel.isEmpty
-                    ? homework.status
-                    : homework.statusLabel,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(homework.title,
+                        style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(height: 4),
+                    Text('${AppStrings.t('Student')}: ${homework.studentName}'),
+                    const SizedBox(height: 2),
+                    Text('${AppStrings.t('End Date')}: $dueLabel'),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        onEdit?.call();
+                        return;
+                      }
+                      if (value == 'review') {
+                        onReview?.call();
+                        return;
+                      }
+                      if (value == 'archive') {
+                        onArchive?.call();
+                      }
+                    },
+                    itemBuilder: (context) {
+                      return [
+                        PopupMenuItem<String>(
+                          value: 'edit',
+                          child: Text(AppStrings.t('Edit')),
+                        ),
+                        if (homework.submission != null)
+                          PopupMenuItem<String>(
+                            value: 'review',
+                            child: Text(AppStrings.t('Review Submission')),
+                          ),
+                        if (onArchive != null)
+                          PopupMenuItem<String>(
+                            value: 'archive',
+                            child: Text(AppStrings.t('Archive')),
+                          ),
+                      ];
+                    },
+                  ),
+                  Text(
+                    homework.statusLabel.isEmpty
+                        ? homework.status
+                        : homework.statusLabel,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                ],
               ),
             ],
           ),
+          if (homework.submission != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              '${AppStrings.t('Submitted')}: ${homework.submission!.submittedAt == null ? '-' : DateFormat('dd.MM.yyyy HH:mm').format(homework.submission!.submittedAt!.toLocal())}',
+              style: const TextStyle(color: AppColors.muted),
+            ),
+            if (homework.submission!.studentNote.trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                '${AppStrings.t('Student Note')}: ${homework.submission!.studentNote}',
+                style: const TextStyle(color: AppColors.muted),
+              ),
+            ],
+            if (homework.submission!.instructorNote.trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                '${AppStrings.t('Instructor Feedback')}: ${homework.submission!.instructorNote}',
+                style: const TextStyle(color: AppColors.muted),
+              ),
+            ],
+          ],
+          if (homework.description.trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              homework.description.trim(),
+              style: const TextStyle(color: AppColors.muted),
+            ),
+          ],
+          if (onOpenAttachment != null || onOpenSubmission != null) ...[
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (onOpenAttachment != null)
+                  OutlinedButton(
+                    onPressed: onOpenAttachment,
+                    child: Text(AppStrings.t('Homework File')),
+                  ),
+                if (onOpenSubmission != null)
+                  OutlinedButton(
+                    onPressed: onOpenSubmission,
+                    child: Text(AppStrings.t('Submission')),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -569,4 +822,14 @@ class _HomeworkFormValue {
   final String title;
   final String description;
   final DateTime? dueAt;
+}
+
+class _ReviewFormValue {
+  const _ReviewFormValue({
+    required this.status,
+    required this.note,
+  });
+
+  final String status;
+  final String note;
 }
