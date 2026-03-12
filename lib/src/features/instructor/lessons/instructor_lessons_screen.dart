@@ -19,6 +19,25 @@ class InstructorLessonsScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(AppStrings.t('Something went wrong')),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const InstructorLessonsScreen()),
+                  ),
+                  child: Text(AppStrings.t('Try Again')),
+                ),
+              ],
+            ),
+          );
+        }
+
         final payload = snapshot.data;
         final upcoming = payload?.upcoming ?? const <InstructorLessonItem>[];
         final past = payload?.past ?? const <InstructorLessonItem>[];

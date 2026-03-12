@@ -1,4 +1,5 @@
 ﻿import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/storage/secure_storage.dart';
@@ -24,6 +25,19 @@ class _InstructorChatScreenState extends State<InstructorChatScreen> {
   List<ChatMessage> _messages = [];
   int _userId = 0;
 
+  String _errorMessage(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map<String, dynamic>) {
+        final message = data['message'];
+        if (message is String && message.trim().isNotEmpty) {
+          return message.trim();
+        }
+      }
+    }
+    return AppStrings.t('Something went wrong');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -43,13 +57,23 @@ class _InstructorChatScreenState extends State<InstructorChatScreen> {
     if (!silent) {
       setState(() => _loading = true);
     }
-    final items = await _repository.fetchThreadMessages(widget.partnerId);
-    if (mounted) {
-      setState(() {
-        _messages = items;
-        _loading = false;
-      });
-      _jumpToBottom();
+    try {
+      final items = await _repository.fetchThreadMessages(widget.partnerId);
+      if (mounted) {
+        setState(() {
+          _messages = items;
+          _loading = false;
+        });
+        _jumpToBottom();
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      if (!silent) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_errorMessage(error))),
+        );
+      }
     }
   }
 
@@ -57,10 +81,16 @@ class _InstructorChatScreenState extends State<InstructorChatScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     _controller.clear();
-    final message = await _repository.sendMessage(widget.partnerId, text);
-    if (message != null) {
+    try {
+      final message = await _repository.sendMessage(widget.partnerId, text);
       setState(() => _messages = [..._messages, message]);
       _jumpToBottom();
+    } catch (error) {
+      _controller.text = text;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_errorMessage(error))),
+      );
     }
   }
 

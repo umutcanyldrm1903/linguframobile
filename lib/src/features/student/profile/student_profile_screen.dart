@@ -53,6 +53,27 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
           return const Center(child: CircularProgressIndicator());
         }
 
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(AppStrings.t('Something went wrong')),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const StudentProfileScreen(),
+                    ),
+                  ),
+                  child: Text(AppStrings.t('Try Again')),
+                ),
+              ],
+            ),
+          );
+        }
+
         return ListView(
           padding: const EdgeInsets.all(20),
           children: [

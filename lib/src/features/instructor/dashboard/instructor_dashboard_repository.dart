@@ -1,17 +1,15 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class InstructorDashboardRepository {
   Future<InstructorDashboardPayload?> fetchDashboard() async {
-    try {
-      final response = await ApiClient.dio.get('/instructor/dashboard');
-      final data = response.data;
-      if (data is Map && data['data'] is Map) {
-        return InstructorDashboardPayload.fromJson(
-          Map<String, dynamic>.from(data['data'] as Map),
-        );
-      }
-    } catch (_) {}
-    return null;
+    final response = await ApiClient.dio.get('/instructor/dashboard');
+    return InstructorDashboardPayload.fromJson(
+      ApiResponseParser.requireMap(
+        response.data,
+        context: '/instructor/dashboard',
+      ),
+    );
   }
 }
 

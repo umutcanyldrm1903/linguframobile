@@ -1,46 +1,37 @@
 import 'package:intl/intl.dart';
 import '../../core/network/api_client.dart';
+import '../../core/network/api_response.dart';
 
 class ChatRepository {
   Future<List<ChatThread>> fetchThreads() async {
-    try {
-      final response = await ApiClient.dio.get('/messages/threads');
-      final data = response.data;
-      if (data is Map && data['data'] is List) {
-        return (data['data'] as List)
-            .whereType<Map<String, dynamic>>()
-            .map(ChatThread.fromJson)
-            .toList(growable: false);
-      }
-    } catch (_) {}
-    return const [];
+    final response = await ApiClient.dio.get('/messages/threads');
+    return ApiResponseParser.requireList(
+      response.data,
+      context: '/messages/threads',
+    ).map(ChatThread.fromJson).toList(growable: false);
   }
 
   Future<List<ChatMessage>> fetchThreadMessages(int partnerId) async {
-    try {
-      final response = await ApiClient.dio.get('/messages/thread/$partnerId');
-      final data = response.data;
-      if (data is Map && data['data'] is List) {
-        return (data['data'] as List)
-            .whereType<Map<String, dynamic>>()
-            .map(ChatMessage.fromJson)
-            .toList(growable: false);
-      }
-    } catch (_) {}
-    return const [];
+    final response = await ApiClient.dio.get('/messages/thread/$partnerId');
+    return ApiResponseParser.requireList(
+      response.data,
+      context: '/messages/thread/$partnerId',
+    ).map(ChatMessage.fromJson).toList(growable: false);
   }
 
-  Future<ChatMessage?> sendMessage(int partnerId, String body) async {
-    try {
-      final response = await ApiClient.dio.post('/messages/thread/$partnerId', data: {
+  Future<ChatMessage> sendMessage(int partnerId, String body) async {
+    final response = await ApiClient.dio.post(
+      '/messages/thread/$partnerId',
+      data: {
         'body': body,
-      });
-      final data = response.data;
-      if (data is Map && data['data'] is Map) {
-        return ChatMessage.fromJson(Map<String, dynamic>.from(data['data'] as Map));
-      }
-    } catch (_) {}
-    return null;
+      },
+    );
+    return ChatMessage.fromJson(
+      ApiResponseParser.requireMap(
+        response.data,
+        context: '/messages/thread/$partnerId',
+      ),
+    );
   }
 }
 

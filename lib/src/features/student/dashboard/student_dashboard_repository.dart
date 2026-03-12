@@ -1,55 +1,43 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 import '../lessons/student_lessons_repository.dart';
 
 class StudentDashboardRepository {
   Future<DashboardPayload?> fetchDashboard() async {
-    try {
-      final responses = await Future.wait([
-        ApiClient.dio.get('/profile'),
-        ApiClient.dio.get('/live-lessons'),
-      ]);
+    final responses = await Future.wait([
+      ApiClient.dio.get('/profile'),
+      ApiClient.dio.get('/live-lessons'),
+    ]);
 
-      final profileData = _extractMap(responses[0].data);
-      final liveData = _extractMap(responses[1].data);
+    final profileData = ApiResponseParser.requireMap(
+      responses[0].data,
+      context: '/profile',
+    );
+    final liveData = ApiResponseParser.requireMap(
+      responses[1].data,
+      context: '/live-lessons',
+    );
 
-      if (profileData == null && liveData == null) {
-        return null;
-      }
+    final name = (profileData['name'] ?? '').toString();
+    final planRaw = profileData['plan'];
+    final plan = planRaw is Map<String, dynamic>
+        ? PlanSummary.fromJson(planRaw)
+        : null;
+    final phone = (profileData['phone'] ?? '').toString();
 
-      final name = (profileData?['name'] ?? '').toString();
-      final planRaw = profileData?['plan'];
-      final plan = planRaw is Map<String, dynamic>
-          ? PlanSummary.fromJson(planRaw)
-          : null;
-      final phone = (profileData?['phone'] ?? '').toString();
+    final upcoming = _parseList(
+      liveData['upcoming'],
+      LiveLessonItem.fromJson,
+    );
+    final past = _parseList(liveData['past'], LiveLessonItem.fromJson);
 
-      final upcoming = _parseList(
-        liveData?['upcoming'],
-        LiveLessonItem.fromJson,
-      );
-      final past = _parseList(liveData?['past'], LiveLessonItem.fromJson);
-
-      return DashboardPayload(
-        name: name,
-        phone: phone,
-        plan: plan,
-        upcoming: upcoming,
-        past: past,
-      );
-    } catch (_) {
-      return null;
-    }
-  }
-
-  Map<String, dynamic>? _extractMap(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      final inner = data['data'];
-      if (inner is Map) {
-        return Map<String, dynamic>.from(inner);
-      }
-      return Map<String, dynamic>.from(data);
-    }
-    return null;
+    return DashboardPayload(
+      name: name,
+      phone: phone,
+      plan: plan,
+      upcoming: upcoming,
+      past: past,
+    );
   }
 
   List<T> _parseList<T>(dynamic raw, T Function(Map<String, dynamic>) mapper) {

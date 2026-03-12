@@ -17,6 +17,7 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
   Timer? _pollTimer;
   bool _loading = true;
   List<ChatThread> _threads = const [];
+  String? _errorText;
 
   @override
   void initState() {
@@ -30,12 +31,21 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
     if (!silent) {
       setState(() => _loading = true);
     }
-    final items = await _repository.fetchThreads();
-    if (!mounted) return;
-    setState(() {
-      _threads = items;
-      _loading = false;
-    });
+    try {
+      final items = await _repository.fetchThreads();
+      if (!mounted) return;
+      setState(() {
+        _threads = items;
+        _loading = false;
+        _errorText = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _errorText = AppStrings.t('Something went wrong');
+      });
+    }
   }
 
   @override
@@ -48,6 +58,22 @@ class _StudentMessagesScreenState extends State<StudentMessagesScreen> {
   Widget build(BuildContext context) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_errorText != null && _threads.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_errorText!),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _loadThreads,
+              child: Text(AppStrings.t('Try Again')),
+            ),
+          ],
+        ),
+      );
     }
 
     if (_threads.isEmpty) {

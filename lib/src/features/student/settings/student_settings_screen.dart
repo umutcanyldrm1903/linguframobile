@@ -20,6 +20,7 @@ class _StudentSettingsScreenState extends State<StudentSettingsScreen> {
 
   UserProfile? _profile;
   bool _loading = true;
+  String? _loadError;
 
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
@@ -83,32 +84,44 @@ class _StudentSettingsScreenState extends State<StudentSettingsScreen> {
   }
 
   Future<void> _loadProfile() async {
-    final profile = await _repo.fetchProfile();
-    if (!mounted) return;
     setState(() {
-      _profile = profile;
-      _loading = false;
-      if (profile != null) {
-        _nameCtrl.text = profile.name;
-        _emailCtrl.text = profile.email;
-        _phoneCtrl.text = profile.phone;
-        _ageCtrl.text = profile.age == 0 ? '' : profile.age.toString();
-        _genderCtrl.text = profile.gender;
-        _jobTitleCtrl.text = profile.jobTitle;
-        _shortBioCtrl.text = profile.shortBio;
-        _bioCtrl.text = profile.bio;
-        _countryCtrl.text =
-            profile.countryId == 0 ? '' : profile.countryId.toString();
-        _stateCtrl.text = profile.state;
-        _cityCtrl.text = profile.city;
-        _addressCtrl.text = profile.address;
-        _facebookCtrl.text = profile.facebook;
-        _twitterCtrl.text = profile.twitter;
-        _linkedinCtrl.text = profile.linkedin;
-        _websiteCtrl.text = profile.website;
-        _githubCtrl.text = profile.github;
-      }
+      _loading = true;
+      _loadError = null;
     });
+    try {
+      final profile = await _repo.fetchProfile();
+      if (!mounted) return;
+      setState(() {
+        _profile = profile;
+        _loading = false;
+        if (profile != null) {
+          _nameCtrl.text = profile.name;
+          _emailCtrl.text = profile.email;
+          _phoneCtrl.text = profile.phone;
+          _ageCtrl.text = profile.age == 0 ? '' : profile.age.toString();
+          _genderCtrl.text = profile.gender;
+          _jobTitleCtrl.text = profile.jobTitle;
+          _shortBioCtrl.text = profile.shortBio;
+          _bioCtrl.text = profile.bio;
+          _countryCtrl.text =
+              profile.countryId == 0 ? '' : profile.countryId.toString();
+          _stateCtrl.text = profile.state;
+          _cityCtrl.text = profile.city;
+          _addressCtrl.text = profile.address;
+          _facebookCtrl.text = profile.facebook;
+          _twitterCtrl.text = profile.twitter;
+          _linkedinCtrl.text = profile.linkedin;
+          _websiteCtrl.text = profile.website;
+          _githubCtrl.text = profile.github;
+        }
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = _errorMessage(error);
+      });
+    }
   }
 
   Future<void> _pickProfileImage() async {
@@ -276,6 +289,24 @@ class _StudentSettingsScreenState extends State<StudentSettingsScreen> {
     if (_loading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_loadError != null) {
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_loadError!),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: _loadProfile,
+                child: Text(AppStrings.t('Try Again')),
+              ),
+            ],
+          ),
+        ),
       );
     }
 

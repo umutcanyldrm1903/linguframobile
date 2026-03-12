@@ -1,18 +1,13 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class InstructorScheduleRepository {
   Future<List<InstructorAvailability>> fetchAvailabilities() async {
-    try {
-      final response = await ApiClient.dio.get('/instructor/availabilities');
-      final data = response.data;
-      if (data is Map && data['data'] is List) {
-        return (data['data'] as List)
-            .whereType<Map<String, dynamic>>()
-            .map(InstructorAvailability.fromJson)
-            .toList(growable: false);
-      }
-    } catch (_) {}
-    return const [];
+    final response = await ApiClient.dio.get('/instructor/availabilities');
+    return ApiResponseParser.requireList(
+      response.data,
+      context: '/instructor/availabilities',
+    ).map(InstructorAvailability.fromJson).toList(growable: false);
   }
 
   Future<int?> createAvailability({
@@ -20,29 +15,24 @@ class InstructorScheduleRepository {
     required String startTime,
     required String endTime,
   }) async {
-    try {
-      final response = await ApiClient.dio.post('/instructor/availabilities', data: {
+    final response = await ApiClient.dio.post(
+      '/instructor/availabilities',
+      data: {
         'day_of_week': dayOfWeek,
         'start_time': startTime,
         'end_time': endTime,
         'is_active': true,
-      });
-      final data = response.data;
-      if (data is Map && data['data'] is Map) {
-        final inner = Map<String, dynamic>.from(data['data'] as Map);
-        return inner['id'] is int ? inner['id'] as int : int.tryParse('${inner['id']}');
-      }
-    } catch (_) {}
-    return null;
+      },
+    );
+    final data = ApiResponseParser.requireMap(
+      response.data,
+      context: '/instructor/availabilities',
+    );
+    return data['id'] is int ? data['id'] as int : int.tryParse('${data['id']}');
   }
 
-  Future<bool> deleteAvailability(int id) async {
-    try {
-      await ApiClient.dio.delete('/instructor/availabilities/$id');
-      return true;
-    } catch (_) {
-      return false;
-    }
+  Future<void> deleteAvailability(int id) async {
+    await ApiClient.dio.delete('/instructor/availabilities/$id');
   }
 }
 

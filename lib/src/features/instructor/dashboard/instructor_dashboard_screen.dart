@@ -29,6 +29,25 @@ class InstructorDashboardScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(AppStrings.t('Something went wrong')),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const InstructorDashboardScreen()),
+                  ),
+                  child: Text(AppStrings.t('Try Again')),
+                ),
+              ],
+            ),
+          );
+        }
+
         final payload = snapshot.data;
         final stats = payload?.stats;
         final upcoming = payload?.upcoming ?? const <InstructorUpcomingLesson>[];

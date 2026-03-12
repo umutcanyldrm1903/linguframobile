@@ -1,29 +1,26 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class InstructorLessonsRepository {
   Future<InstructorLessonsPayload?> fetchLessons() async {
-    try {
-      final response = await ApiClient.dio.get('/instructor/lessons');
-      final data = response.data;
-      if (data is Map && data['data'] is Map) {
-        return InstructorLessonsPayload.fromJson(
-          Map<String, dynamic>.from(data['data'] as Map),
-        );
-      }
-    } catch (_) {}
-    return null;
+    final response = await ApiClient.dio.get('/instructor/lessons');
+    return InstructorLessonsPayload.fromJson(
+      ApiResponseParser.requireMap(
+        response.data,
+        context: '/instructor/lessons',
+      ),
+    );
   }
 
   Future<InstructorLessonStartResult?> startLesson(int lessonId) async {
     if (lessonId <= 0) return null;
     final response = await ApiClient.dio.post('/instructor/lessons/$lessonId/start');
-    final data = response.data;
-    if (data is Map && data['data'] is Map) {
-      return InstructorLessonStartResult.fromJson(
-        Map<String, dynamic>.from(data['data'] as Map),
-      );
-    }
-    return null;
+    return InstructorLessonStartResult.fromJson(
+      ApiResponseParser.requireMap(
+        response.data,
+        context: '/instructor/lessons/$lessonId/start',
+      ),
+    );
   }
 }
 

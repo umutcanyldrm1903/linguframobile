@@ -126,6 +126,31 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     return FutureBuilder<DashboardPayload?>(
       future: _future,
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(_extractError(snapshot.error!)),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const StudentDashboardScreen(),
+                    ),
+                  ),
+                  child: Text(AppStrings.t('Try Again')),
+                ),
+              ],
+            ),
+          );
+        }
+
         final payload = snapshot.data;
         final plan = payload?.plan;
         final name = payload?.name.isNotEmpty == true
@@ -249,6 +274,31 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                     );
                   }
 
+                  if (homeworkSnapshot.hasError) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _extractError(homeworkSnapshot.error!),
+                          style: const TextStyle(color: AppColors.muted),
+                        ),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const StudentHomeworksScreen(),
+                              ),
+                            ),
+                            child: Text(AppStrings.t('Try Again')),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
                   if (active.isEmpty) {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,11 +341,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 },
               ),
             ),
-            if (snapshot.connectionState == ConnectionState.waiting)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: Center(child: CircularProgressIndicator()),
-              ),
           ],
         );
       },

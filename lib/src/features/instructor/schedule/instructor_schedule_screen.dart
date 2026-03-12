@@ -15,6 +15,7 @@ class _InstructorScheduleScreenState extends State<InstructorScheduleScreen> {
   final Map<String, int> _availabilityIds = {};
   final Set<String> _busyKeys = {};
   bool _loading = true;
+  String? _loadError;
 
   @override
   void initState() {
@@ -23,17 +24,28 @@ class _InstructorScheduleScreenState extends State<InstructorScheduleScreen> {
   }
 
   Future<void> _loadAvailabilities() async {
-    setState(() => _loading = true);
-    final items = await _repository.fetchAvailabilities();
-    _availabilityIds
-      ..clear()
-      ..addEntries(
-        items
-            .where((item) => item.isActive)
-            .map((item) => MapEntry(item.key, item.id)),
-      );
-    if (mounted) {
-      setState(() => _loading = false);
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
+    try {
+      final items = await _repository.fetchAvailabilities();
+      _availabilityIds
+        ..clear()
+        ..addEntries(
+          items
+              .where((item) => item.isActive)
+              .map((item) => MapEntry(item.key, item.id)),
+        );
+      if (mounted) {
+        setState(() => _loading = false);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = AppStrings.t('Something went wrong');
+      });
     }
   }
 
@@ -47,25 +59,25 @@ class _InstructorScheduleScreenState extends State<InstructorScheduleScreen> {
     if (_busyKeys.contains(key)) return;
     setState(() => _busyKeys.add(key));
 
-    if (_availabilityIds.containsKey(key)) {
-      final id = _availabilityIds[key]!;
-      final removed = await _repository.deleteAvailability(id);
-      if (removed) {
+    try {
+      if (_availabilityIds.containsKey(key)) {
+        final id = _availabilityIds[key]!;
+        await _repository.deleteAvailability(id);
         _availabilityIds.remove(key);
       } else {
-        _showErrorSnack();
+        final id = await _repository.createAvailability(
+          dayOfWeek: dayIndex,
+          startTime: startTime,
+          endTime: endTime,
+        );
+        if (id != null) {
+          _availabilityIds[key] = id;
+        } else {
+          _showErrorSnack();
+        }
       }
-    } else {
-      final id = await _repository.createAvailability(
-        dayOfWeek: dayIndex,
-        startTime: startTime,
-        endTime: endTime,
-      );
-      if (id != null) {
-        _availabilityIds[key] = id;
-      } else {
-        _showErrorSnack();
-      }
+    } catch (_) {
+      _showErrorSnack();
     }
 
     if (mounted) {
@@ -85,6 +97,22 @@ class _InstructorScheduleScreenState extends State<InstructorScheduleScreen> {
 
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_loadError != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_loadError!),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _loadAvailabilities,
+              child: Text(AppStrings.t('Try Again')),
+            ),
+          ],
+        ),
+      );
     }
 
     return ListView(

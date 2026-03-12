@@ -24,6 +24,7 @@ class _InstructorProfileScreenState extends State<InstructorProfileScreen> {
   UserProfile? _profile;
   bool _loading = true;
   bool _savingProfile = false;
+  String? _loadError;
 
   final _nameCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
@@ -64,21 +65,30 @@ class _InstructorProfileScreenState extends State<InstructorProfileScreen> {
   }
 
   Future<void> _loadProfile() async {
-    final profile = await _repo.fetchProfile();
-    if (!mounted) return;
-    setState(() {
-      _profile = profile;
-      _loading = false;
-      if (profile != null) {
-        _nameCtrl.text = profile.name;
-        _phoneCtrl.text = profile.phone;
-        _emailCtrl.text = profile.email;
-        _jobTitleCtrl.text = profile.jobTitle;
-        _shortBioCtrl.text = profile.shortBio;
-        _bioCtrl.text = profile.bio;
-        _selectedCertificates = profile.certificates.toSet();
-      }
-    });
+    try {
+      final profile = await _repo.fetchProfile();
+      if (!mounted) return;
+      setState(() {
+        _profile = profile;
+        _loading = false;
+        _loadError = null;
+        if (profile != null) {
+          _nameCtrl.text = profile.name;
+          _phoneCtrl.text = profile.phone;
+          _emailCtrl.text = profile.email;
+          _jobTitleCtrl.text = profile.jobTitle;
+          _shortBioCtrl.text = profile.shortBio;
+          _bioCtrl.text = profile.bio;
+          _selectedCertificates = profile.certificates.toSet();
+        }
+      });
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = _errorMessage(error);
+      });
+    }
   }
 
   Future<void> _pickProfileImage() async {
@@ -253,6 +263,22 @@ class _InstructorProfileScreenState extends State<InstructorProfileScreen> {
   Widget build(BuildContext context) {
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_loadError != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_loadError!),
+            const SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: _loadProfile,
+              child: Text(AppStrings.t('Try Again')),
+            ),
+          ],
+        ),
+      );
     }
 
     return DefaultTabController(

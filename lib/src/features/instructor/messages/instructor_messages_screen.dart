@@ -18,6 +18,7 @@ class _InstructorMessagesScreenState extends State<InstructorMessagesScreen> {
   Timer? _pollTimer;
   bool _loading = true;
   List<ChatThread> _threads = const [];
+  String? _errorText;
 
   @override
   void initState() {
@@ -31,12 +32,21 @@ class _InstructorMessagesScreenState extends State<InstructorMessagesScreen> {
     if (!silent) {
       setState(() => _loading = true);
     }
-    final items = await _repository.fetchThreads();
-    if (!mounted) return;
-    setState(() {
-      _threads = items;
-      _loading = false;
-    });
+    try {
+      final items = await _repository.fetchThreads();
+      if (!mounted) return;
+      setState(() {
+        _threads = items;
+        _loading = false;
+        _errorText = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _errorText = AppStrings.t('Something went wrong');
+      });
+    }
   }
 
   @override
@@ -51,9 +61,23 @@ class _InstructorMessagesScreenState extends State<InstructorMessagesScreen> {
       appBar: AppBar(title: Text(AppStrings.t('Messages'))),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : _threads.isEmpty
-              ? Center(child: Text(AppStrings.t('No messages yet.')))
-              : ListView(
+          : (_errorText != null && _threads.isEmpty)
+              ? Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_errorText!),
+                      const SizedBox(height: 10),
+                      ElevatedButton(
+                        onPressed: _loadThreads,
+                        child: Text(AppStrings.t('Try Again')),
+                      ),
+                    ],
+                  ),
+                )
+              : _threads.isEmpty
+                  ? Center(child: Text(AppStrings.t('No messages yet.')))
+                  : ListView(
                   padding: const EdgeInsets.all(20),
                   children: [
                     Text(AppStrings.t('Messages'),

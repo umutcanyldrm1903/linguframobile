@@ -1,17 +1,17 @@
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/network/api_client.dart';
+import '../../core/network/api_response.dart';
 
 class ProfileRepository {
   Future<UserProfile?> fetchProfile() async {
-    try {
-      final response = await ApiClient.dio.get('/profile');
-      final data = _extractMap(response.data);
-      if (data == null) return null;
-      return UserProfile.fromJson(data);
-    } catch (_) {
-      return null;
-    }
+    final response = await ApiClient.dio.get('/profile');
+    return UserProfile.fromJson(
+      ApiResponseParser.requireMap(
+        response.data,
+        context: '/profile',
+      ),
+    );
   }
 
   Future<void> updateProfile({
@@ -218,17 +218,6 @@ class ProfileRepository {
 
   Future<void> deleteExperience(int id) async {
     await ApiClient.dio.delete('/experiences/$id');
-  }
-
-  Map<String, dynamic>? _extractMap(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      final inner = data['data'];
-      if (inner is Map) {
-        return Map<String, dynamic>.from(inner);
-      }
-      return Map<String, dynamic>.from(data);
-    }
-    return null;
   }
 
   List<T> _extractList<T>(

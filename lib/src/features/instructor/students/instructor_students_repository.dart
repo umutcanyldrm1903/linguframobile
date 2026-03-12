@@ -1,18 +1,13 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class InstructorStudentsRepository {
   Future<List<InstructorStudent>> fetchStudents() async {
-    try {
-      final response = await ApiClient.dio.get('/instructor/students');
-      final data = response.data;
-      if (data is Map && data['data'] is List) {
-        return (data['data'] as List)
-            .whereType<Map<String, dynamic>>()
-            .map(InstructorStudent.fromJson)
-            .toList(growable: false);
-      }
-    } catch (_) {}
-    return const [];
+    final response = await ApiClient.dio.get('/instructor/students');
+    return ApiResponseParser.requireList(
+      response.data,
+      context: '/instructor/students',
+    ).map(InstructorStudent.fromJson).toList(growable: false);
   }
 }
 

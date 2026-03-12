@@ -1,22 +1,19 @@
 import '../../../core/localization/app_strings.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class InstructorGuideRepository {
   Future<InstructorGuidePayload?> fetchGuide() async {
-    try {
-      final response = await ApiClient.dio.get(
-        '/instructor/guide',
-        queryParameters: {'language': AppStrings.code},
-      );
-      final data = response.data;
-      if (data is Map && data['data'] is Map) {
-        return InstructorGuidePayload.fromJson(
-          Map<String, dynamic>.from(data['data'] as Map),
-        );
-      }
-    } catch (_) {}
-
-    return null;
+    final response = await ApiClient.dio.get(
+      '/instructor/guide',
+      queryParameters: {'language': AppStrings.code},
+    );
+    return InstructorGuidePayload.fromJson(
+      ApiResponseParser.requireMap(
+        response.data,
+        context: '/instructor/guide',
+      ),
+    );
   }
 }
 

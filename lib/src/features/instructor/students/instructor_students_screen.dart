@@ -15,6 +15,25 @@ class InstructorStudentsScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(AppStrings.t('Something went wrong')),
+                const SizedBox(height: 10),
+                ElevatedButton(
+                  onPressed: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const InstructorStudentsScreen()),
+                  ),
+                  child: Text(AppStrings.t('Try Again')),
+                ),
+              ],
+            ),
+          );
+        }
+
         final students = snapshot.data ?? const <InstructorStudent>[];
         if (students.isEmpty) {
           return Center(child: Text(AppStrings.t('No assigned students yet.')));
