@@ -20,6 +20,7 @@ class _StudentNotificationsScreenState
       StudentNotificationsRepository();
 
   bool _loading = true;
+  bool _markingAllRead = false;
   bool _hasError = false;
   List<StudentNotificationItem> _items = const [];
   StudentNotificationType? _filter;
@@ -61,13 +62,33 @@ class _StudentNotificationsScreenState
     return _items.where((item) => item.type == filter).toList(growable: false);
   }
 
-  void _toggleAllRead() {
-    final anyUnread = _items.any((item) => item.unread);
+  Future<void> _markAllAsRead() async {
+    if (_markingAllRead || !_items.any((item) => item.unread)) {
+      return;
+    }
+
     setState(() {
-      _items = _items
-          .map((item) => item.copyWith(unread: !anyUnread))
-          .toList(growable: false);
+      _markingAllRead = true;
     });
+
+    try {
+      await _repository.markAllAsRead();
+      if (!mounted) return;
+      setState(() {
+        _items = _items
+            .map((item) => item.copyWith(unread: false))
+            .toList(growable: false);
+        _markingAllRead = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _markingAllRead = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.t('Something went wrong'))),
+      );
+    }
   }
 
   String? _actionLabel(StudentNotificationType type) {
@@ -135,11 +156,11 @@ class _StudentNotificationsScreenState
                 ),
                 const Spacer(),
                 TextButton(
-                  onPressed: _items.isEmpty ? null : _toggleAllRead,
+                  onPressed: anyUnread && !_markingAllRead ? _markAllAsRead : null,
                   child: Text(
-                    anyUnread
-                        ? AppStrings.t('Mark all as read')
-                        : AppStrings.t('Mark as unread'),
+                    _markingAllRead
+                        ? AppStrings.t('Loading...')
+                        : AppStrings.t('Mark all as read'),
                   ),
                 ),
               ],

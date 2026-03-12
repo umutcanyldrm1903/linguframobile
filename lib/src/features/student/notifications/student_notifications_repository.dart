@@ -1,24 +1,18 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 import '../lessons/student_lessons_repository.dart';
 
 class StudentNotificationsRepository {
   Future<List<StudentNotificationItem>> fetchNotifications() async {
     final response = await ApiClient.dio.get('/notifications');
-    final payload = response.data;
+    return ApiResponseParser.requireList(
+      response.data,
+      context: '/notifications',
+    ).map(StudentNotificationItem.fromJson).toList(growable: false);
+  }
 
-    if (payload is! Map<String, dynamic>) {
-      return const [];
-    }
-
-    final data = payload['data'];
-    if (data is! List) {
-      return const [];
-    }
-
-    return data
-        .whereType<Map<String, dynamic>>()
-        .map(StudentNotificationItem.fromJson)
-        .toList(growable: false);
+  Future<void> markAllAsRead() async {
+    await ApiClient.dio.post('/notifications/mark-all-read');
   }
 }
 
