@@ -12,9 +12,6 @@ workflows:
         BUNDLE_ID: com.lingufranca.app
       groups:
         - app_store_credentials
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.lingufranca.app
 
     scripts:
       - name: Flutter packages
@@ -27,8 +24,11 @@ workflows:
           pod install
           cd ..
 
-      - name: Apply provisioning profiles to Xcode project
+      - name: Set up iOS code signing
         script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" --type IOS_APP_STORE --create
+          keychain add-certificates
           xcode-project use-profiles
 
       - name: Build IPA
