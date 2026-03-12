@@ -26,6 +26,18 @@ workflows:
 
       - name: Set up iOS code signing
         script: |
+          if [ -z "$CERTIFICATE_PRIVATE_KEY" ]; then
+            echo "ERROR: CERTIFICATE_PRIVATE_KEY is empty."
+            echo "Create an RSA 2048 private key and save it as a secret env var named CERTIFICATE_PRIVATE_KEY."
+            exit 1
+          fi
+          if ! echo "$CERTIFICATE_PRIVATE_KEY" | grep -q "BEGIN RSA PRIVATE KEY"; then
+            echo "ERROR: CERTIFICATE_PRIVATE_KEY must be RSA 2048 PEM."
+            echo "Expected header: -----BEGIN RSA PRIVATE KEY-----"
+            echo "Do not use APP_STORE_CONNECT .p8 key here."
+            exit 1
+          fi
+
           keychain initialize
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
@@ -33,7 +45,7 @@ workflows:
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
             --key-id "$APP_STORE_CONNECT_KEY_IDENTIFIER" \
             --private-key "$APP_STORE_CONNECT_PRIVATE_KEY" \
-            --certificate-key "$APP_STORE_CONNECT_PRIVATE_KEY"
+            --certificate-key "$CERTIFICATE_PRIVATE_KEY"
           keychain add-certificates
 
       - name: Build IPA
