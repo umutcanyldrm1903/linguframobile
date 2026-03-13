@@ -1,10 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/zoom_join_url.dart';
-import '../../zoom/zoom_meeting_service.dart';
+import '../../zoom/live_lesson_launcher.dart';
 import 'student_lessons_repository.dart';
 
 class StudentLiveLessonScreen extends StatelessWidget {
@@ -43,40 +41,15 @@ class StudentLiveLessonScreen extends StatelessWidget {
             child: ElevatedButton.icon(
               onPressed: canJoin
                   ? () async {
-                      final meetingId = (lesson!.meetingId ?? '').trim();
-                      final passcode = (lesson!.password ?? '').trim();
-                      final joined = await ZoomMeetingService.joinMeeting(
-                        meetingId: meetingId,
-                        password: passcode,
+                      await openLiveLessonSession(
+                        context,
+                        title: lesson!.title.isNotEmpty
+                            ? lesson!.title
+                            : AppStrings.t('Online Lesson'),
+                        joinUrl: lesson!.joinUrl ?? '',
+                        meetingId: lesson!.meetingId,
+                        password: lesson!.password,
                       );
-                      if (joined) return;
-
-                      final uri = tryParseZoomJoinUrl(lesson!.joinUrl ?? '');
-                      if (uri == null) {
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              AppStrings.t('Links is broke or some thing went wrong'),
-                            ),
-                          ),
-                        );
-                        return;
-                      }
-
-                      final opened = await launchUrl(
-                        uri,
-                        mode: LaunchMode.externalApplication,
-                      );
-                      if (!opened && context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              AppStrings.t('Links is broke or some thing went wrong'),
-                            ),
-                          ),
-                        );
-                      }
                     }
                   : null,
               icon: const Icon(Icons.video_call),
@@ -92,28 +65,44 @@ class StudentLiveLessonScreen extends StatelessWidget {
 enum _LessonJoinState { unknown, pending, notStarted, canJoin, finished }
 
 _LessonJoinState _deriveJoinState(LiveLessonItem? lesson) {
-  if (lesson == null) return _LessonJoinState.unknown;
+  if (lesson == null) {
+    return _LessonJoinState.unknown;
+  }
   final status = lesson.status.toLowerCase();
 
-  if (lesson.isCompleted || status == 'completed') return _LessonJoinState.finished;
-  if (lesson.isPending || status == 'pending') return _LessonJoinState.pending;
-  if (status.startsWith('cancelled')) return _LessonJoinState.finished;
+  if (lesson.isCompleted || status == 'completed') {
+    return _LessonJoinState.finished;
+  }
+  if (lesson.isPending || status == 'pending') {
+    return _LessonJoinState.pending;
+  }
+  if (status.startsWith('cancelled')) {
+    return _LessonJoinState.finished;
+  }
 
   // Prefer the backend's can_join guard. It already bakes in:
   // - time window (start - 15min -> end)
   // - host-start / access checks for private lessons
   // - credential visibility rules (join_url/meeting_id/password can be nulled)
-  if (lesson.canJoin) return _LessonJoinState.canJoin;
+  if (lesson.canJoin) {
+    return _LessonJoinState.canJoin;
+  }
 
   final raw = lesson.joinUrl?.trim() ?? '';
-  if (raw.isEmpty) return _LessonJoinState.notStarted;
+  if (raw.isEmpty) {
+    return _LessonJoinState.notStarted;
+  }
 
   final start = lesson.startTime;
   final end = lesson.computedEndTime;
-  if (start == null || end == null) return _LessonJoinState.notStarted;
+  if (start == null || end == null) {
+    return _LessonJoinState.notStarted;
+  }
 
   final now = DateTime.now();
-  if (!now.isBefore(end)) return _LessonJoinState.finished;
+  if (!now.isBefore(end)) {
+    return _LessonJoinState.finished;
+  }
 
   final startWindow = start.subtract(const Duration(minutes: 15));
 
@@ -128,7 +117,8 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = lesson?.title.isNotEmpty == true ? lesson!.title : 'Canlı Ders';
+    final title =
+        lesson?.title.isNotEmpty == true ? lesson!.title : 'Canlı Ders';
     final instructor = lesson?.instructorName ?? '';
     final dateLabel = _formatDate(lesson?.startTime);
     final timeLabel = _formatTime(lesson?.startTime);

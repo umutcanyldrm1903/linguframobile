@@ -1,10 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/zoom_join_url.dart';
-import '../../zoom/zoom_meeting_service.dart';
+import '../../zoom/live_lesson_launcher.dart';
 import 'instructor_dashboard_repository.dart';
 import '../lessons/instructor_lessons_repository.dart';
 import '../agreements/instructor_agreement_screen.dart';
@@ -39,7 +37,8 @@ class InstructorDashboardScreen extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () => Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const InstructorDashboardScreen()),
+                    MaterialPageRoute(
+                        builder: (_) => const InstructorDashboardScreen()),
                   ),
                   child: Text(AppStrings.t('Try Again')),
                 ),
@@ -50,8 +49,11 @@ class InstructorDashboardScreen extends StatelessWidget {
 
         final payload = snapshot.data;
         final stats = payload?.stats;
-        final upcoming = payload?.upcoming ?? const <InstructorUpcomingLesson>[];
-        final name = payload?.name.isNotEmpty == true ? payload!.name : AppStrings.t('Instructor');
+        final upcoming =
+            payload?.upcoming ?? const <InstructorUpcomingLesson>[];
+        final name = payload?.name.isNotEmpty == true
+            ? payload!.name
+            : AppStrings.t('Instructor');
 
         return ListView(
           padding: EdgeInsets.all(compact ? 14 : 20),
@@ -106,45 +108,55 @@ class InstructorDashboardScreen extends StatelessWidget {
               compact: compact,
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final columns = compact ? 2 : (constraints.maxWidth > 700 ? 4 : 3);
+                  final columns =
+                      compact ? 2 : (constraints.maxWidth > 700 ? 4 : 3);
                   final spacing = compact ? 8.0 : 12.0;
-                  final itemWidth = (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
+                  final itemWidth =
+                      (constraints.maxWidth - ((columns - 1) * spacing)) /
+                          columns;
 
                   final items = <_QuickAction>[
                     _QuickAction(
                       label: AppStrings.t('Messages'),
                       icon: Icons.chat_bubble_outline,
-                      onTap: () => _open(context, const InstructorMessagesScreen()),
+                      onTap: () =>
+                          _open(context, const InstructorMessagesScreen()),
                     ),
                     _QuickAction(
                       label: AppStrings.t('Homeworks'),
                       icon: Icons.assignment,
-                      onTap: () => _open(context, const InstructorHomeworksScreen()),
+                      onTap: () =>
+                          _open(context, const InstructorHomeworksScreen()),
                     ),
                     _QuickAction(
                       label: AppStrings.t('Reports'),
                       icon: Icons.bar_chart,
-                      onTap: () => _open(context, const InstructorReportsScreen()),
+                      onTap: () =>
+                          _open(context, const InstructorReportsScreen()),
                     ),
                     _QuickAction(
                       label: AppStrings.t('User Guide'),
                       icon: Icons.help_outline,
-                      onTap: () => _open(context, const InstructorGuideScreen()),
+                      onTap: () =>
+                          _open(context, const InstructorGuideScreen()),
                     ),
                     _QuickAction(
                       label: AppStrings.t('Library'),
                       icon: Icons.menu_book,
-                      onTap: () => _open(context, const InstructorLibraryScreen()),
+                      onTap: () =>
+                          _open(context, const InstructorLibraryScreen()),
                     ),
                     _QuickAction(
                       label: AppStrings.t('Agreement'),
                       icon: Icons.description,
-                      onTap: () => _open(context, const InstructorAgreementScreen()),
+                      onTap: () =>
+                          _open(context, const InstructorAgreementScreen()),
                     ),
                     _QuickAction(
                       label: AppStrings.t('Instructions'),
                       icon: Icons.rule_folder,
-                      onTap: () => _open(context, const InstructorInstructionsScreen()),
+                      onTap: () =>
+                          _open(context, const InstructorInstructionsScreen()),
                     ),
                   ];
 
@@ -196,10 +208,16 @@ class _StatGrid extends StatelessWidget {
       mainAxisSpacing: compact ? 8 : 12,
       crossAxisSpacing: compact ? 8 : 12,
       children: [
-        _StatCard(title: AppStrings.t('Lessons'), value: totalLessons.toString()),
-        _StatCard(title: AppStrings.t('Active Students'), value: activeStudents.toString()),
-        _StatCard(title: AppStrings.t('Upcoming Lessons'), value: upcoming.toString()),
-        _StatCard(title: AppStrings.t('Ratings'), value: rating.toStringAsFixed(1)),
+        _StatCard(
+            title: AppStrings.t('Lessons'), value: totalLessons.toString()),
+        _StatCard(
+            title: AppStrings.t('Active Students'),
+            value: activeStudents.toString()),
+        _StatCard(
+            title: AppStrings.t('Upcoming Lessons'),
+            value: upcoming.toString()),
+        _StatCard(
+            title: AppStrings.t('Ratings'), value: rating.toStringAsFixed(1)),
       ],
     );
   }
@@ -220,7 +238,7 @@ class _StatCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -258,7 +276,7 @@ class _SectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(compact ? 14 : 18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -287,9 +305,8 @@ class _LessonTile extends StatelessWidget {
         ? DateFormat('dd MMM, HH:mm').format(lesson.startTime!.toLocal())
         : '';
     final canJoin = lesson.status == 'started' && _canJoinNow(lesson);
-    final canStart = !lesson.isPending &&
-        lesson.status != 'started' &&
-        _canStartNow(lesson);
+    final canStart =
+        !lesson.isPending && lesson.status != 'started' && _canStartNow(lesson);
     return Row(
       children: [
         const CircleAvatar(
@@ -329,42 +346,21 @@ class _LessonTile extends StatelessWidget {
                       }
                     }
 
-                    final joined = await ZoomMeetingService.joinMeeting(
+                    if (!context.mounted) return;
+                    await openLiveLessonSession(
+                      context,
+                      title: lesson.title.isNotEmpty
+                          ? lesson.title
+                          : AppStrings.t('Lesson'),
+                      joinUrl: rawJoinUrl,
                       meetingId: meetingId,
                       password: passcode,
                     );
-                    if (joined) return;
-
-                    final url = tryParseZoomJoinUrl(rawJoinUrl);
-                    if (url == null) {
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            AppStrings.t('Links is broke or some thing went wrong'),
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-
-                    final ok = await launchUrl(
-                      url,
-                      mode: LaunchMode.externalApplication,
-                    );
-                    if (!ok && context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            AppStrings.t('Links is broke or some thing went wrong'),
-                          ),
-                        ),
-                      );
-                    }
                   } catch (_) {
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(AppStrings.t('Something went wrong'))),
+                      SnackBar(
+                          content: Text(AppStrings.t('Something went wrong'))),
                     );
                   }
                 }
@@ -431,7 +427,7 @@ class _QuickAction extends StatelessWidget {
         width: width ?? 140,
         padding: EdgeInsets.all(compact ? 12 : 14),
         decoration: BoxDecoration(
-          color: AppColors.brand.withOpacity(0.12),
+          color: AppColors.brand.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(compact ? 12 : 14),
         ),
         child: Column(

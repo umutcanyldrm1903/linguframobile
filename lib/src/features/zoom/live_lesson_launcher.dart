@@ -1,0 +1,72 @@
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../../core/localization/app_strings.dart';
+import '../../core/utils/zoom_join_url.dart';
+import '../shared/content_webview_screen.dart';
+import 'zoom_meeting_service.dart';
+
+Future<void> openLiveLessonSession(
+  BuildContext context, {
+  required String title,
+  required String joinUrl,
+  String? meetingId,
+  String? password,
+  String? displayName,
+}) async {
+  final trimmedMeetingId = (meetingId ?? '').trim();
+  final trimmedPassword = (password ?? '').trim();
+  final trimmedJoinUrl = joinUrl.trim();
+
+  if (trimmedMeetingId.isNotEmpty) {
+    final joined = await ZoomMeetingService.joinMeeting(
+      meetingId: trimmedMeetingId,
+      password: trimmedPassword,
+      displayName: displayName,
+    );
+    if (joined) {
+      return;
+    }
+  }
+
+  final uri = tryParseZoomJoinUrl(trimmedJoinUrl);
+  if (uri == null) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppStrings.t('Links is broke or some thing went wrong'),
+        ),
+      ),
+    );
+    return;
+  }
+
+  final scheme = uri.scheme.toLowerCase();
+  if (scheme == 'http' || scheme == 'https') {
+    if (!context.mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ContentWebViewScreen(
+          title: title,
+          loadUrl: uri.toString(),
+          externalUrl: uri.toString(),
+          actionLabel: AppStrings.t('Open Externally'),
+        ),
+      ),
+    );
+    return;
+  }
+
+  final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (!opened && context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppStrings.t('Links is broke or some thing went wrong'),
+        ),
+      ),
+    );
+  }
+}

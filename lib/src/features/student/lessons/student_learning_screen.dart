@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
-import '../../../core/config/app_config.dart';
+import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/content_uri.dart';
+import '../../shared/content_webview_screen.dart';
+import '../../zoom/live_lesson_launcher.dart';
 import 'student_course_repository.dart';
 import 'student_quiz_screen.dart';
 
@@ -65,11 +67,10 @@ class _StudentLearningScreenState extends State<StudentLearningScreen> {
   Widget _buildLessonTile(CourseItem item) {
     final isLoading = _loadingItemId == item.id;
     return ListTile(
-      leading: Icon(
-        _iconForType(item.type),
-        color: AppColors.brand,
+      leading: Icon(_iconForType(item.type), color: AppColors.brand),
+      title: Text(
+        item.title.isNotEmpty ? item.title : AppStrings.t('Content'),
       ),
-      title: Text(item.title.isNotEmpty ? item.title : 'İçerik'),
       subtitle: item.duration.isNotEmpty
           ? Text('${item.duration} dk')
           : Text(item.type.toUpperCase()),
@@ -99,11 +100,12 @@ class _StudentLearningScreenState extends State<StudentLearningScreen> {
 
   Future<void> _openLesson(CourseItem item) async {
     if (item.id <= 0) {
-      _showSnack('Bu içerik için detay bulunamadı.');
+      _showSnack(AppStrings.t('Content details could not be found.'));
       return;
     }
 
     if (item.type == 'quiz') {
+      if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -124,14 +126,52 @@ class _StudentLearningScreenState extends State<StudentLearningScreen> {
         lessonId: item.id,
       );
 
-      final url = item.type == 'live' ? info.joinUrl : info.fileUrl;
-      final uri = _buildUri(url);
-      if (uri == null) {
-        _showSnack('Bağlantı bulunamadı.');
+      final rawUrl = item.type == 'live' ? info.joinUrl : info.fileUrl;
+      if (item.type == 'live') {
+        if (!mounted) return;
+        await openLiveLessonSession(
+          context,
+          title: info.title.isNotEmpty
+              ? info.title
+              : (item.title.isNotEmpty
+                  ? item.title
+                  : AppStrings.t('Live Lesson')),
+          joinUrl: rawUrl ?? '',
+          meetingId: info.meetingId,
+          password: info.password,
+        );
         return;
       }
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
 
+      final externalUri = tryResolveWebUri(rawUrl);
+      if (externalUri == null) {
+        _showSnack(AppStrings.t('Link not found.'));
+        return;
+      }
+
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ContentWebViewScreen(
+            title: info.title.isNotEmpty
+                ? info.title
+                : (item.title.isNotEmpty
+                    ? item.title
+                    : AppStrings.t(
+                        item.type == 'live' ? 'Live Lesson' : 'Lesson',
+                      )),
+            loadUrl:
+                (tryBuildEmbeddedContentUri(rawUrl) ?? externalUri).toString(),
+            externalUrl: externalUri.toString(),
+            actionLabel: AppStrings.t(
+              item.type == 'live' ? 'Open Externally' : 'Open in Browser',
+            ),
+          ),
+        ),
+      );
+
+      if (!mounted) return;
       if (item.type == 'lesson' || item.type == 'document') {
         await _repo.markLessonComplete(item.id);
       }
@@ -142,14 +182,6 @@ class _StudentLearningScreenState extends State<StudentLearningScreen> {
         setState(() => _loadingItemId = null);
       }
     }
-  }
-
-  Uri? _buildUri(String? raw) {
-    if (raw == null || raw.isEmpty) return null;
-    final normalized = raw.startsWith('http')
-        ? raw
-        : '${AppConfig.webBaseUrl}${raw.startsWith('/') ? '' : '/'}$raw';
-    return Uri.tryParse(normalized);
   }
 
   void _showSnack(String message) {
@@ -163,6 +195,6 @@ class _StudentLearningScreenState extends State<StudentLearningScreen> {
     if (error is Exception) {
       return error.toString().replaceAll('Exception: ', '');
     }
-    return 'Bir hata oluştu. Lütfen tekrar deneyin.';
+    return AppStrings.t('Something went wrong. Please try again.');
   }
 }
