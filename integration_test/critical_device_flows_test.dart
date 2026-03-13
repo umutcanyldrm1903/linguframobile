@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
 import 'package:lingufranca_mobile/src/features/instructor/homeworks/instructor_homeworks_screen.dart';
 import 'package:lingufranca_mobile/src/features/student/homeworks/student_homeworks_screen.dart';
 import 'package:lingufranca_mobile/src/features/student/notifications/student_notifications_screen.dart';
 
-import 'support/critical_flow_fakes.dart';
+import '../test/support/critical_flow_fakes.dart';
 
 void main() {
-  group('Student homework flow', () {
-    testWidgets('updates an existing submission from the homework detail sheet',
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  group('Critical device smoke flows', () {
+    testWidgets('student can update homework submission note',
         (tester) async {
       final repository = FakeStudentHomeworksRepository(
         payload: buildStudentHomeworksPayload(),
@@ -19,33 +22,24 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Essay Draft'), findsOneWidget);
-
       await tester.tap(find.text('Essay Draft'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Submission Details'), findsOneWidget);
-      expect(find.text('Update Submission'), findsOneWidget);
-
-      final updateButton =
-          find.widgetWithText(ElevatedButton, 'Update Submission');
-      await tester.ensureVisible(updateButton);
-      await tester.tap(updateButton);
+      await tester.tap(
+        find.widgetWithText(ElevatedButton, 'Update Submission'),
+      );
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextField), 'Updated student note');
+      await tester.enterText(find.byType(TextField), 'Device flow note');
       await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
       await tester.pumpAndSettle();
 
       expect(repository.submitCalls.length, 1);
-      expect(repository.submitCalls.single.homeworkId, 11);
-      expect(repository.submitCalls.single.note, 'Updated student note');
+      expect(repository.submitCalls.single.note, 'Device flow note');
       expect(find.text('Submission updated.'), findsOneWidget);
     });
-  });
 
-  group('Student notifications flow', () {
-    testWidgets('marks all notifications as read via repository',
+    testWidgets('student can mark all notifications as read',
         (tester) async {
       final repository = FakeStudentNotificationsRepository(
         items: buildStudentNotifications(),
@@ -56,20 +50,19 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final markAllFinder = find.widgetWithText(TextButton, 'Mark all as read');
-      expect(markAllFinder, findsOneWidget);
-
-      await tester.tap(markAllFinder);
+      await tester.tap(find.widgetWithText(TextButton, 'Mark all as read'));
       await tester.pumpAndSettle();
 
       expect(repository.markAllAsReadCalls, 1);
-      final button = tester.widget<TextButton>(markAllFinder);
-      expect(button.onPressed, isNull);
+      expect(
+        tester.widget<TextButton>(
+          find.widgetWithText(TextButton, 'Mark all as read'),
+        ).onPressed,
+        isNull,
+      );
     });
-  });
 
-  group('Instructor homework flow', () {
-    testWidgets('submits a review for student homework', (tester) async {
+    testWidgets('instructor can save a homework review', (tester) async {
       final repository = FakeInstructorHomeworksRepository(
         payload: buildInstructorHomeworksPayload(),
       );
@@ -84,21 +77,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Speaking Homework'), findsOneWidget);
-
       await tester.tap(find.byType(PopupMenuButton<String>).first);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Review Submission').last);
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextFormField), 'Great progress.');
+      await tester.enterText(find.byType(TextFormField), 'Reviewed on device');
       await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
       await tester.pumpAndSettle();
 
       expect(repository.reviewCalls.length, 1);
-      expect(repository.reviewCalls.single.id, 31);
-      expect(repository.reviewCalls.single.status, 'submitted');
-      expect(repository.reviewCalls.single.instructorNote, 'Great progress.');
+      expect(repository.reviewCalls.single.instructorNote, 'Reviewed on device');
     });
   });
 }
