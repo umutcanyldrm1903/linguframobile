@@ -26,3 +26,26 @@ Uri? tryParseZoomJoinUrl(String raw) {
   return uri;
 }
 
+Uri? tryBuildZoomBrowserUri(String raw) {
+  final uri = tryParseZoomJoinUrl(raw);
+  if (uri == null) return null;
+
+  final scheme = uri.scheme.toLowerCase();
+  if (scheme == 'http' || scheme == 'https') {
+    return uri;
+  }
+
+  if (scheme != 'zoommtg') return null;
+
+  final host = uri.host.isNotEmpty ? uri.host : 'zoom.us';
+  final meetingId = (uri.queryParameters['confno'] ?? '').trim();
+  if (meetingId.isEmpty) return null;
+
+  final query = <String, String>{};
+  final password = (uri.queryParameters['pwd'] ?? '').trim();
+  if (password.isNotEmpty) {
+    query['pwd'] = password;
+  }
+
+  return Uri.https(host, '/j/$meetingId', query.isEmpty ? null : query);
+}

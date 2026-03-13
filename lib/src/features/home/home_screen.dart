@@ -1,10 +1,10 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../core/config/app_config.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
+import '../shared/content_preview_launcher.dart';
 import '../student/instructors/student_instructors_screen.dart';
 import '../student/packages/student_packages_screen.dart';
 import '../public/public_repository.dart';
@@ -846,15 +846,13 @@ class _HeroFormCardState extends State<_HeroFormCard> {
           ? 'https://wa.me/$cleaned?text=$encoded'
           : 'https://wa.me/?text=$encoded';
 
-      final ok = await launchUrl(
-        Uri.parse(waUrl),
-        mode: LaunchMode.externalApplication,
+      if (!mounted) return;
+      await openContentPreview(
+        context,
+        title: 'WhatsApp',
+        rawUrl: waUrl,
+        browserActionLabel: AppStrings.t('Open Externally'),
       );
-      if (!ok && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppStrings.t('Something went wrong'))),
-        );
-      }
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1135,8 +1133,12 @@ class InstagramSection extends StatelessWidget {
           Center(
             child: OutlinedButton(
               onPressed: () async {
-                final uri = Uri.parse('https://www.instagram.com/lingufranca/');
-                await launchUrl(uri, mode: LaunchMode.externalApplication);
+                await openContentPreview(
+                  context,
+                  title: 'Instagram',
+                  rawUrl: 'https://www.instagram.com/lingufranca/',
+                  browserActionLabel: AppStrings.t('Open Externally'),
+                );
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: Colors.white,
@@ -1743,7 +1745,12 @@ class _PlanFlowSheetState extends State<_PlanFlowSheet> {
     final url = cleaned.isNotEmpty
         ? 'https://wa.me/$cleaned?text=$message'
         : 'https://wa.me/?text=$message';
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    await openContentPreview(
+      context,
+      title: 'WhatsApp',
+      rawUrl: url,
+      browserActionLabel: AppStrings.t('Open Externally'),
+    );
     if (!mounted) return;
     if (!widget.inline) {
       Navigator.pop(context);

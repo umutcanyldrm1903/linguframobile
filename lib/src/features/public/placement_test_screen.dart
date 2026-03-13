@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/storage/secure_storage.dart';
 import '../../core/theme/app_colors.dart';
+import '../shared/content_preview_launcher.dart';
 import 'public_repository.dart';
 
 String _placementError(Object error) {
@@ -68,9 +68,12 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
   Future<void> _openUrl(String raw) async {
     final value = raw.trim();
     if (value.isEmpty) return;
-    final uri = Uri.tryParse(value);
-    if (uri == null) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    await openContentPreview(
+      context,
+      title: AppStrings.t('Open Link'),
+      rawUrl: value,
+      browserActionLabel: AppStrings.t('Open Externally'),
+    );
   }
 
   Future<void> _requestTrialLesson() async {

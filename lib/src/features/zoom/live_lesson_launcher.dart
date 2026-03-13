@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/localization/app_strings.dart';
 import '../../core/utils/zoom_join_url.dart';
@@ -59,8 +58,24 @@ Future<void> openLiveLessonSession(
     return;
   }
 
-  final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-  if (!opened && context.mounted) {
+  final browserUri = tryBuildZoomBrowserUri(trimmedJoinUrl);
+  if (browserUri != null) {
+    if (!context.mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ContentWebViewScreen(
+          title: title,
+          loadUrl: browserUri.toString(),
+          externalUrl: browserUri.toString(),
+          actionLabel: AppStrings.t('Open in Browser'),
+        ),
+      ),
+    );
+    return;
+  }
+
+  if (context.mounted) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

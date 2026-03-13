@@ -1,11 +1,11 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../shared/content_preview_launcher.dart';
 import '../students/instructor_students_repository.dart';
 import 'instructor_library_repository.dart';
 
@@ -617,12 +617,12 @@ class _LibraryItemCard extends StatelessWidget {
       return;
     }
 
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!ok && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.t('Something went wrong'))),
-      );
-    }
+    await openContentPreview(
+      context,
+      title: item.fileName.isNotEmpty ? item.fileName : item.title,
+      rawUrl: uri.toString(),
+      browserActionLabel: AppStrings.t('Open Externally'),
+    );
   }
 
   Uri? _resolveUri(String absoluteUrl, String path) {
