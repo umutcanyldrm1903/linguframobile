@@ -407,6 +407,73 @@ String _resolveImage(String? raw) {
   return '${AppConfig.webBaseUrl}/$value';
 }
 
+String _readSectionText(
+  Map<String, dynamic> content,
+  String key,
+  String fallback,
+) {
+  final cleaned = _cleanRichText(content[key]);
+  return cleaned.isEmpty ? fallback : cleaned;
+}
+
+String _cleanRichText(dynamic raw) {
+  if (raw == null) return '';
+  final withoutTags = raw.toString().replaceAll(RegExp(r'<[^>]*>'), ' ');
+  final normalized = withoutTags.replaceAll(RegExp(r'\s+'), ' ').trim();
+  if (normalized.isEmpty) return '';
+  return _decodeHtmlEntities(normalized);
+}
+
+String _decodeHtmlEntities(String input) {
+  if (input.isEmpty || !input.contains('&')) return input;
+
+  final named = <String, String>{
+    '&quot;': '"',
+    '&apos;': '\'',
+    '&nbsp;': ' ',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&ouml;': 'ö',
+    '&Ouml;': 'Ö',
+    '&uuml;': 'ü',
+    '&Uuml;': 'Ü',
+    '&ccedil;': 'ç',
+    '&Ccedil;': 'Ç',
+    '&scaron;': 'ş',
+    '&Scaron;': 'Ş',
+    '&iacute;': 'ı',
+    '&Iacute;': 'İ',
+  };
+
+  String output = input;
+
+  output = output.replaceAllMapped(RegExp(r'&#(\d+);'), (match) {
+    final code = int.tryParse(match.group(1) ?? '');
+    if (code == null) return match.group(0) ?? '';
+    return String.fromCharCode(code);
+  });
+
+  output = output.replaceAllMapped(RegExp(r'&#x([0-9a-fA-F]+);'), (match) {
+    final code = int.tryParse(match.group(1) ?? '', radix: 16);
+    if (code == null) return match.group(0) ?? '';
+    return String.fromCharCode(code);
+  });
+
+  named.forEach((entity, value) {
+    output = output.replaceAll(entity, value);
+  });
+
+  // Decode ampersand last so nested entities like &amp;ouml; can resolve.
+  output = output.replaceAll('&amp;', '&');
+  if (output.contains('&')) {
+    named.forEach((entity, value) {
+      output = output.replaceAll(entity, value);
+    });
+  }
+
+  return output;
+}
+
 class HeroSection extends StatelessWidget {
   const HeroSection({
     super.key,
@@ -424,32 +491,31 @@ class HeroSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = hero?.content ?? const <String, dynamic>{};
-    String readText(String key, String fallback) {
-      final raw = content[key];
-      if (raw == null) return fallback;
-      final cleaned = raw.toString().replaceAll(RegExp('<[^>]*>'), '').trim();
-      return cleaned.isEmpty ? fallback : cleaned;
-    }
 
-    final eyebrow = readText(
+    final eyebrow = _readSectionText(
+      content,
       'short_title',
       AppStrings.t('Live online lessons'),
     );
-    final title = readText(
+    final title = _readSectionText(
+      content,
       'title',
       AppStrings.t('Start your Learning Journey Today!'),
     );
-    final description = readText(
+    final description = _readSectionText(
+      content,
       'sub_title',
       AppStrings.t(
         'Start live lessons with native English instructors who also speak Turkish.',
       ),
     );
-    final primaryLabel = readText(
+    final primaryLabel = _readSectionText(
+      content,
       'action_button_text',
       AppStrings.t('Start now with a free trial lesson!'),
     );
-    final secondaryLabel = readText(
+    final secondaryLabel = _readSectionText(
+      content,
       'video_button_text',
       AppStrings.t('Explore packages'),
     );
@@ -2476,15 +2542,9 @@ class JourneySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = about?.content ?? const <String, dynamic>{};
-    String readText(String key, String fallback) {
-      final raw = content[key];
-      if (raw == null) return fallback;
-      final cleaned = raw.toString().replaceAll(RegExp('<[^>]*>'), '').trim();
-      return cleaned.isEmpty ? fallback : cleaned;
-    }
 
-    final eyebrow = readText('short_title', AppStrings.t('Öğrenim yolu'));
-    final title = readText(
+    final eyebrow = _readSectionText(content, 'short_title', AppStrings.t('Öğrenim yolu'));
+    final title = _readSectionText(content, 
       'title',
       AppStrings.t('Özgüvenli İngilizceye giden net bir yol'),
     );
@@ -2564,18 +2624,12 @@ class CorporateSection extends StatelessWidget {
     final compact = MediaQuery.sizeOf(context).width < 900;
     final content = banner?.content ?? const <String, dynamic>{};
     final global = banner?.global ?? const <String, dynamic>{};
-    String readText(String key, String fallback) {
-      final raw = content[key];
-      if (raw == null) return fallback;
-      final cleaned = raw.toString().replaceAll(RegExp('<[^>]*>'), '').trim();
-      return cleaned.isEmpty ? fallback : cleaned;
-    }
 
-    final title = readText(
+    final title = _readSectionText(content, 
       'title',
       AppStrings.t('Corporate language training for companies'),
     );
-    final description = readText(
+    final description = _readSectionText(content, 
       'sub_title',
       AppStrings.t(
         'Improve your team\'s skills with online English training programs. Let your company cover the training costs and move forward with a flexible, reportable system.',
@@ -2903,25 +2957,18 @@ class SliderSection extends StatelessWidget {
         itemCount: items.length,
         itemBuilder: (context, index) {
           final item = items[index];
-          String readText(String key, String fallback) {
-            final raw = item[key];
-            if (raw == null) return fallback;
-            final cleaned =
-                raw.toString().replaceAll(RegExp('<[^>]*>'), '').trim();
-            return cleaned.isEmpty ? fallback : cleaned;
-          }
 
-          final title = readText(
+          final title = _readSectionText(item, 
             'title',
             AppStrings.t('Start your Learning Journey Today!'),
           );
-          final subtitle = readText(
+          final subtitle = _readSectionText(item, 
             'sub_title',
             AppStrings.t(
               'Discover a World of Knowledge and Skills at Your Fingertips - Unlock Your Potential and Achieve Your Dreams with Our Comprehensive Learning Resources!',
             ),
           );
-          final buttonText = readText(
+          final buttonText = _readSectionText(item, 
             'action_button_text',
             AppStrings.t('Get Started'),
           );
@@ -3257,22 +3304,16 @@ class _NewsletterSectionState extends State<NewsletterSection> {
   @override
   Widget build(BuildContext context) {
     final content = widget.newsletter?.content ?? const <String, dynamic>{};
-    String readText(String key, String fallback) {
-      final raw = content[key];
-      if (raw == null) return fallback;
-      final cleaned = raw.toString().replaceAll(RegExp('<[^>]*>'), '').trim();
-      return cleaned.isEmpty ? fallback : cleaned;
-    }
 
-    final title = readText(
+    final title = _readSectionText(content, 
       'title',
       AppStrings.t('Want to stay informed about'),
     );
-    final subtitle = readText(
+    final subtitle = _readSectionText(content, 
       'sub_title',
       AppStrings.t('new courses and study'),
     );
-    final buttonLabel = readText(
+    final buttonLabel = _readSectionText(content, 
       'action_button_text',
       AppStrings.t('Subscribe Now'),
     );
@@ -3346,14 +3387,8 @@ class FaqSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final content = section?.content ?? const <String, dynamic>{};
-    String readText(String key, String fallback) {
-      final raw = content[key];
-      if (raw == null) return fallback;
-      final cleaned = raw.toString().replaceAll(RegExp('<[^>]*>'), '').trim();
-      return cleaned.isEmpty ? fallback : cleaned;
-    }
 
-    final title = readText('title', AppStrings.t('FAQs'));
+    final title = _readSectionText(content, 'title', AppStrings.t('FAQs'));
 
     return _Section(
       eyebrow: AppStrings.t('Frequently Asked Questions'),
@@ -4740,3 +4775,5 @@ class _FooterLink extends StatelessWidget {
     );
   }
 }
+
+
