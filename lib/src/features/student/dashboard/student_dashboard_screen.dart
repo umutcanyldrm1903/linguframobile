@@ -12,6 +12,7 @@ import 'package:lingufranca_mobile/src/features/student/packages/student_package
 import 'package:lingufranca_mobile/src/features/student/homeworks/student_homeworks_repository.dart';
 import 'package:lingufranca_mobile/src/features/student/homeworks/student_homeworks_screen.dart';
 import 'package:lingufranca_mobile/src/features/student/instructors/student_instructors_screen.dart';
+import 'package:lingufranca_mobile/src/features/student/orders/student_orders_screen.dart';
 import 'package:lingufranca_mobile/src/features/student/profile/student_profile_screen.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
@@ -191,7 +192,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                 _QuickAction(
                   label: AppStrings.t('Payment'),
                   icon: Icons.payment,
-                  onTap: () => _open(context, const StudentPackagesScreen()),
+                  onTap: () => _open(context, const StudentOrdersScreen()),
                 ),
                 _QuickAction(
                   label: AppStrings.t('Notifications'),
@@ -375,7 +376,7 @@ class _WelcomeCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(compact ? 14 : 18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -610,7 +611,7 @@ class _SectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(compact ? 14 : 18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -640,7 +641,7 @@ class _ChipCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.brand.withOpacity(0.15),
+        color: AppColors.brand.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Text(text, style: const TextStyle(fontWeight: FontWeight.w700)),
