@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../payment/payment_webview_screen.dart';
+import '../../shared/content_webview_screen.dart';
 import 'student_guide_repository.dart';
 
 class StudentGuideScreen extends StatefulWidget {
@@ -142,11 +142,11 @@ class _GuideItemTile extends StatelessWidget {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => PaymentWebViewScreen(
-          url: uri.toString(),
-          title: AppStrings.t('User Guide'),
-          successContains: '__never__success__',
-          failContains: '__never__fail__',
+        builder: (_) => ContentWebViewScreen(
+          loadUrl: uri.toString(),
+          title: item.title.isNotEmpty ? item.title : AppStrings.t('User Guide'),
+          externalUrl: uri.toString(),
+          actionLabel: AppStrings.t('Open'),
         ),
       ),
     );
