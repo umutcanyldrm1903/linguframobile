@@ -380,12 +380,13 @@ class _QuestionStep extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Radio<String>(
-                        value: option.id,
-                        groupValue: selected,
-                        onChanged: (value) {
-                          if (value != null) onSelect(value);
-                        },
+                      Icon(
+                        isSelected
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_off,
+                        color: isSelected
+                            ? AppColors.brand
+                            : const Color(0xFF94A3B8),
                       ),
                       Expanded(
                         child: Text(

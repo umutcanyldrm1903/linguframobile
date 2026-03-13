@@ -191,7 +191,7 @@ class _PackageCard extends StatelessWidget {
         border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -211,7 +211,7 @@ class _PackageCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppColors.brand.withOpacity(0.15),
+                    color: AppColors.brand.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(data.badge!,

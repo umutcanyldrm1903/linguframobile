@@ -79,7 +79,7 @@ class _StudentLanguageScreenState extends ConsumerState<StudentLanguageScreen> {
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 18,
                       offset: const Offset(0, 8),
                     ),
@@ -114,7 +114,7 @@ class _StudentLanguageScreenState extends ConsumerState<StudentLanguageScreen> {
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.06),
+                      color: Colors.black.withValues(alpha: 0.06),
                       blurRadius: 18,
                       offset: const Offset(0, 8),
                     ),
@@ -194,7 +194,7 @@ class _OptionTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: isActive ? AppColors.brand.withOpacity(0.15) : Colors.transparent,
+            color: isActive ? AppColors.brand.withValues(alpha: 0.15) : Colors.transparent,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0xFFE2E8F0)),
           ),

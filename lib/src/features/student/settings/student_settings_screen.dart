@@ -429,7 +429,7 @@ class _ProfileTab extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 34,
-                    backgroundColor: AppColors.brand.withOpacity(0.2),
+                    backgroundColor: AppColors.brand.withValues(alpha: 0.2),
                     child: ClipOval(
                       child: (() {
                         if (pickedImageBytes != null) {
@@ -666,6 +666,7 @@ class _EducationTabState extends State<_EducationTab> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () async {
+                        final navigator = Navigator.of(context);
                         try {
                           if (item == null) {
                             await _repo.createExperience(
@@ -689,7 +690,7 @@ class _EducationTabState extends State<_EducationTab> {
                               current: current,
                             );
                           }
-                          if (mounted) Navigator.pop(context);
+                          navigator.pop();
                           await _load();
                           _showSnack(AppStrings.t('Updated successfully'));
                         } catch (e) {
@@ -761,6 +762,7 @@ class _EducationTabState extends State<_EducationTab> {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () async {
+                        final navigator = Navigator.of(context);
                         try {
                           if (item == null) {
                             await _repo.createEducation(
@@ -784,7 +786,7 @@ class _EducationTabState extends State<_EducationTab> {
                               current: current,
                             );
                           }
-                          if (mounted) Navigator.pop(context);
+                          navigator.pop();
                           await _load();
                           _showSnack(AppStrings.t('Updated successfully'));
                         } catch (e) {
@@ -1113,7 +1115,7 @@ class _SectionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),

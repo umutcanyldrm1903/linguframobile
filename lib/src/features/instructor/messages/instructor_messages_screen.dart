@@ -124,7 +124,7 @@ class _MessageTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 16,
               offset: const Offset(0, 8),
             ),
@@ -134,7 +134,7 @@ class _MessageTile extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 22,
-              backgroundColor: AppColors.brandDeep.withOpacity(0.2),
+              backgroundColor: AppColors.brandDeep.withValues(alpha: 0.2),
               child: (() {
                 final initial = thread.partnerName.isNotEmpty
                     ? thread.partnerName.substring(0, 1)

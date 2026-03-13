@@ -92,6 +92,7 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
       final priceLabel = _formatPrice(plan.price, widget.currency);
 
       if (_shouldUseNativeIyzico()) {
+        if (!mounted) return;
         final result = await Navigator.push<bool>(
           context,
           MaterialPageRoute(
@@ -127,36 +128,35 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
         throw Exception('missing_url');
       }
 
-      if (mounted) {
-        final result = await Navigator.push<bool>(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PaymentProcessingScreen(
-              invoiceId: init?.invoiceId ?? '',
-              paymentUrl: url,
+      if (!mounted) return;
+      final result = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PaymentProcessingScreen(
+            invoiceId: init?.invoiceId ?? '',
+            paymentUrl: url,
+          ),
+        ),
+      );
+      if (!mounted) return;
+      if (result == true) {
+        final status = await StudentPaymentRepository()
+            .fetchOrderStatus(init?.invoiceId ?? '');
+        if (!mounted) return;
+        final isSuccess = status?.isSuccess ?? false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isSuccess
+                  ? AppStrings.t('Payment Success.')
+                  : AppStrings.t('Payment is pending.'),
             ),
           ),
         );
-        if (!mounted) return;
-        if (result == true) {
-          final status = await StudentPaymentRepository()
-              .fetchOrderStatus(init?.invoiceId ?? '');
-          if (!mounted) return;
-          final isSuccess = status?.isSuccess ?? false;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                isSuccess
-                    ? AppStrings.t('Payment Success.')
-                    : AppStrings.t('Payment is pending.'),
-              ),
-            ),
-          );
-        } else if (result == false) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppStrings.t('Payment Fail'))),
-          );
-        }
+      } else if (result == false) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppStrings.t('Payment Fail'))),
+        );
       }
     } catch (error) {
       if (!mounted) return;

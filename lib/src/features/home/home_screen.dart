@@ -870,7 +870,7 @@ class _HeroFormCardState extends State<_HeroFormCard> {
         borderRadius: BorderRadius.circular(widget.compact ? 16 : 20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 22,
             offset: const Offset(0, 12),
           ),
@@ -1041,7 +1041,7 @@ class StatsSection extends StatelessWidget {
           borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 22,
               offset: const Offset(0, 10),
             ),
@@ -1465,7 +1465,7 @@ class _PackagesSectionState extends State<PackagesSection> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.08),
+                            color: Colors.black.withValues(alpha: 0.08),
                             blurRadius: 24,
                             offset: const Offset(0, 12),
                           ),
@@ -1515,14 +1515,14 @@ class _PackagesSectionState extends State<PackagesSection> {
                         borderRadius: BorderRadius.circular(26),
                         border: Border.all(
                           color: _highlightForm
-                              ? AppColors.brand.withOpacity(0.75)
+                              ? AppColors.brand.withValues(alpha: 0.75)
                               : Colors.transparent,
                           width: 2,
                         ),
                         boxShadow: _highlightForm
                             ? [
                                 BoxShadow(
-                                  color: AppColors.brand.withOpacity(0.18),
+                                  color: AppColors.brand.withValues(alpha: 0.18),
                                   blurRadius: 30,
                                   offset: const Offset(0, 18),
                                 ),
@@ -1765,9 +1765,9 @@ class _PlanFlowSheetState extends State<_PlanFlowSheet> {
     return Column(
       children: options.map((option) {
         final selected = option == groupValue;
-        final baseTint = AppColors.brandDeep.withOpacity(0.04);
-        final hoverTint = AppColors.brandDeep.withOpacity(0.06);
-        final borderTint = AppColors.brandDeep.withOpacity(0.18);
+        final baseTint = AppColors.brandDeep.withValues(alpha: 0.04);
+        final hoverTint = AppColors.brandDeep.withValues(alpha: 0.06);
+        final borderTint = AppColors.brandDeep.withValues(alpha: 0.18);
         final selectedBorder = AppColors.brand;
         return Padding(
           padding: const EdgeInsets.only(bottom: 10),
@@ -1794,7 +1794,7 @@ class _PlanFlowSheetState extends State<_PlanFlowSheet> {
                       border: Border.all(
                         color: selected
                             ? selectedBorder
-                            : AppColors.brandDeep.withOpacity(0.28),
+                            : AppColors.brandDeep.withValues(alpha: 0.28),
                         width: 2,
                       ),
                     ),
@@ -2069,15 +2069,15 @@ class _PlanFlowSheetState extends State<_PlanFlowSheet> {
             ? BorderRadius.circular(18)
             : const BorderRadius.vertical(top: Radius.circular(18));
         final decoration = BoxDecoration(
-          color: Colors.white.withOpacity(0.92),
+          color: Colors.white.withValues(alpha: 0.92),
           borderRadius: borderRadius,
           border: Border.all(
-            color: AppColors.brandDeep.withOpacity(0.10),
+            color: AppColors.brandDeep.withValues(alpha: 0.10),
             width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.10),
+              color: Colors.black.withValues(alpha: 0.10),
               blurRadius: 52,
               offset: const Offset(0, 18),
             ),
@@ -2090,7 +2090,7 @@ class _PlanFlowSheetState extends State<_PlanFlowSheet> {
             child: Container(
               height: 10,
               decoration: BoxDecoration(
-                color: AppColors.brandDeep.withOpacity(0.10),
+                color: AppColors.brandDeep.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: Align(
@@ -2360,7 +2360,7 @@ class _MiniStepRow extends StatelessWidget {
             borderRadius: BorderRadius.circular(999),
             boxShadow: [
               BoxShadow(
-                color: AppColors.brand.withOpacity(0.25),
+                color: AppColors.brand.withValues(alpha: 0.25),
                 blurRadius: 14,
                 offset: const Offset(0, 8),
               ),
@@ -2950,7 +2950,7 @@ class SliderSection extends StatelessWidget {
                       webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
                       errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                     ),
-                  Container(color: Colors.black.withOpacity(0.35)),
+                  Container(color: Colors.black.withValues(alpha: 0.35)),
                   Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
@@ -3064,7 +3064,7 @@ class _TrendingCategoryCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -3078,7 +3078,7 @@ class _TrendingCategoryCard extends StatelessWidget {
               if (iconUrl.isNotEmpty)
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: AppColors.brand.withOpacity(0.12),
+                  backgroundColor: AppColors.brand.withValues(alpha: 0.12),
                   child: ClipOval(
                     child: Image.network(
                       iconUrl,
@@ -3100,7 +3100,7 @@ class _TrendingCategoryCard extends StatelessWidget {
               else
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: AppColors.brand.withOpacity(0.12),
+                  backgroundColor: AppColors.brand.withValues(alpha: 0.12),
                   child: const Icon(Icons.category, color: AppColors.brand),
                 ),
               const SizedBox(width: 10),
@@ -3126,7 +3126,7 @@ class _TrendingCategoryCard extends StatelessWidget {
                         '${sub.name} (${sub.courseCount})',
                         style: const TextStyle(fontSize: 12),
                       ),
-                      backgroundColor: AppColors.brand.withOpacity(0.12),
+                      backgroundColor: AppColors.brand.withValues(alpha: 0.12),
                     ),
                   )
                   .toList(),
@@ -3172,7 +3172,7 @@ class BrandStripSection extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
@@ -3286,7 +3286,7 @@ class _NewsletterSectionState extends State<NewsletterSection> {
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.08),
+                color: Colors.black.withValues(alpha: 0.08),
                 blurRadius: 20,
                 offset: const Offset(0, 8),
               ),
@@ -3377,7 +3377,7 @@ class FaqSection extends StatelessWidget {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
+                            color: Colors.black.withValues(alpha: 0.06),
                             blurRadius: 16,
                             offset: const Offset(0, 8),
                           ),
@@ -3997,7 +3997,7 @@ class _PlanCard extends StatelessWidget {
             border: borderColor != null ? Border.all(color: borderColor) : null,
             boxShadow: [
               BoxShadow(
-                color: colors.last.withOpacity(0.35),
+                color: colors.last.withValues(alpha: 0.35),
                 blurRadius: 18,
                 offset: const Offset(0, 10),
               ),
@@ -4083,7 +4083,7 @@ class _PlanCard extends StatelessWidget {
               BoxShadow(
                 color: const Color(
                   0xFF0F172A,
-                ).withOpacity(plan.featured ? 0.25 : 0.15),
+                ).withValues(alpha: plan.featured ? 0.25 : 0.15),
                 blurRadius: plan.featured ? 70 : 50,
                 offset: Offset(0, plan.featured ? 30 : 20),
               ),
@@ -4114,7 +4114,7 @@ class _PlanCard extends StatelessWidget {
                               color: (plan.featured
                                       ? const Color(0xFF0EA5E9)
                                       : warmAccent)
-                                  .withOpacity(plan.featured ? 0.30 : 0.25),
+                                  .withValues(alpha: plan.featured ? 0.30 : 0.25),
                               blurRadius: 24,
                               offset: const Offset(0, 10),
                             ),
@@ -4141,7 +4141,7 @@ class _PlanCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(999),
                           boxShadow: [
                             BoxShadow(
-                              color: warmAccent.withOpacity(0.25),
+                              color: warmAccent.withValues(alpha: 0.25),
                               blurRadius: 24,
                               offset: const Offset(0, 10),
                             ),
@@ -4269,7 +4269,7 @@ class _PlanCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                   ),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withOpacity(0.40)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.40)),
                 ),
                 child: Text(
                   plan.lessons.toUpperCase(),
@@ -4344,7 +4344,7 @@ class _PlanCard extends StatelessWidget {
       }
     }
 
-    final borderColor = selected ? accent : accent.withOpacity(0.25);
+    final borderColor = selected ? accent : accent.withValues(alpha: 0.25);
 
     Widget chip(String text, {Color? color, Color? textColor}) {
       return Container(
@@ -4354,7 +4354,7 @@ class _PlanCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(999),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 12,
               offset: const Offset(0, 8),
             ),
@@ -4612,7 +4612,7 @@ class _JourneyCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),

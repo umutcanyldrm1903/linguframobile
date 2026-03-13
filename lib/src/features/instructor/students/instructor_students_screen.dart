@@ -71,7 +71,7 @@ class _StudentTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -81,7 +81,7 @@ class _StudentTile extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 22,
-            backgroundColor: AppColors.brandDeep.withOpacity(0.15),
+            backgroundColor: AppColors.brandDeep.withValues(alpha: 0.15),
             child: (() {
               final initial =
                   student.name.isNotEmpty ? student.name.substring(0, 1) : '?';

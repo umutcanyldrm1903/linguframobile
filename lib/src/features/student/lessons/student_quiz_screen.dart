@@ -195,7 +195,7 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.brand.withOpacity(0.12),
+        color: AppColors.brand.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text('$label: $value',
@@ -235,16 +235,39 @@ class _QuestionCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           ...question.answers.map(
-            (answer) => RadioListTile<int>(
-              value: answer.id,
-              groupValue: selectedAnswerId,
-              onChanged: (value) {
-                if (value != null) onChanged(value);
-              },
-              title: Text(answer.title),
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              activeColor: AppColors.brand,
+            (answer) => InkWell(
+              onTap: () => onChanged(answer.id),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: selectedAnswerId == answer.id
+                      ? const Color(0xFFE9F6FF)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: selectedAnswerId == answer.id
+                        ? AppColors.brand
+                        : const Color(0xFFD9E3F2),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      selectedAnswerId == answer.id
+                          ? Icons.radio_button_checked
+                          : Icons.radio_button_off,
+                      color: selectedAnswerId == answer.id
+                          ? AppColors.brand
+                          : const Color(0xFF94A3B8),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(answer.title)),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
