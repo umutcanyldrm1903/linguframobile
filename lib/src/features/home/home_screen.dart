@@ -454,6 +454,183 @@ class HeroSection extends StatelessWidget {
       AppStrings.t('Explore packages'),
     );
 
+    if (compact) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF0D5B90),
+                    Color(0xFF0B466F),
+                    Color(0xFF082C46),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.ink.withValues(alpha: 0.14),
+                    blurRadius: 26,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: _Eyebrow(text: eyebrow, color: Colors.white),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.14),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.18),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.waves_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      description,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.82),
+                        height: 1.55,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: const [
+                        _NativeHeroBadge(
+                          icon: Icons.play_circle_outline,
+                          label: 'Live lessons',
+                        ),
+                        _NativeHeroBadge(
+                          icon: Icons.verified_user_outlined,
+                          label: 'Native instructors',
+                        ),
+                        _NativeHeroBadge(
+                          icon: Icons.schedule_outlined,
+                          label: 'Flexible schedule',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pushNamed(context, '/login'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: AppColors.brandDeep,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        child: Text(primaryLabel),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const StudentPackagesScreen(),
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: const BorderSide(color: Colors.white54),
+                            ),
+                            child: Text(secondaryLabel),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () =>
+                                Navigator.pushNamed(context, '/placement-test'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.white,
+                              side: const BorderSide(color: Color(0xFF93C5FD)),
+                            ),
+                            child: Text(AppStrings.t('Level Test')),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (onOpenLeadForm != null) ...[
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        width: double.infinity,
+                        child: TextButton.icon(
+                          onPressed: onOpenLeadForm,
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                          ),
+                          icon: const Icon(
+                            Icons.chat_bubble_outline,
+                            size: 18,
+                          ),
+                          label: Text(
+                            AppStrings.t(
+                              'Get pricing info on WhatsApp in minutes.',
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Row(
+              children: [
+                Expanded(child: _StoreBadge(text: 'App Store')),
+                SizedBox(width: 10),
+                Expanded(child: _StoreBadge(text: 'Google Play')),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         compact ? 14 : 20,
@@ -982,6 +1159,7 @@ class InstructorSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 900;
     final sectionTitle = (section?.title ?? '').trim();
     final sectionSubtitle = (section?.subtitle ?? '').trim();
     final titleText = sectionTitle.isNotEmpty
@@ -1005,18 +1183,18 @@ class InstructorSection extends StatelessWidget {
         : const [
             _InstructorCardData(
               name: 'Ethan Granger',
-              title: 'Developer',
-              image: 'assets/web/h2_instructor01.png',
+              title: 'Instructor',
+              image: '',
             ),
             _InstructorCardData(
               name: 'Jason Thorne',
-              title: 'Developer',
-              image: 'assets/web/h2_instructor02.png',
+              title: 'Instructor',
+              image: '',
             ),
             _InstructorCardData(
               name: 'Mark Davenport',
-              title: 'Developer',
-              image: 'assets/web/h2_instructor03.png',
+              title: 'Instructor',
+              image: '',
             ),
           ];
 
@@ -1037,24 +1215,44 @@ class InstructorSection extends StatelessWidget {
               ),
               const SizedBox(height: 14),
             ],
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: items
-                  .map(
-                    (item) => GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const StudentInstructorsScreen(standalone: true),
-                        ),
+            if (compact)
+              SizedBox(
+                height: 210,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemBuilder: (_, index) => GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            const StudentInstructorsScreen(standalone: true),
                       ),
-                      child: _InstructorCard(item: item),
                     ),
-                  )
-                  .toList(),
-            ),
+                    child: _InstructorCard(item: items[index], compact: true),
+                  ),
+                ),
+              )
+            else
+              Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: items
+                    .map(
+                      (item) => GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const StudentInstructorsScreen(standalone: true),
+                          ),
+                        ),
+                        child: _InstructorCard(item: item),
+                      ),
+                    )
+                    .toList(),
+              ),
           ],
         ),
       ),
@@ -2353,6 +2551,7 @@ class CorporateSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 900;
     final content = banner?.content ?? const <String, dynamic>{};
     final global = banner?.global ?? const <String, dynamic>{};
     String readText(String key, String fallback) {
@@ -2413,26 +2612,17 @@ class CorporateSection extends StatelessWidget {
               const SizedBox(height: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: hasImage
-                    ? Image.network(
-                        image,
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-                        errorBuilder: (_, __, ___) => Image.asset(
-                          'assets/web/h2_banner_img.png',
-                          height: 180,
-                          width: double.infinity,
+                child: SizedBox(
+                  height: compact ? 160 : 180,
+                  width: double.infinity,
+                  child: hasImage
+                      ? _HomeNetworkImage(
+                          imageUrl: image,
                           fit: BoxFit.cover,
-                        ),
-                      )
-                    : Image.asset(
-                        'assets/web/h2_banner_img.png',
-                        height: 180,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
+                          errorFallback: const _CorporatePreviewFallback(),
+                        )
+                      : const _CorporatePreviewFallback(),
+                ),
               ),
             ],
           ),
@@ -3329,6 +3519,175 @@ class _StoreBadge extends StatelessWidget {
   }
 }
 
+class _NativeHeroBadge extends StatelessWidget {
+  const _NativeHeroBadge({
+    required this.icon,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: Colors.white),
+          const SizedBox(width: 8),
+          Text(
+            AppStrings.t(label),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeNetworkImage extends StatelessWidget {
+  const _HomeNetworkImage({
+    required this.imageUrl,
+    required this.fit,
+    this.width,
+    this.height,
+    this.errorFallback,
+  });
+
+  final String imageUrl;
+  final BoxFit fit;
+  final double? width;
+  final double? height;
+  final Widget? errorFallback;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.network(
+      imageUrl,
+      width: width,
+      height: height,
+      fit: fit,
+      errorBuilder: (_, __, ___) => errorFallback ?? const SizedBox.shrink(),
+    );
+  }
+}
+
+class _InitialsAvatar extends StatelessWidget {
+  const _InitialsAvatar({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList(growable: false);
+    final initials = parts.isEmpty
+        ? 'LF'
+        : parts.take(2).map((part) => part.substring(0, 1)).join().toUpperCase();
+
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF0D5B90), Color(0xFF082C46)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initials,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+          fontSize: 22,
+        ),
+      ),
+    );
+  }
+}
+
+class _CorporatePreviewFallback extends StatelessWidget {
+  const _CorporatePreviewFallback();
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFFEAF4FF), Color(0xFFDCEBFF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned(
+            right: -30,
+            top: -20,
+            child: Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.42),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                const CircleAvatar(
+                  radius: 22,
+                  backgroundColor: Colors.white,
+                  child: Icon(Icons.apartment_rounded, color: AppColors.brand),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  AppStrings.t('Corporate language training'),
+                  style: const TextStyle(
+                    color: AppColors.brandDeep,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  AppStrings.t(
+                    'Flexible planning, progress tracking, and instructor matching for teams.',
+                  ),
+                  style: const TextStyle(
+                    color: AppColors.muted,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Field extends StatelessWidget {
   const _Field({
     required this.label,
@@ -3479,59 +3838,26 @@ class _InstructorCardData {
 }
 
 class _InstructorCard extends StatelessWidget {
-  const _InstructorCard({required this.item});
+  const _InstructorCard({required this.item, this.compact = false});
 
   final _InstructorCardData item;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final fallbackAsset = 'assets/web/h2_instructor01.png';
     final hasImage = item.image.isNotEmpty;
 
-    Widget avatarChild() {
-      if (!hasImage) {
-        return Image.asset(
-          fallbackAsset,
-          width: 72,
-          height: 72,
-          fit: BoxFit.cover,
-        );
-      }
-
-      if (!item.isNetwork) {
-        return Image.asset(
-          item.image,
-          width: 72,
-          height: 72,
-          fit: BoxFit.cover,
-        );
-      }
-
-      return Image.network(
-        item.image,
-        width: 72,
-        height: 72,
-        fit: BoxFit.cover,
-        webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-        errorBuilder: (_, __, ___) => Image.asset(
-          fallbackAsset,
-          width: 72,
-          height: 72,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-
     return Container(
-      width: 260,
-      padding: const EdgeInsets.all(16),
+      width: compact ? 220 : 260,
+      padding: EdgeInsets.all(compact ? 14 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(compact ? 18 : 20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 18,
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: compact ? 14 : 18,
             offset: const Offset(0, 8),
           ),
         ],
@@ -3542,7 +3868,17 @@ class _InstructorCard extends StatelessWidget {
           CircleAvatar(
             radius: 36,
             backgroundColor: const Color(0xFFF1F5F9),
-            child: ClipOval(child: avatarChild()),
+            child: ClipOval(
+              child: hasImage
+                  ? _HomeNetworkImage(
+                      imageUrl: item.image,
+                      width: 72,
+                      height: 72,
+                      fit: BoxFit.cover,
+                      errorFallback: _InitialsAvatar(name: item.name),
+                    )
+                  : _InitialsAvatar(name: item.name),
+            ),
           ),
           const SizedBox(height: 10),
           Text(item.name, style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -3551,7 +3887,10 @@ class _InstructorCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               '${item.rating.toStringAsFixed(1)} / 5 • ${item.courseCount} ${AppStrings.t('Courses')}',
-              style: const TextStyle(color: AppColors.muted, fontSize: 12),
+              style: TextStyle(
+                color: AppColors.muted,
+                fontSize: compact ? 11 : 12,
+              ),
             ),
           ],
           const SizedBox(height: 10),
