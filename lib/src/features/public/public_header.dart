@@ -130,35 +130,6 @@ class _PublicHeaderState extends State<PublicHeader> {
     );
   }
 
-  void _showMoreMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _MoreItem(
-                  label: AppStrings.t('Terms of Use'),
-                  onTap: () => _handleNav(context, 'terms'),
-                ),
-                _MoreItem(
-                  label: AppStrings.t('Privacy Policy'),
-                  onTap: () => _handleNav(context, 'privacy'),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<_HeaderPayload>(
@@ -172,77 +143,162 @@ class _PublicHeaderState extends State<PublicHeader> {
             _shortLocation(contact?.address) ?? 'Turkey/Istanbul';
         final emailLabel =
             _firstNonEmpty([contact?.emailOne, contact?.emailTwo]) ??
-            'contact@lingufranca.com';
-        final isCompact = MediaQuery.sizeOf(context).width < 430;
+                'contact@lingufranca.com';
+        final isCompact = MediaQuery.sizeOf(context).width < 900;
 
-        return Column(
-          children: [
-            if (!isCompact)
-              Container(
-                color: AppColors.brandDeep,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 10,
-                ),
-                child: Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  runSpacing: 8,
+        if (isCompact) {
+          final canPop = Navigator.of(context).canPop();
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.95),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.ink.withValues(alpha: 0.07),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+                child: Row(
                   children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.place,
-                          size: 16,
-                          color: Colors.white70,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          locationLabel,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                        const SizedBox(width: 12),
-                        const Icon(
-                          Icons.email,
-                          size: 16,
-                          color: Colors.white70,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          emailLabel,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                      ],
+                    IconButton.filledTonal(
+                      onPressed: () {
+                        if (canPop) {
+                          Navigator.of(context).pop();
+                        } else {
+                          _handleNav(context, 'home');
+                        }
+                      },
+                      icon: Icon(
+                        canPop ? Icons.arrow_back_rounded : Icons.home_rounded,
+                      ),
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          '${AppStrings.t('Follow Us On')}:',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        if (socials.isEmpty) ...const [
-                          _SocialIcon(icon: Icons.facebook),
-                          _SocialIcon(icon: Icons.linked_camera),
-                          _SocialIcon(icon: Icons.video_library),
-                        ] else
-                          ...socials.map(
-                            (item) => _SocialIcon(
-                              icon: _iconFor(item.icon),
-                              onTap: item.url.isNotEmpty
-                                  ? () => _openUrl(item.url)
-                                  : null,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'LinguFranca',
+                            style: TextStyle(
+                              color: AppColors.ink,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
                             ),
                           ),
-                      ],
+                          const SizedBox(height: 2),
+                          Text(
+                            emailLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.muted,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: () => Navigator.pushNamed(context, '/login'),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(0, 38),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      child: Text(
+                        AppStrings.t('Log In'),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    IconButton.filled(
+                      onPressed: () => _showNavMenu(context),
+                      style: IconButton.styleFrom(
+                        backgroundColor: AppColors.brand,
+                        foregroundColor: AppColors.ink,
+                      ),
+                      icon: const Icon(Icons.menu_rounded),
+                      tooltip: AppStrings.t('Menu'),
                     ),
                   ],
                 ),
               ),
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            Container(
+              color: AppColors.brandDeep,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 10,
+              ),
+              child: Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                runSpacing: 8,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.place, size: 16, color: Colors.white70),
+                      const SizedBox(width: 6),
+                      Text(
+                        locationLabel,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(width: 12),
+                      const Icon(Icons.email, size: 16, color: Colors.white70),
+                      const SizedBox(width: 6),
+                      Text(
+                        emailLabel,
+                        style: const TextStyle(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${AppStrings.t('Follow Us On')}:',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      if (socials.isEmpty) ...const [
+                        _SocialIcon(icon: Icons.facebook),
+                        _SocialIcon(icon: Icons.linked_camera),
+                        _SocialIcon(icon: Icons.video_library),
+                      ] else
+                        ...socials.map(
+                          (item) => _SocialIcon(
+                            icon: _iconFor(item.icon),
+                            onTap: item.url.isNotEmpty
+                                ? () => _openUrl(item.url)
+                                : null,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
             Container(
               color: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -270,55 +326,28 @@ class _PublicHeaderState extends State<PublicHeader> {
                         ),
                       ),
                       const Spacer(),
-                      if (!isCompact) ...[
-                        TextButton(
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/login'),
-                          child: Text(AppStrings.t('Log In')),
-                        ),
-                        const SizedBox(width: 6),
-                        ElevatedButton(
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/register'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.brand,
-                            foregroundColor: AppColors.ink,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                      TextButton(
+                        onPressed: () => Navigator.pushNamed(context, '/login'),
+                        child: Text(AppStrings.t('Log In')),
+                      ),
+                      const SizedBox(width: 6),
+                      ElevatedButton(
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/register'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.brand,
+                          foregroundColor: AppColors.ink,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
                           ),
-                          child: Text(AppStrings.t('Sign Up')),
-                        ),
-                        const SizedBox(width: 6),
-                      ] else ...[
-                        OutlinedButton(
-                          onPressed: () =>
-                              Navigator.pushNamed(context, '/login'),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFE2E8F0)),
-                            minimumSize: const Size(0, 36),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Text(
-                            AppStrings.t('Log In'),
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
                         ),
-                        const SizedBox(width: 4),
-                      ],
+                        child: Text(AppStrings.t('Sign Up')),
+                      ),
+                      const SizedBox(width: 6),
                       IconButton(
                         onPressed: () => _showNavMenu(context),
                         icon: const Icon(Icons.menu),
@@ -407,31 +436,6 @@ class _MoreItem extends StatelessWidget {
         Navigator.pop(context);
         onTap();
       },
-    );
-  }
-}
-
-class _NavChip extends StatelessWidget {
-  const _NavChip({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 10),
-      child: OutlinedButton(
-        onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.ink,
-          side: const BorderSide(color: Color(0xFFE2E8F0)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        child: Text(label),
-      ),
     );
   }
 }

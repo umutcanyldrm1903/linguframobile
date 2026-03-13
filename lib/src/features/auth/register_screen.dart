@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+
+import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
+import 'auth_page_scaffold.dart';
 import 'auth_repository.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -33,29 +36,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+
     if (_passwordController.text != _confirmController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Şifreler eşleşmiyor')),
+        SnackBar(content: Text(AppStrings.t('Passwords do not match.'))),
       );
       return;
     }
+
     setState(() => _isSubmitting = true);
     try {
       await AuthRepository().register(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
+        phone: _phoneController.text.trim(),
+        role: _role,
         password: _passwordController.text,
         passwordConfirmation: _confirmController.text,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kayıt isteği alındı.')),
+        SnackBar(content: Text(AppStrings.t('Register'))),
       );
       Navigator.pushReplacementNamed(context, '/login');
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kayıt başarısız.')),
+        SnackBar(content: Text(AppStrings.t('Something went wrong'))),
       );
     } finally {
       if (mounted) {
@@ -66,99 +73,107 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Kayıt Ol')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return AuthPageScaffold(
+      title: AppStrings.t('Register'),
+      subtitle: AppStrings.t('Start your Learning Journey Today!'),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextFormField(
+              controller: _nameController,
+              decoration: InputDecoration(labelText: AppStrings.t('Full Name')),
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? AppStrings.t('Full Name')
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(labelText: AppStrings.t('Email')),
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? AppStrings.t('Email is required')
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(labelText: AppStrings.t('Phone')),
+              validator: (value) => value == null || value.trim().isEmpty
+                  ? AppStrings.t('Phone')
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: InputDecoration(labelText: AppStrings.t('Password')),
+              validator: (value) => value == null || value.isEmpty
+                  ? AppStrings.t('Password is required')
+                  : null,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _confirmController,
+              obscureText: true,
+              decoration:
+                  InputDecoration(labelText: AppStrings.t('Confirm Password')),
+              validator: (value) => value == null || value.isEmpty
+                  ? AppStrings.t('Confirm Password')
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              AppStrings.t('Role'),
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 10),
+            Row(
               children: [
-                Text(
-                  'Hesap oluştur',
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Kısa formu doldur, hemen başlayalım.',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Ad Soyad'),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Ad Soyad gerekli' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'E-posta'),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'E-posta gerekli' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: 'Telefon'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Şifre'),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Şifre gerekli' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _confirmController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Şifre (tekrar)'),
-                  validator: (value) =>
-                      value == null || value.isEmpty ? 'Tekrar şifre gerekli' : null,
-                ),
-                const SizedBox(height: 16),
-                Text('Hesap türü', style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 10,
-                  children: [
-                    ChoiceChip(
-                      label: const Text('Öğrenci'),
-                      selected: _role == 'student',
-                      onSelected: (_) => setState(() => _role = 'student'),
-                      selectedColor: AppColors.brand.withOpacity(0.2),
-                    ),
-                    ChoiceChip(
-                      label: const Text('Eğitmen'),
-                      selected: _role == 'instructor',
-                      onSelected: (_) => setState(() => _role = 'instructor'),
-                      selectedColor: AppColors.brand.withOpacity(0.2),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _submit,
-                    child: Text(_isSubmitting ? 'Gönderiliyor...' : 'Kayıt Ol'),
+                Expanded(
+                  child: ChoiceChip(
+                    label: Text(AppStrings.t('Student')),
+                    selected: _role == 'student',
+                    onSelected: (_) => setState(() => _role = 'student'),
+                    selectedColor: AppColors.brand.withValues(alpha: 0.18),
                   ),
                 ),
-                const SizedBox(height: 12),
-                TextButton(
-                  onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
-                  child: const Text('Zaten hesabın var mı? Giriş yap'),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ChoiceChip(
+                    label: Text(AppStrings.t('Instructor')),
+                    selected: _role == 'instructor',
+                    onSelected: (_) => setState(() => _role = 'instructor'),
+                    selectedColor: AppColors.brand.withValues(alpha: 0.18),
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _isSubmitting ? null : _submit,
+                child: Text(
+                  _isSubmitting
+                      ? AppStrings.t('Submitting')
+                      : AppStrings.t('Sign Up'),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextButton(
+              onPressed: () =>
+                  Navigator.pushReplacementNamed(context, '/login'),
+              child: Text(
+                '${AppStrings.t('Already have an account?')} ${AppStrings.t('Login')}',
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

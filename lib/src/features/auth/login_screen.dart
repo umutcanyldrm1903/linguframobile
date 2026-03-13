@@ -8,6 +8,7 @@ import '../../core/config/app_config.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/storage/secure_storage.dart';
 import '../payment/payment_native_service.dart';
+import 'auth_page_scaffold.dart';
 import 'auth_provider.dart';
 import 'auth_repository.dart';
 
@@ -128,24 +129,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final isLoading = ref.watch(authNotifierProvider);
     final loading = isLoading || _socialLoading;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(AppStrings.t('Login')),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
+    return AuthPageScaffold(
+      title: AppStrings.t('Login'),
+      subtitle: AppStrings.t('Login with your email and password.'),
+      child: Column(
         children: [
-          const SizedBox(height: 12),
-          Text(
-            AppStrings.t('Login'),
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            AppStrings.t('Login with your email and password.'),
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 24),
           TextField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
@@ -158,29 +146,39 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             decoration: InputDecoration(labelText: AppStrings.t('Password')),
           ),
           const SizedBox(height: 18),
-          ElevatedButton(
-            onPressed: loading
-                ? null
-                : () async {
-                    await ref
-                        .read(authNotifierProvider.notifier)
-                        .login(
-                          _emailController.text.trim(),
-                          _passwordController.text,
-                        );
-                    final role = await SecureStorage.getRole();
-                    if (!mounted) return;
-                    if (role == 'instructor') {
-                      Navigator.pushReplacementNamed(context, '/instructor');
-                    } else {
-                      Navigator.pushReplacementNamed(context, '/student');
-                    }
-                  },
-            child: Text(
-              loading ? AppStrings.t('Submitting') : AppStrings.t('Login'),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: loading
+                  ? null
+                  : () async {
+                      await ref.read(authNotifierProvider.notifier).login(
+                            _emailController.text.trim(),
+                            _passwordController.text,
+                          );
+                      final role = await SecureStorage.getRole();
+                      if (!context.mounted) return;
+                      if (role == 'instructor') {
+                        Navigator.pushReplacementNamed(context, '/instructor');
+                      } else {
+                        Navigator.pushReplacementNamed(context, '/student');
+                      }
+                    },
+              child: Text(
+                loading ? AppStrings.t('Submitting') : AppStrings.t('Login'),
+              ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: loading ? null : _continueWithGoogle,
+              icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
+              label: Text(AppStrings.t('Continue with Google')),
+            ),
+          ),
+          const SizedBox(height: 8),
           TextButton(
             onPressed: loading
                 ? null
@@ -188,13 +186,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Text(AppStrings.t('Forgot Password')),
           ),
           TextButton(
-            onPressed: loading ? null : () => Navigator.pushNamed(context, '/register'),
-            child: Text(AppStrings.t('Create an account')),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: loading ? null : _continueWithGoogle,
-            child: Text(AppStrings.t('Continue with Google')),
+            onPressed: loading
+                ? null
+                : () => Navigator.pushNamed(context, '/register'),
+            child: Text(
+              '${AppStrings.t('Sign Up')} · ${AppStrings.t('Register')}',
+            ),
           ),
         ],
       ),

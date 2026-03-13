@@ -39,12 +39,16 @@ class AuthRepository {
   Future<Map<String, dynamic>> register({
     required String name,
     required String email,
+    required String phone,
+    required String role,
     required String password,
     required String passwordConfirmation,
   }) async {
     final response = await ApiClient.dio.post('/register', data: {
       'name': name,
       'email': email,
+      'phone': phone,
+      'role': role,
       'password': password,
       'password_confirmation': passwordConfirmation,
     });
