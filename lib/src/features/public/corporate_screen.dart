@@ -1,9 +1,8 @@
-﻿import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
-import 'public_header.dart';
-import 'public_footer.dart';
+import 'public_page_scaffold.dart';
 import 'public_repository.dart';
 
 String _errorMessage(Object error) {
@@ -135,18 +134,18 @@ class _CorporateScreenState extends State<CorporateScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: ListView(
-        padding: EdgeInsets.zero,
+      body: PublicPageShell(
+        title: AppStrings.t('Corporate'),
+        breadcrumb: '${AppStrings.t('Home')}  >  ${AppStrings.t('Corporate')}',
+        description: AppStrings.t(
+          'Collect corporate training requests with a cleaner mobile flow.',
+        ),
+        icon: Icons.apartment_rounded,
         children: [
-          const PublicHeader(),
-          _HeroBanner(
-            title: AppStrings.t('Corporate'),
-            breadcrumb:
-                '${AppStrings.t('Home')}  >  ${AppStrings.t('Corporate')}',
-          ),
-          const SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
+            padding: EdgeInsets.symmetric(
+              horizontal: isCompactPublicLayout(context) ? 14 : 18,
+            ),
             child: Column(
               children: [
                 const _CorporateCta(),
@@ -170,67 +169,6 @@ class _CorporateScreenState extends State<CorporateScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          const PublicFooter(),
-        ],
-      ),
-    );
-  }
-}
-
-class _HeroBanner extends StatelessWidget {
-  const _HeroBanner({required this.title, required this.breadcrumb});
-
-  final String title;
-  final String breadcrumb;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 180,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF0D5B90),
-            Color(0xFF0B466F),
-            Color(0xFF082C46),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Opacity(
-            opacity: 0.10,
-            child: Image.asset('assets/web/banner_bg.png', fit: BoxFit.cover),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    height: 1.05,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  breadcrumb,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -242,12 +180,22 @@ class _CorporateCta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactPublicLayout(context);
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(compact ? 16 : 18),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(compact ? 24 : 20),
         border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: compact
+            ? [
+                BoxShadow(
+                  color: AppColors.ink.withValues(alpha: 0.06),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null,
       ),
       child: Column(
         children: [
@@ -259,14 +207,18 @@ class _CorporateCta extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             AppStrings.t(
-                'Fill in the details for a corporate training quote. Our team will get back to you shortly.'),
+              'Fill in the details for a corporate training quote. Our team will get back to you shortly.',
+            ),
             style: Theme.of(context).textTheme.bodyMedium,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.asset('assets/web/h4_cta_bg.jpg', fit: BoxFit.cover),
+            borderRadius: BorderRadius.circular(compact ? 20 : 16),
+            child: Image.asset(
+              'assets/web/h4_cta_bg.jpg',
+              fit: BoxFit.cover,
+            ),
           ),
         ],
       ),
@@ -305,12 +257,22 @@ class _CorporateForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactPublicLayout(context);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 18 : 16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(compact ? 24 : 18),
         border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: compact
+            ? [
+                BoxShadow(
+                  color: AppColors.ink.withValues(alpha: 0.06),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ]
+            : null,
       ),
       child: Form(
         key: formKey,
@@ -318,8 +280,10 @@ class _CorporateForm extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(AppStrings.t('Corporate Form'),
-                style: const TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              AppStrings.t('Corporate Form'),
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
             const SizedBox(height: 12),
             _InputField(
               label: '${AppStrings.t('Company name')} *',
@@ -404,9 +368,11 @@ class _CorporateForm extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: isSubmitting ? null : onSubmit,
-                child: Text(isSubmitting
-                    ? AppStrings.t('Submitting')
-                    : AppStrings.t('Submit your company')),
+                child: Text(
+                  isSubmitting
+                      ? AppStrings.t('Submitting')
+                      : AppStrings.t('Submit your company'),
+                ),
               ),
             ),
           ],

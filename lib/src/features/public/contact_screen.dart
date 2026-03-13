@@ -1,10 +1,9 @@
-﻿import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
-import 'public_header.dart';
-import 'public_footer.dart';
+import 'public_page_scaffold.dart';
 import 'public_repository.dart';
 
 String _errorMessage(Object error) {
@@ -136,18 +135,19 @@ class _ContactScreenState extends State<ContactScreen> {
         future: PublicRepository().fetchContactInfo(),
         builder: (context, snapshot) {
           final info = snapshot.data;
-          return ListView(
-            padding: EdgeInsets.zero,
+          return PublicPageShell(
+            title: AppStrings.t('Contact Us'),
+            breadcrumb:
+                '${AppStrings.t('Home')}  >  ${AppStrings.t('Contact Us')}',
+            description: AppStrings.t(
+              'Reach our team, send a message or open directions in one place.',
+            ),
+            icon: Icons.support_agent_rounded,
             children: [
-              const PublicHeader(),
-              _HeroBanner(
-                title: AppStrings.t('Contact Us'),
-                breadcrumb:
-                    '${AppStrings.t('Home')}  >  ${AppStrings.t('Contact Us')}',
-              ),
-              const SizedBox(height: 16),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isCompactPublicLayout(context) ? 14 : 18,
+                ),
                 child: Column(
                   children: [
                     _InfoGrid(info: info),
@@ -172,70 +172,9 @@ class _ContactScreenState extends State<ContactScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
-              const PublicFooter(),
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class _HeroBanner extends StatelessWidget {
-  const _HeroBanner({required this.title, required this.breadcrumb});
-
-  final String title;
-  final String breadcrumb;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 180,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF0D5B90),
-            Color(0xFF0B466F),
-            Color(0xFF082C46),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Opacity(
-            opacity: 0.10,
-            child: Image.asset('assets/web/banner_bg.png', fit: BoxFit.cover),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    height: 1.05,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  breadcrumb,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -322,7 +261,7 @@ class _InfoCard extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: AppColors.brand.withOpacity(0.15),
+            backgroundColor: AppColors.brand.withValues(alpha: 0.15),
             child: Icon(icon, color: AppColors.brand),
           ),
           const SizedBox(width: 12),
@@ -330,7 +269,8 @@ class _InfoCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(title,
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
                 Text(subtitle),
               ],
             ),
@@ -521,8 +461,7 @@ class _MapPlaceholder extends StatelessWidget {
                 onPressed: () async {
                   final uri = Uri.tryParse(mapUrl);
                   if (uri != null) {
-                    await launchUrl(uri,
-                        mode: LaunchMode.externalApplication);
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
                   }
                 },
                 icon: const Icon(Icons.map),

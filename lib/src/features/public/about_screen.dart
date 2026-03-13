@@ -1,10 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../core/config/app_config.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import 'public_repository.dart';
-import 'public_header.dart';
-import 'public_footer.dart';
+import 'public_page_scaffold.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -14,7 +13,8 @@ class AboutScreen extends StatefulWidget {
 }
 
 class _AboutScreenState extends State<AboutScreen> {
-  late final Future<AboutPayload?> _future = PublicRepository().fetchAboutPage();
+  late final Future<AboutPayload?> _future =
+      PublicRepository().fetchAboutPage();
 
   @override
   Widget build(BuildContext context) {
@@ -24,88 +24,24 @@ class _AboutScreenState extends State<AboutScreen> {
         future: _future,
         builder: (context, snapshot) {
           final payload = snapshot.data;
-          return ListView(
-            padding: EdgeInsets.zero,
+          return PublicPageShell(
+            title: AppStrings.t('About Us'),
+            breadcrumb:
+                '${AppStrings.t('Home')}  >  ${AppStrings.t('About Us')}',
+            description: _tOr(
+              'Meet the LinguFranca model, teaching quality and support structure in one place.',
+              'LinguFranca egitim modelini, kalite standardini ve destek yapisini tek ekranda inceleyin.',
+            ),
+            icon: Icons.info_outline_rounded,
             children: [
-              const PublicHeader(),
-              _HeroBanner(
-                title: AppStrings.t('About Us'),
-                breadcrumb: '${AppStrings.t('Home')}  >  ${AppStrings.t('About Us')}',
-              ),
-              const SizedBox(height: 16),
               _AboutSection(payload: payload),
-              const SizedBox(height: 16),
               _WhySection(payload: payload),
-              const SizedBox(height: 16),
               _SupportSection(),
-              const SizedBox(height: 16),
               _BrandStrip(payload: payload),
-              const SizedBox(height: 16),
               _FaqSection(payload: payload),
-              const SizedBox(height: 16),
-              const PublicFooter(),
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class _HeroBanner extends StatelessWidget {
-  const _HeroBanner({required this.title, required this.breadcrumb});
-
-  final String title;
-  final String breadcrumb;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 180,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF0D5B90),
-            Color(0xFF0B466F),
-            Color(0xFF082C46),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Opacity(
-            opacity: 0.10,
-            child: Image.asset('assets/web/banner_bg.png', fit: BoxFit.cover),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    height: 1.05,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  breadcrumb,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -118,6 +54,7 @@ class _AboutSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactPublicLayout(context);
     final about = payload?.about;
     final title = _firstNonEmpty([
       about?.content['title']?.toString(),
@@ -125,7 +62,8 @@ class _AboutSection extends StatelessWidget {
     ]);
     final description = _firstNonEmpty([
       about?.content['description']?.toString(),
-      AppStrings.t('We offer transparent pricing tailored to local conditions. By processing in Turkish Lira, we reduce high foreign currency costs.'),
+      AppStrings.t(
+          'We offer transparent pricing tailored to local conditions. By processing in Turkish Lira, we reduce high foreign currency costs.'),
     ]);
     final image = _resolveImage(
       about?.global['image']?.toString(),
@@ -133,12 +71,21 @@ class _AboutSection extends StatelessWidget {
     );
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: EdgeInsets.all(compact ? 16 : 18),
         decoration: BoxDecoration(
           color: AppColors.brandDeep,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(compact ? 24 : 20),
+          boxShadow: compact
+              ? [
+                  BoxShadow(
+                    color: AppColors.brandDeep.withValues(alpha: 0.18),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,10 +102,10 @@ class _AboutSection extends StatelessWidget {
               description,
               style: const TextStyle(color: Colors.white70, height: 1.5),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: compact ? 12 : 14),
             ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: _ImageView(path: image, height: 190),
+              borderRadius: BorderRadius.circular(compact ? 20 : 16),
+              child: _ImageView(path: image, height: compact ? 168 : 190),
             ),
           ],
         ),
@@ -174,6 +121,7 @@ class _WhySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactPublicLayout(context);
     final features = payload?.features;
     final title = _firstNonEmpty([
       features?.content['title']?.toString(),
@@ -208,7 +156,7 @@ class _WhySection extends StatelessWidget {
     final displayItems = items.isNotEmpty ? items : fallbackItems;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -219,11 +167,12 @@ class _WhySection extends StatelessWidget {
                   color: AppColors.ink,
                 ),
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: compact ? 10 : 12),
           ...displayItems.map(
             (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _InfoTile(title: item.title, description: item.description),
+              padding: EdgeInsets.only(bottom: compact ? 10 : 12),
+              child:
+                  _InfoTile(title: item.title, description: item.description),
             ),
           ),
         ],
@@ -235,56 +184,74 @@ class _WhySection extends StatelessWidget {
 class _SupportSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactPublicLayout(context);
+    final content = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _tOr('Turkish Support', 'Türkçe Desteği'),
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: AppColors.ink,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _tOr(
+            'We offer Turkish speaking instructors so you can ask questions comfortably.',
+            'Türkçe konuşan eğitmenlerle sorularını rahatça sor, hızlı ilerle.',
+          ),
+          style: const TextStyle(color: AppColors.muted, height: 1.5),
+        ),
+        const SizedBox(height: 12),
+        ElevatedButton(
+          onPressed: () => Navigator.pushNamed(context, '/student'),
+          child: Text(AppStrings.t('Instructors')),
+        ),
+      ],
+    );
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: EdgeInsets.all(compact ? 16 : 18),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(compact ? 24 : 20),
           border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
+        child: compact
+            ? Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    _tOr('Turkish Support', 'Türkçe Desteği'),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppColors.ink,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _tOr(
-                      'We offer Turkish speaking instructors so you can ask questions comfortably.',
-                      'Türkçe konuşan eğitmenlerle sorularını rahatça sor, hızlı ilerle.',
-                    ),
-                    style: const TextStyle(color: AppColors.muted, height: 1.5),
-                  ),
+                  content,
                   const SizedBox(height: 12),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pushNamed(context, '/student'),
-                    child: Text(AppStrings.t('Instructors')),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: Image.asset(
+                      'assets/web/h4_cta_bg.jpg',
+                      width: double.infinity,
+                      height: 150,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ],
+              )
+            : Row(
+                children: [
+                  Expanded(child: content),
+                  const SizedBox(width: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Image.asset(
+                      'assets/web/h4_cta_bg.jpg',
+                      width: 140,
+                      height: 140,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(width: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                'assets/web/h4_cta_bg.jpg',
-                width: 140,
-                height: 140,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -297,12 +264,13 @@ class _BrandStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactPublicLayout(context);
     final brands = payload?.brands ?? [];
     if (brands.isEmpty) {
       return const SizedBox.shrink();
     }
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -312,7 +280,7 @@ class _BrandStrip extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: compact ? 8 : 10),
           SizedBox(
             height: 72,
             child: ListView.separated(
@@ -326,7 +294,8 @@ class _BrandStrip extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  child: _ImageView(path: brand.imageUrl, width: 90, height: 40),
+                  child:
+                      _ImageView(path: brand.imageUrl, width: 90, height: 40),
                 );
               },
               separatorBuilder: (_, __) => const SizedBox(width: 12),
@@ -346,12 +315,13 @@ class _FaqSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactPublicLayout(context);
     final faqs = payload?.faqs ?? [];
     if (faqs.isEmpty) {
       return const SizedBox.shrink();
     }
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -361,10 +331,10 @@ class _FaqSection extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: compact ? 8 : 10),
           ...faqs.map(
             (faq) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: EdgeInsets.only(bottom: compact ? 10 : 12),
               child: _InfoTile(title: faq.question, description: faq.answer),
             ),
           ),
@@ -382,18 +352,20 @@ class _InfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactPublicLayout(context);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 14 : 16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(compact ? 20 : 16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
             radius: 18,
-            backgroundColor: AppColors.brand.withOpacity(0.15),
+            backgroundColor: AppColors.brand.withValues(alpha: 0.15),
             child: const Icon(Icons.check, color: AppColors.brand),
           ),
           const SizedBox(width: 12),
@@ -401,9 +373,11 @@ class _InfoTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(title,
+                    style: const TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 4),
-                Text(description, style: const TextStyle(color: AppColors.muted)),
+                Text(description,
+                    style: const TextStyle(color: AppColors.muted)),
               ],
             ),
           ),
@@ -457,7 +431,9 @@ String _tOr(String key, String fallback) {
 
 List<_FeatureItem> _extractFeatureItems(SectionData? features) {
   if (features == null) return [];
-  final raw = features.content['items'] ?? features.content['features'] ?? features.content['feature_items'];
+  final raw = features.content['items'] ??
+      features.content['features'] ??
+      features.content['feature_items'];
   if (raw is! List) return [];
   return raw
       .whereType<Map>()

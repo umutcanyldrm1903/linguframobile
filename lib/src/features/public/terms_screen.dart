@@ -1,8 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
-import 'public_header.dart';
-import 'public_footer.dart';
+import 'public_page_scaffold.dart';
 import 'public_repository.dart';
 
 class TermsScreen extends StatelessWidget {
@@ -21,84 +21,24 @@ class TermsScreen extends StatelessWidget {
               : AppStrings.t('Terms and Conditions');
           final body = _stripHtml(page?.content ?? '');
 
-          return ListView(
-            padding: EdgeInsets.zero,
+          return PublicPageShell(
+            title: title,
+            breadcrumb:
+                '${AppStrings.t('Home')}  >  ${AppStrings.t('Terms and Conditions')}',
+            description: AppStrings.t(
+              'Review the core terms, usage scope and service conditions in a cleaner mobile layout.',
+            ),
+            icon: Icons.gavel_rounded,
             children: [
-              const PublicHeader(),
-              _HeroBanner(
-                title: title,
-                breadcrumb:
-                    '${AppStrings.t('Home')}  >  ${AppStrings.t('Terms and Conditions')}',
-              ),
-              const SizedBox(height: 16),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isCompactPublicLayout(context) ? 14 : 18,
+                ),
                 child: _LegalBlock(title: title, body: body),
               ),
-              const SizedBox(height: 20),
-              const PublicFooter(),
             ],
           );
         },
-      ),
-    );
-  }
-}
-
-class _HeroBanner extends StatelessWidget {
-  const _HeroBanner({required this.title, required this.breadcrumb});
-
-  final String title;
-  final String breadcrumb;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 180,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF0D5B90),
-            Color(0xFF0B466F),
-            Color(0xFF082C46),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Opacity(
-            opacity: 0.10,
-            child: Image.asset('assets/web/banner_bg.png', fit: BoxFit.cover),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    height: 1.05,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  breadcrumb,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -112,16 +52,17 @@ class _LegalBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactPublicLayout(context);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(compact ? 18 : 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(compact ? 24 : 16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: compact ? 0.07 : 0.05),
+            blurRadius: compact ? 18 : 12,
+            offset: Offset(0, compact ? 8 : 6),
           ),
         ],
       ),
@@ -140,7 +81,7 @@ class _LegalBlock extends StatelessWidget {
             body.isEmpty ? AppStrings.t('No Data Found') : body,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.muted,
-                  height: 1.5,
+                  height: 1.6,
                 ),
           ),
         ],
@@ -150,5 +91,8 @@ class _LegalBlock extends StatelessWidget {
 }
 
 String _stripHtml(String html) {
-  return html.replaceAll(RegExp('<[^>]*>'), '').replaceAll('&nbsp;', ' ').trim();
+  return html
+      .replaceAll(RegExp('<[^>]*>'), '')
+      .replaceAll('&nbsp;', ' ')
+      .trim();
 }

@@ -1,11 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/url_resolver.dart';
 import 'blog_detail_screen.dart';
-import 'public_footer.dart';
-import 'public_header.dart';
+import 'public_page_scaffold.dart';
 import 'public_repository.dart';
 
 class BlogScreen extends StatelessWidget {
@@ -15,17 +14,18 @@ class BlogScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: ListView(
-        padding: EdgeInsets.zero,
+      body: PublicPageShell(
+        title: AppStrings.t('Blog'),
+        breadcrumb: '${AppStrings.t('Home')}  >  ${AppStrings.t('Blog')}',
+        description: AppStrings.t(
+          'Read learning tips, platform updates and practical English guidance.',
+        ),
+        icon: Icons.article_outlined,
         children: [
-          const PublicHeader(),
-          _HeroBanner(
-            title: AppStrings.t('Blog'),
-            breadcrumb: '${AppStrings.t('Home')}  >  ${AppStrings.t('Blog')}',
-          ),
-          const SizedBox(height: 16),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
+            padding: EdgeInsets.symmetric(
+              horizontal: isCompactPublicLayout(context) ? 14 : 18,
+            ),
             child: Text(
               AppStrings.t('Latest Post'),
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -34,19 +34,22 @@ class BlogScreen extends StatelessWidget {
                   ),
             ),
           ),
-          const SizedBox(height: 12),
           FutureBuilder<List<PublicBlogPost>>(
             future: PublicRepository().fetchBlogPosts(),
             builder: (context, snapshot) {
               final posts = snapshot.data ?? const [];
               if (posts.isEmpty) {
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isCompactPublicLayout(context) ? 14 : 18,
+                  ),
                   child: Text(AppStrings.t('No latest post yet')),
                 );
               }
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isCompactPublicLayout(context) ? 14 : 18,
+                ),
                 child: Column(
                   children: posts
                       .map(
@@ -65,8 +68,6 @@ class BlogScreen extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: 16),
-          const PublicFooter(),
         ],
       ),
     );
@@ -81,20 +82,21 @@ class _BlogCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = isCompactPublicLayout(context);
     final dateLabel = _formatDate(post.dateLabel);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: EdgeInsets.only(bottom: compact ? 12 : 16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(compact ? 22 : 18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
+              color: Colors.black.withValues(alpha: compact ? 0.08 : 0.06),
+              blurRadius: compact ? 24 : 16,
+              offset: Offset(0, compact ? 10 : 8),
             ),
           ],
         ),
@@ -102,11 +104,13 @@ class _BlogCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(compact ? 22 : 18),
+              ),
               child: _PostImage(imageUrl: post.imageUrl),
             ),
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(compact ? 18 : 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -128,7 +132,8 @@ class _BlogCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       post.excerpt,
-                      style: const TextStyle(color: AppColors.muted, height: 1.4),
+                      style:
+                          const TextStyle(color: AppColors.muted, height: 1.4),
                     ),
                   ],
                   const SizedBox(height: 12),
@@ -157,65 +162,6 @@ class _BlogCard extends StatelessWidget {
       return raw;
     }
     return DateFormat('dd MMMM yyyy', 'tr_TR').format(parsed);
-  }
-}
-
-class _HeroBanner extends StatelessWidget {
-  const _HeroBanner({required this.title, required this.breadcrumb});
-
-  final String title;
-  final String breadcrumb;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 180,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFF0D5B90),
-            Color(0xFF0B466F),
-            Color(0xFF082C46),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Opacity(
-            opacity: 0.10,
-            child: Image.asset('assets/web/banner_bg.png', fit: BoxFit.cover),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w900,
-                    height: 1.05,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  breadcrumb,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
