@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Typography + small theme tweaks to match the website's "language" frontend.
-///
-/// Web spec uses Manrope for body and Fraunces for display headings.
+/// Keep the marketing typography on wide screens, but let compact mobile
+/// screens inherit the native app theme so the app stops feeling like a webview.
 class PublicTheme extends StatelessWidget {
   const PublicTheme({super.key, required this.child});
 
@@ -11,6 +10,11 @@ class PublicTheme extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width < 900) {
+      return child;
+    }
+
     final base = Theme.of(context);
     final manrope = GoogleFonts.manropeTextTheme(base.textTheme);
 

@@ -275,65 +275,107 @@ class _NativeHomeTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            radius: 15,
-            backgroundColor: AppColors.brand,
-            child: Icon(Icons.school, size: 16, color: Colors.white),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'Lingufranca',
-            style: TextStyle(
-              fontWeight: FontWeight.w800,
-              color: AppColors.ink,
-              fontSize: 16,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.9)),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.ink.withValues(alpha: 0.07),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
-          ),
-          const Spacer(),
-          OutlinedButton(
-            onPressed: onLogin,
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Color(0xFFE2E8F0)),
-              minimumSize: const Size(0, 34),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.brand.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  size: 20,
+                  color: AppColors.brandDeep,
+                ),
               ),
-            ),
-            child: Text(
-              AppStrings.t('Log In'),
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(width: 6),
-          ElevatedButton(
-            onPressed: onRegister,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.brand,
-              foregroundColor: AppColors.ink,
-              minimumSize: const Size(0, 34),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'LinguFranca',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      AppStrings.t('Continue Learning'),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.muted,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            child: Text(
-              AppStrings.t('Sign Up'),
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-            ),
+              OutlinedButton(
+                onPressed: onLogin,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  minimumSize: const Size(0, 38),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text(
+                  AppStrings.t('Log In'),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              IconButton.filled(
+                onPressed: onRegister,
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.brand,
+                  foregroundColor: AppColors.ink,
+                ),
+                icon: const Icon(Icons.person_add_alt_1_rounded),
+                tooltip: AppStrings.t('Sign Up'),
+              ),
+              const SizedBox(width: 6),
+              IconButton.filledTonal(
+                onPressed: onMenu,
+                style: IconButton.styleFrom(
+                  backgroundColor: AppColors.brand.withValues(alpha: 0.14),
+                  foregroundColor: AppColors.brandDeep,
+                ),
+                icon: const Icon(Icons.menu_rounded),
+                tooltip: AppStrings.t('Menu'),
+              ),
+            ],
           ),
-          const SizedBox(width: 2),
-          IconButton(
-            onPressed: onMenu,
-            icon: const Icon(Icons.menu_rounded),
-            tooltip: AppStrings.t('Menu'),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -438,20 +480,20 @@ class HeroSection extends StatelessWidget {
           Text(
             title,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              height: 1.15,
-              fontSize: compact ? 30 : null,
-            ),
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                  fontSize: compact ? 30 : null,
+                ),
           ),
           const SizedBox(height: 12),
           Text(
             description,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Colors.white70,
-              height: 1.5,
-              fontSize: compact ? 14 : null,
-            ),
+                  color: Colors.white70,
+                  height: 1.5,
+                  fontSize: compact ? 14 : null,
+                ),
           ),
           SizedBox(height: compact ? 12 : 16),
           Wrap(
@@ -563,8 +605,8 @@ class _HeroFormCardState extends State<_HeroFormCard> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _ageController = TextEditingController();
-  late final Future<PublicSettings?> _settingsFuture = PublicRepository()
-      .fetchSettings();
+  late final Future<PublicSettings?> _settingsFuture =
+      PublicRepository().fetchSettings();
   bool _consentMarketing = false;
   bool _consentPrivacy = false;
   String _phoneType = 'Mobile';
@@ -671,10 +713,10 @@ class _HeroFormCardState extends State<_HeroFormCard> {
             Text(
               AppStrings.t('Fill out the form to get pricing information'),
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: AppColors.brandDeep,
-                fontSize: widget.compact ? 16 : null,
-              ),
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.brandDeep,
+                    fontSize: widget.compact ? 16 : null,
+                  ),
             ),
             SizedBox(height: widget.compact ? 10 : 14),
             _Field(
@@ -873,9 +915,9 @@ class InstagramSection extends StatelessWidget {
             child: Text(
               '${AppStrings.t('Visit us on Instagram')}\n${AppStrings.t('Meet the team')}',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
             ),
           ),
           const SizedBox(height: 8),
@@ -1037,8 +1079,8 @@ class _PackagesSectionState extends State<PackagesSection> {
   int _flowSession = 0;
   bool _highlightForm = false;
   bool _sheetOpen = false;
-  late final Future<PlanPayload?> _plansFuture = PublicRepository()
-      .fetchStudentPlans();
+  late final Future<PlanPayload?> _plansFuture =
+      PublicRepository().fetchStudentPlans();
 
   Future<void> _handleStart(_PlanData plan) async {
     setState(() {
@@ -1118,11 +1160,10 @@ class _PackagesSectionState extends State<PackagesSection> {
                   final list = List<StudentPlan>.from(source);
                   StudentPlan? premium;
                   for (final plan in list) {
-                    final text =
-                        (plan.displayTitle.isNotEmpty
-                                ? plan.displayTitle
-                                : plan.title)
-                            .toLowerCase();
+                    final text = (plan.displayTitle.isNotEmpty
+                            ? plan.displayTitle
+                            : plan.title)
+                        .toLowerCase();
                     if (text.contains('premium')) {
                       premium = plan;
                       break;
@@ -1142,9 +1183,8 @@ class _PackagesSectionState extends State<PackagesSection> {
                   return [first, premium, ...others];
                 }
 
-                final displayPlans = plans.isEmpty
-                    ? const <StudentPlan>[]
-                    : reorderPlans(plans);
+                final displayPlans =
+                    plans.isEmpty ? const <StudentPlan>[] : reorderPlans(plans);
 
                 final mappedPlans = displayPlans.isNotEmpty
                     ? displayPlans.asMap().entries.map((entry) {
@@ -1154,15 +1194,14 @@ class _PackagesSectionState extends State<PackagesSection> {
                             ? plan.displayTitle
                             : (plan.title.isNotEmpty ? plan.title : 'Plan');
                         final isPremium = title.toLowerCase().contains(
-                          'premium',
-                        );
+                              'premium',
+                            );
                         final isFeatured = plan.featured || isPremium;
                         final primaryBadge = plan.label.isNotEmpty
                             ? plan.label
                             : (isPremium ? AppStrings.t('En Populer') : null);
-                        final secondaryBadge = isPremium
-                            ? AppStrings.t('En Avantajli')
-                            : null;
+                        final secondaryBadge =
+                            isPremium ? AppStrings.t('En Avantajli') : null;
                         final subtitle =
                             '${plan.durationMonths} ${AppStrings.t('Months')}';
                         final lessons =
@@ -1245,8 +1284,8 @@ class _PackagesSectionState extends State<PackagesSection> {
                           final cardWidth = columns == 1
                               ? constraints.maxWidth
                               : (constraints.maxWidth -
-                                        (spacing * (columns - 1))) /
-                                    columns;
+                                      (spacing * (columns - 1))) /
+                                  columns;
 
                           return Wrap(
                             alignment: WrapAlignment.center,
@@ -1822,9 +1861,8 @@ class _PlanFlowSheetState extends State<_PlanFlowSheet> {
         final selectedLabel = hasPlan
             ? '${widget.plan!.title} - ${widget.plan!.lessons}'
             : AppStrings.t('(Not selected)');
-        final progress = !hasPlan || _totalSteps <= 1
-            ? 0.0
-            : _stepIndex / (_totalSteps - 1);
+        final progress =
+            !hasPlan || _totalSteps <= 1 ? 0.0 : _stepIndex / (_totalSteps - 1);
 
         final borderRadius = widget.inline
             ? BorderRadius.circular(18)
@@ -2161,17 +2199,17 @@ class ReviewsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = reviews.isNotEmpty
         ? reviews
-              .map(
-                (review) => _ReviewCardData(
-                  name: review.name,
-                  title: review.designation.isNotEmpty
-                      ? review.designation
-                      : AppStrings.t('Student'),
-                  rating: review.rating.round().clamp(1, 5),
-                  comment: review.comment,
-                ),
-              )
-              .toList()
+            .map(
+              (review) => _ReviewCardData(
+                name: review.name,
+                title: review.designation.isNotEmpty
+                    ? review.designation
+                    : AppStrings.t('Student'),
+                rating: review.rating.round().clamp(1, 5),
+                comment: review.comment,
+              ),
+            )
+            .toList()
         : const [
             _ReviewCardData(
               name: 'Kerem Özer',
@@ -2216,9 +2254,8 @@ class ReviewsSection extends StatelessWidget {
             Wrap(
               spacing: 16,
               runSpacing: 16,
-              children: items
-                  .map((review) => _ReviewCard(review: review))
-                  .toList(),
+              children:
+                  items.map((review) => _ReviewCard(review: review)).toList(),
             ),
           ],
         ),
@@ -2435,9 +2472,9 @@ class InstructorCtaSection extends StatelessWidget {
               'Join our platform as an instructor, teach online, and manage your time freely. Track your journey with a modern panel and earning opportunities.',
             ),
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: AppColors.ink,
-            ),
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.ink,
+                ),
           ),
           const SizedBox(height: 12),
           _CheckPill(text: AppStrings.t('Save time')),
@@ -2673,10 +2710,8 @@ class SliderSection extends StatelessWidget {
           String readText(String key, String fallback) {
             final raw = item[key];
             if (raw == null) return fallback;
-            final cleaned = raw
-                .toString()
-                .replaceAll(RegExp('<[^>]*>'), '')
-                .trim();
+            final cleaned =
+                raw.toString().replaceAll(RegExp('<[^>]*>'), '').trim();
             return cleaned.isEmpty ? fallback : cleaned;
           }
 
@@ -2731,18 +2766,20 @@ class SliderSection extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                              ),
+                          style:
+                              Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                         ),
                         const SizedBox(height: 8),
                         Text(
                           subtitle,
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
                               ?.copyWith(color: Colors.white70),
                         ),
                         const SizedBox(height: 12),
@@ -2878,8 +2915,8 @@ class _TrendingCategoryCard extends StatelessWidget {
                 child: Text(
                   category.name,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ),
             ],
@@ -3218,9 +3255,9 @@ class _Section extends StatelessWidget {
             child: Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: titleColor ?? AppColors.ink,
-              ),
+                    fontWeight: FontWeight.w800,
+                    color: titleColor ?? AppColors.ink,
+                  ),
             ),
           ),
           const SizedBox(height: 16),
@@ -3732,11 +3769,10 @@ class _PlanCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(999),
                           boxShadow: [
                             BoxShadow(
-                              color:
-                                  (plan.featured
-                                          ? const Color(0xFF0EA5E9)
-                                          : warmAccent)
-                                      .withOpacity(plan.featured ? 0.30 : 0.25),
+                              color: (plan.featured
+                                      ? const Color(0xFF0EA5E9)
+                                      : warmAccent)
+                                  .withOpacity(plan.featured ? 0.30 : 0.25),
                               blurRadius: 24,
                               offset: const Offset(0, 10),
                             ),
@@ -3854,8 +3890,8 @@ class _PlanCard extends StatelessWidget {
                                     color: plan.featured
                                         ? featuredAccent
                                         : (plan.tone == _PlanTone.slate
-                                              ? stoneAccent
-                                              : warmAccent),
+                                            ? stoneAccent
+                                            : warmAccent),
                                     width: 3,
                                   ),
                                 ),
@@ -3900,9 +3936,8 @@ class _PlanCard extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                     fontSize: 22,
                     letterSpacing: 1.44,
-                    color: plan.featured
-                        ? Colors.white
-                        : const Color(0xFF1F2937),
+                    color:
+                        plan.featured ? Colors.white : const Color(0xFF1F2937),
                   ),
                 ),
               ),
