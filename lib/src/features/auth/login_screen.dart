@@ -20,6 +20,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
@@ -33,7 +34,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     _deepLinkSub = PaymentNativeService.deepLinkStream.listen(_handleDeepLink);
 
-    // Handle a potential deep-link delivered before the screen subscribed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final last = PaymentNativeService.consumeLastDeepLink();
       if (last != null) _handleDeepLink(last);
@@ -67,9 +67,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _handleDeepLink(String link) async {
     if (_handledAuthDeepLink) return;
     final uri = Uri.tryParse(link.trim());
-    if (uri == null) return;
-    if (uri.scheme != 'lingufranca') return;
-    if (uri.host != 'auth') return;
+    if (uri == null || uri.scheme != 'lingufranca' || uri.host != 'auth') {
+      return;
+    }
 
     final result = (uri.queryParameters['result'] ?? '').toLowerCase();
     final message = (uri.queryParameters['message'] ?? '').trim();
@@ -102,16 +102,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await SecureStorage.setRole(roleFromLink);
     }
 
-    // Fetch profile to ensure role is correct.
     try {
       final profile = await AuthRepository().profile();
-      final name = (profile['data']?['name'])?.toString();
-      if (name != null && name.trim().isNotEmpty) {
-        await SecureStorage.setUserName(name.trim());
-      }
-      final role = (profile['data']?['role'])?.toString();
-      if (role != null && role.isNotEmpty) {
-        await SecureStorage.setRole(role);
+      final profileData = profile['data'];
+      if (profileData is Map<String, dynamic>) {
+        final name = profileData['name']?.toString().trim() ?? '';
+        final role = profileData['role']?.toString().trim() ?? '';
+        if (name.isNotEmpty) {
+          await SecureStorage.setUserName(name);
+        }
+        if (role.isNotEmpty) {
+          await SecureStorage.setRole(role);
+        }
       }
     } catch (_) {}
 
@@ -124,6 +126,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    try {
+      final role = await ref.read(authNotifierProvider.notifier).login(
+            _emailController.text.trim(),
+            _passwordController.text,
+          );
+      if (!mounted) return;
+      if (role == 'instructor') {
+        Navigator.pushReplacementNamed(context, '/instructor');
+      } else {
+        Navigator.pushReplacementNamed(context, '/student');
+      }
+    } on AuthFailure catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.t(error.message))),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isLoading = ref.watch(authNotifierProvider);
@@ -132,68 +158,74 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return AuthPageScaffold(
       title: AppStrings.t('Login'),
       subtitle: AppStrings.t('Login with your email and password.'),
-      child: Column(
-        children: [
-          TextField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(labelText: AppStrings.t('Email')),
-          ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: _passwordController,
-            obscureText: true,
-            decoration: InputDecoration(labelText: AppStrings.t('Password')),
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: loading
-                  ? null
-                  : () async {
-                      await ref.read(authNotifierProvider.notifier).login(
-                            _emailController.text.trim(),
-                            _passwordController.text,
-                          );
-                      final role = await SecureStorage.getRole();
-                      if (!context.mounted) return;
-                      if (role == 'instructor') {
-                        Navigator.pushReplacementNamed(context, '/instructor');
-                      } else {
-                        Navigator.pushReplacementNamed(context, '/student');
-                      }
-                    },
-              child: Text(
-                loading ? AppStrings.t('Submitting') : AppStrings.t('Login'),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: InputDecoration(labelText: AppStrings.t('Email')),
+              validator: (value) {
+                final email = value?.trim() ?? '';
+                if (email.isEmpty) {
+                  return AppStrings.t('Email is required');
+                }
+                final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                if (!emailRegex.hasMatch(email)) {
+                  return AppStrings.t('The email must be a valid email address');
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 14),
+            TextFormField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: InputDecoration(labelText: AppStrings.t('Password')),
+              validator: (value) {
+                if ((value ?? '').isEmpty) {
+                  return AppStrings.t('Password is required');
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: loading ? null : _submit,
+                child: Text(
+                  loading ? AppStrings.t('Submitting') : AppStrings.t('Login'),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: loading ? null : _continueWithGoogle,
-              icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
-              label: Text(AppStrings.t('Continue with Google')),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: loading ? null : _continueWithGoogle,
+                icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
+                label: Text(AppStrings.t('Continue with Google')),
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: loading
-                ? null
-                : () => Navigator.pushNamed(context, '/forgot-password'),
-            child: Text(AppStrings.t('Forgot Password')),
-          ),
-          TextButton(
-            onPressed: loading
-                ? null
-                : () => Navigator.pushNamed(context, '/register'),
-            child: Text(
-              '${AppStrings.t('Sign Up')} · ${AppStrings.t('Register')}',
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: loading
+                  ? null
+                  : () => Navigator.pushNamed(context, '/forgot-password'),
+              child: Text(AppStrings.t('Forgot Password')),
             ),
-          ),
-        ],
+            TextButton(
+              onPressed: loading
+                  ? null
+                  : () => Navigator.pushNamed(context, '/register'),
+              child: Text(
+                '${AppStrings.t('Sign Up')} · ${AppStrings.t('Register')}',
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

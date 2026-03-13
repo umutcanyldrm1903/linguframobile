@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import 'auth_page_scaffold.dart';
-import 'auth_repository.dart';
+import 'auth_provider.dart';
 
-class RegisterScreen extends StatefulWidget {
+class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -20,7 +21,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   String _role = 'student';
-  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -44,35 +44,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
-    setState(() => _isSubmitting = true);
     try {
-      await AuthRepository().register(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        phone: _phoneController.text.trim(),
-        role: _role,
-        password: _passwordController.text,
-        passwordConfirmation: _confirmController.text,
-      );
+      final role = await ref.read(authNotifierProvider.notifier).register(
+            name: _nameController.text.trim(),
+            email: _emailController.text.trim(),
+            phone: _phoneController.text.trim(),
+            role: _role,
+            password: _passwordController.text,
+            passwordConfirmation: _confirmController.text,
+          );
+
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.t('Register'))),
+        SnackBar(content: Text(AppStrings.t('Account created successfully.'))),
       );
-      Navigator.pushReplacementNamed(context, '/login');
-    } catch (_) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.t('Something went wrong'))),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isSubmitting = false);
+
+      if (role == 'instructor') {
+        Navigator.pushReplacementNamed(context, '/instructor');
+      } else {
+        Navigator.pushReplacementNamed(context, '/student');
       }
+    } on AuthFailure catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppStrings.t(error.message))),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isSubmitting = ref.watch(authNotifierProvider);
+
     return AuthPageScaffold(
       title: AppStrings.t('Register'),
       subtitle: AppStrings.t('Start your Learning Journey Today!'),
@@ -85,7 +88,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               controller: _nameController,
               decoration: InputDecoration(labelText: AppStrings.t('Full Name')),
               validator: (value) => value == null || value.trim().isEmpty
-                  ? AppStrings.t('Full Name')
+                  ? AppStrings.t('Name is required')
                   : null,
             ),
             const SizedBox(height: 12),
@@ -93,27 +96,52 @@ class _RegisterScreenState extends State<RegisterScreen> {
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
               decoration: InputDecoration(labelText: AppStrings.t('Email')),
-              validator: (value) => value == null || value.trim().isEmpty
-                  ? AppStrings.t('Email is required')
-                  : null,
+              validator: (value) {
+                final email = value?.trim() ?? '';
+                if (email.isEmpty) {
+                  return AppStrings.t('Email is required');
+                }
+                final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+                if (!emailRegex.hasMatch(email)) {
+                  return AppStrings.t('The email must be a valid email address');
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
               decoration: InputDecoration(labelText: AppStrings.t('Phone')),
-              validator: (value) => value == null || value.trim().isEmpty
-                  ? AppStrings.t('Phone')
-                  : null,
+              validator: (value) {
+                final phone = value?.trim() ?? '';
+                if (phone.isEmpty) {
+                  return AppStrings.t('Phone is required');
+                }
+                final digitCount =
+                    phone.replaceAll(RegExp(r'\D'), '').length;
+                if (digitCount < 7) {
+                  return AppStrings.t('Phone number is too short');
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 12),
             TextFormField(
               controller: _passwordController,
               obscureText: true,
               decoration: InputDecoration(labelText: AppStrings.t('Password')),
-              validator: (value) => value == null || value.isEmpty
-                  ? AppStrings.t('Password is required')
-                  : null,
+              validator: (value) {
+                if ((value ?? '').isEmpty) {
+                  return AppStrings.t('Password is required');
+                }
+                if ((value ?? '').length < 4) {
+                  return AppStrings.t(
+                    'You have to provide minimum 4 character password',
+                  );
+                }
+                return null;
+              },
             ),
             const SizedBox(height: 12),
             TextFormField(
@@ -156,9 +184,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _isSubmitting ? null : _submit,
+                onPressed: isSubmitting ? null : _submit,
                 child: Text(
-                  _isSubmitting
+                  isSubmitting
                       ? AppStrings.t('Submitting')
                       : AppStrings.t('Sign Up'),
                 ),
@@ -166,8 +194,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             const SizedBox(height: 10),
             TextButton(
-              onPressed: () =>
-                  Navigator.pushReplacementNamed(context, '/login'),
+              onPressed: isSubmitting
+                  ? null
+                  : () => Navigator.pushReplacementNamed(context, '/login'),
               child: Text(
                 '${AppStrings.t('Already have an account?')} ${AppStrings.t('Login')}',
               ),
