@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/auth_repository.dart';
+import '../packages/student_packages_screen.dart';
 import 'instructor_repository.dart';
 
 class StudentInstructorsScreen extends StatefulWidget {
@@ -239,6 +241,102 @@ class _StudentInstructorDetailScreenState
     }
   }
 
+  Future<void> _promptPackageRequired() async {
+    if (!mounted) return;
+    final openPackages = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(AppStrings.t('Package Required')),
+            content: Text(
+              AppStrings.t(
+                'You need an active package with lesson credits to book a reservation.',
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(AppStrings.t('Cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(AppStrings.t('View Packages')),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (!mounted || !openPackages) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const StudentPackagesScreen()),
+    );
+  }
+
+  Future<bool> _ensureStudentHasCredits() async {
+    try {
+      final profile = await AuthRepository().profile();
+      final data = profile['data'];
+      if (data is! Map) {
+        return true;
+      }
+
+      final plan = data['plan'];
+      if (plan is! Map) {
+        await _promptPackageRequired();
+        return false;
+      }
+
+      final lessonsRemainingRaw = plan['lessons_remaining'];
+      final lessonsRemaining = lessonsRemainingRaw is num
+          ? lessonsRemainingRaw.toInt()
+          : int.tryParse('${lessonsRemainingRaw ?? ''}') ?? 0;
+
+      if (lessonsRemaining > 0) {
+        return true;
+      }
+
+      await _promptPackageRequired();
+      return false;
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 401) {
+        await _promptLoginRequired();
+        return false;
+      }
+      // Do not block booking on profile-check network issues.
+      return true;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  String? _extractBackendErrorCode(Object error) {
+    if (error is! DioException) return null;
+    final data = error.response?.data;
+    if (data is Map<String, dynamic>) {
+      final code = data['error_code'];
+      if (code is String && code.trim().isNotEmpty) {
+        return code.trim();
+      }
+    }
+    return null;
+  }
+
+  Future<bool> _handleBookingError(Object error) async {
+    if (error is DioException && error.response?.statusCode == 401) {
+      await _promptLoginRequired();
+      return true;
+    }
+
+    final code = _extractBackendErrorCode(error);
+    if (code == 'no_credits') {
+      await _promptPackageRequired();
+      return true;
+    }
+
+    return false;
+  }
+
   Future<bool> _canBook() async {
     final token = await SecureStorage.getToken();
     if (!mounted) return false;
@@ -262,7 +360,7 @@ class _StudentInstructorDetailScreenState
       return false;
     }
 
-    return true;
+    return _ensureStudentHasCredits();
   }
 
   Future<void> _bookSlot(InstructorSchedule schedule) async {
@@ -282,8 +380,8 @@ class _StudentInstructorDetailScreenState
       }
       _loadSchedule(start: schedule.weekStart);
     } catch (error) {
-      if (error is DioException && error.response?.statusCode == 401) {
-        await _promptLoginRequired();
+      final handled = await _handleBookingError(error);
+      if (handled) {
         return;
       }
       if (mounted) {

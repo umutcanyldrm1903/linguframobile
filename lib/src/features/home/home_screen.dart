@@ -3671,64 +3671,88 @@ class _CorporatePreviewFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFEAF4FF), Color(0xFFDCEBFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Positioned(
-            right: -30,
-            top: -20,
-            child: Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.42),
-                shape: BoxShape.circle,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tightHeight = constraints.maxHeight <= 164;
+        final horizontalPadding = tightHeight ? 14.0 : 18.0;
+        final verticalPadding = tightHeight ? 14.0 : 18.0;
+        final iconRadius = tightHeight ? 18.0 : 22.0;
+
+        return DecoratedBox(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFFEAF4FF), Color(0xFFDCEBFF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Positioned(
+                right: -30,
+                top: -20,
+                child: Container(
+                  width: 140,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.42),
+                    shape: BoxShape.circle,
+                  ),
+                ),
               ),
-            ),
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: horizontalPadding,
+                  vertical: verticalPadding,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    CircleAvatar(
+                      radius: iconRadius,
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.apartment_rounded,
+                        color: AppColors.brand,
+                        size: tightHeight ? 18 : 22,
+                      ),
+                    ),
+                    SizedBox(height: tightHeight ? 8 : 12),
+                    Text(
+                      AppStrings.t('Corporate language training'),
+                      maxLines: tightHeight ? 1 : 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: AppColors.brandDeep,
+                        fontWeight: FontWeight.w800,
+                        fontSize: tightHeight ? 16 : 18,
+                        height: 1.2,
+                      ),
+                    ),
+                    SizedBox(height: tightHeight ? 4 : 6),
+                    Flexible(
+                      child: Text(
+                        AppStrings.t(
+                          'Flexible planning, progress tracking, and instructor matching for teams.',
+                        ),
+                        maxLines: tightHeight ? 2 : 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: AppColors.muted,
+                          height: 1.35,
+                          fontSize: tightHeight ? 12.5 : 13.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                const CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.white,
-                  child: Icon(Icons.apartment_rounded, color: AppColors.brand),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  AppStrings.t('Corporate language training'),
-                  style: const TextStyle(
-                    color: AppColors.brandDeep,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  AppStrings.t(
-                    'Flexible planning, progress tracking, and instructor matching for teams.',
-                  ),
-                  style: const TextStyle(
-                    color: AppColors.muted,
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

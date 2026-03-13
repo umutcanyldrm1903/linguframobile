@@ -221,7 +221,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ? null
                   : () => Navigator.pushNamed(context, '/register'),
               child: Text(
-                '${AppStrings.t('Sign Up')} · ${AppStrings.t('Register')}',
+                '${AppStrings.t('Sign Up')} | ${AppStrings.t('Register')}',
               ),
             ),
           ],
