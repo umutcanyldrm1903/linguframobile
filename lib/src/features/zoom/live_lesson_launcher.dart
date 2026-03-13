@@ -35,7 +35,7 @@ Future<void> openLiveLessonSession(
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          AppStrings.t('Links is broke or some thing went wrong'),
+          AppStrings.t('The lesson link is invalid or unavailable.'),
         ),
       ),
     );
@@ -52,7 +52,7 @@ Future<void> openLiveLessonSession(
           title: title,
           loadUrl: uri.toString(),
           externalUrl: uri.toString(),
-          actionLabel: AppStrings.t('Open Externally'),
+          actionLabel: AppStrings.t('Open in Browser'),
         ),
       ),
     );
@@ -64,7 +64,7 @@ Future<void> openLiveLessonSession(
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          AppStrings.t('Links is broke or some thing went wrong'),
+          AppStrings.t('The lesson link is invalid or unavailable.'),
         ),
       ),
     );

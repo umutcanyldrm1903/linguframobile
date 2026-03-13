@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../zoom/live_lesson_launcher.dart';
@@ -16,7 +17,7 @@ class StudentLiveLessonScreen extends StatelessWidget {
     final canJoin = joinState == _LessonJoinState.canJoin;
 
     final buttonLabel = switch (joinState) {
-      _LessonJoinState.canJoin => AppStrings.t('Derse Katil'),
+      _LessonJoinState.canJoin => AppStrings.t('Join Lesson'),
       _LessonJoinState.pending => AppStrings.t('Reservation is pending.'),
       _LessonJoinState.notStarted => AppStrings.t('Lesson is not started yet'),
       _LessonJoinState.finished => AppStrings.t('Lesson is finished'),
@@ -80,10 +81,6 @@ _LessonJoinState _deriveJoinState(LiveLessonItem? lesson) {
     return _LessonJoinState.finished;
   }
 
-  // Prefer the backend's can_join guard. It already bakes in:
-  // - time window (start - 15min -> end)
-  // - host-start / access checks for private lessons
-  // - credential visibility rules (join_url/meeting_id/password can be nulled)
   if (lesson.canJoin) {
     return _LessonJoinState.canJoin;
   }
@@ -105,8 +102,9 @@ _LessonJoinState _deriveJoinState(LiveLessonItem? lesson) {
   }
 
   final startWindow = start.subtract(const Duration(minutes: 15));
-
-  if (now.isBefore(startWindow)) return _LessonJoinState.notStarted;
+  if (now.isBefore(startWindow)) {
+    return _LessonJoinState.notStarted;
+  }
   return _LessonJoinState.notStarted;
 }
 
@@ -117,15 +115,16 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title =
-        lesson?.title.isNotEmpty == true ? lesson!.title : 'Canlı Ders';
+    final title = lesson?.title.isNotEmpty == true
+        ? lesson!.title
+        : AppStrings.t('Live Lesson');
     final instructor = lesson?.instructorName ?? '';
     final dateLabel = _formatDate(lesson?.startTime);
     final timeLabel = _formatTime(lesson?.startTime);
     final meta = [
-      if (instructor.isNotEmpty) 'Eğitmen: $instructor',
+      if (instructor.isNotEmpty) '${AppStrings.t('Instructor')}: $instructor',
       if (dateLabel.isNotEmpty || timeLabel.isNotEmpty)
-        '${dateLabel.isNotEmpty ? dateLabel : ''}${dateLabel.isNotEmpty && timeLabel.isNotEmpty ? ' · ' : ''}$timeLabel',
+        '${dateLabel.isNotEmpty ? dateLabel : ''}${dateLabel.isNotEmpty && timeLabel.isNotEmpty ? ' • ' : ''}$timeLabel',
     ].where((value) => value.isNotEmpty).toList();
 
     return Container(
@@ -219,7 +218,7 @@ class _MeetingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final meetingId = revealCredentials ? (lesson?.meetingId ?? '-') : '-';
     final password = revealCredentials ? (lesson?.password ?? '-') : '-';
-    final startLabel = _formatTime(lesson?.startTime);
+    final startLabel = _formatDateTime(lesson?.startTime);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -231,8 +230,10 @@ class _MeetingCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Zoom Toplantısı',
-              style: TextStyle(fontWeight: FontWeight.w700)),
+          Text(
+            AppStrings.t('Zoom Meeting'),
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
           if (!revealCredentials) ...[
             const SizedBox(height: 10),
             Text(
@@ -241,11 +242,11 @@ class _MeetingCard extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 10),
-          _InfoRow(label: 'Meeting ID', value: meetingId),
-          _InfoRow(label: 'Şifre', value: password),
+          _InfoRow(label: AppStrings.t('Meeting ID'), value: meetingId),
+          _InfoRow(label: AppStrings.t('Password'), value: password),
           _InfoRow(
-            label: 'Başlangıç',
-            value: startLabel.isEmpty ? '-' : '$startLabel (TR)',
+            label: AppStrings.t('Starts At'),
+            value: startLabel.isEmpty ? '-' : startLabel,
           ),
         ],
       ),
@@ -267,12 +268,21 @@ class _RulesCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          Text('Ders Kuralları', style: TextStyle(fontWeight: FontWeight.w700)),
-          SizedBox(height: 8),
-          _Rule(text: 'Ders başlamadan 5 dk önce hazır olun.'),
-          _Rule(text: 'Mikrofon ve kamera kontrolü yapın.'),
-          _Rule(text: 'Ders sonunda kısa geri bildirim bırakın.'),
+        children: [
+          Text(
+            AppStrings.t('Lesson Rules'),
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          _Rule(
+              text:
+                  AppStrings.t('Be ready 5 minutes before the lesson starts.')),
+          _Rule(
+              text: AppStrings.t(
+                  'Check your microphone and camera before joining.')),
+          _Rule(
+              text: AppStrings.t(
+                  'Leave a short feedback note after the lesson.')),
         ],
       ),
     );
@@ -320,12 +330,19 @@ class _Rule extends StatelessWidget {
   }
 }
 
+String _localeName() => AppStrings.code == 'tr' ? 'tr_TR' : 'en_US';
+
 String _formatDate(DateTime? value) {
   if (value == null) return '';
-  return DateFormat('dd MMMM yyyy', 'tr_TR').format(value);
+  return DateFormat('dd MMMM yyyy', _localeName()).format(value);
 }
 
 String _formatTime(DateTime? value) {
   if (value == null) return '';
-  return DateFormat('HH:mm').format(value);
+  return DateFormat('HH:mm', _localeName()).format(value);
+}
+
+String _formatDateTime(DateTime? value) {
+  if (value == null) return '';
+  return DateFormat('dd MMMM yyyy • HH:mm', _localeName()).format(value);
 }

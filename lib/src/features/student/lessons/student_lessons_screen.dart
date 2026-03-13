@@ -1,5 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
 import 'student_course_detail_screen.dart';
@@ -46,33 +47,35 @@ class _StudentLessonsScreenState extends State<StudentLessonsScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
                 child: Row(
                   children: [
-                    Text('Derslerim',
-                        style: Theme.of(context).textTheme.titleLarge),
+                    Text(
+                      AppStrings.t('My Lessons'),
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppColors.brand.withOpacity(0.15),
+                        color: AppColors.brand.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: Text('Toplam $total'),
+                      child: Text('${AppStrings.t('Total')}: $total'),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 12),
-              const TabBar(
+              TabBar(
                 labelColor: AppColors.ink,
                 indicatorColor: AppColors.brand,
                 tabs: [
-                  Tab(text: 'Yaklaşan'),
-                  Tab(text: 'Geçmiş'),
+                  Tab(text: AppStrings.t('Upcoming')),
+                  Tab(text: AppStrings.t('Past Lessons')),
                 ],
               ),
-              Expanded(
-                child: _buildBody(snapshot),
-              ),
+              Expanded(child: _buildBody(snapshot)),
             ],
           ),
         );
@@ -94,14 +97,14 @@ class _StudentLessonsScreenState extends State<StudentLessonsScreen> {
 
     final data = snapshot.data;
     if (data == null) {
-      return const _EmptyState(message: 'Ders bulunamadı.');
+      return _EmptyState(message: AppStrings.t('No lessons found!'));
     }
 
     return TabBarView(
       children: [
         _LessonList(
           items: data.upcoming,
-          emptyMessage: 'Yaklaşan ders bulunamadı.',
+          emptyMessage: AppStrings.t('No upcoming lessons found.'),
           onRefresh: () => _refresh(),
           onOpenDetail: _openDetail,
           onOpenLive: _openLive,
@@ -109,7 +112,7 @@ class _StudentLessonsScreenState extends State<StudentLessonsScreen> {
         ),
         _LessonList(
           items: data.past,
-          emptyMessage: 'Geçmiş ders bulunamadı.',
+          emptyMessage: AppStrings.t('No past lessons found.'),
           onRefresh: () => _refresh(),
           onOpenDetail: _openDetail,
           onOpenLive: _openLive,
@@ -182,9 +185,7 @@ class _LessonList extends StatelessWidget {
             item: lesson,
             isUpcoming: isUpcoming,
             onTap: () => onOpenDetail(context, lesson),
-            onJoin: joinable
-                ? () => onOpenLive(context, lesson)
-                : null,
+            onJoin: joinable ? () => onOpenLive(context, lesson) : null,
           );
         },
       ),
@@ -226,7 +227,7 @@ class _LessonCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 18,
               offset: const Offset(0, 8),
             ),
@@ -238,7 +239,7 @@ class _LessonCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: statusColor.withOpacity(0.2),
+                  backgroundColor: statusColor.withValues(alpha: 0.2),
                   child: Icon(Icons.play_circle, color: statusColor),
                 ),
                 const SizedBox(width: 12),
@@ -257,14 +258,18 @@ class _LessonCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.15),
+                    color: statusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: Text(statusLabel,
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                  child: Text(
+                    statusLabel,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                 ),
               ],
             ),
@@ -302,21 +307,22 @@ class _LessonCard extends StatelessWidget {
     final dateLabel = _formatDate(item.startTime);
     final timeLabel = _formatTime(item.startTime);
     final parts = [
-      if (item.instructorName.isNotEmpty) item.instructorName,
+      if (item.instructorName.isNotEmpty)
+        '${AppStrings.t('Instructor')}: ${item.instructorName}',
       if (dateLabel.isNotEmpty) dateLabel,
       if (timeLabel.isNotEmpty) timeLabel,
     ];
-    return parts.join(' · ');
+    return parts.join(' • ');
   }
 
   String _formatDate(DateTime? value) {
     if (value == null) return '';
-    return DateFormat('dd MMMM yyyy', 'tr_TR').format(value);
+    return DateFormat('dd MMMM yyyy', _localeName()).format(value);
   }
 
   String _formatTime(DateTime? value) {
     if (value == null) return '';
-    return DateFormat('HH:mm').format(value);
+    return DateFormat('HH:mm', _localeName()).format(value);
   }
 }
 
@@ -341,22 +347,27 @@ bool _canJoinNow(LiveLessonItem lesson) {
 }
 
 String _joinButtonLabel(LiveLessonItem lesson, bool enabled) {
-  if (enabled) return AppStrings.t('Derse Katil');
+  if (enabled) return AppStrings.t('Join Lesson');
   if (lesson.isPending) return AppStrings.t('Reservation is pending.');
   final status = lesson.status.toLowerCase();
-  if (lesson.isCompleted || status == 'completed' || status.startsWith('cancelled')) {
+  if (lesson.isCompleted ||
+      status == 'completed' ||
+      status.startsWith('cancelled')) {
     return AppStrings.t('Lesson is finished');
   }
   final start = lesson.startTime;
   final end = lesson.computedEndTime;
   final now = DateTime.now();
-  if (start != null && now.isBefore(start.subtract(const Duration(minutes: 15)))) {
+  if (start != null &&
+      now.isBefore(start.subtract(const Duration(minutes: 15)))) {
     return AppStrings.t('Lesson is not started yet');
   }
   if (lesson.kind == 'student' && status != 'started') {
     return AppStrings.t('Lesson is not started yet');
   }
-  if (end != null && now.isAfter(end)) return AppStrings.t('Lesson is finished');
+  if (end != null && now.isAfter(end)) {
+    return AppStrings.t('Lesson is finished');
+  }
   return AppStrings.t('Unavailable');
 }
 
@@ -376,7 +387,7 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 12),
           ElevatedButton(
             onPressed: () => onRetry!(),
-            child: const Text('Tekrar Dene'),
+            child: Text(AppStrings.t('Try Again')),
           ),
         ],
       ],
@@ -388,5 +399,7 @@ String _extractError(Object? error) {
   if (error is Exception) {
     return error.toString().replaceAll('Exception: ', '');
   }
-  return 'Bir hata oluştu. Lütfen tekrar deneyin.';
+  return AppStrings.t('An unexpected error occurred. Please try again.');
 }
+
+String _localeName() => AppStrings.code == 'tr' ? 'tr_TR' : 'en_US';

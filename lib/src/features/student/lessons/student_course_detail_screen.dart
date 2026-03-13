@@ -1,4 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+
+import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
 import 'student_course_repository.dart';
 import 'student_learning_screen.dart';
@@ -95,13 +97,14 @@ class _StudentCourseDetailScreenState extends State<StudentCourseDetailScreen> {
         question: result.question,
         description: result.description,
       );
-      if (!mounted) return;
+      if (!context.mounted) return;
       await _refresh();
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Soru gönderildi.')),
+        SnackBar(content: Text(AppStrings.t('Question submitted.'))),
       );
     } catch (error) {
-      if (!mounted) return;
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_errorMessage(error))),
       );
@@ -127,17 +130,24 @@ class _StudentCourseDetailScreenState extends State<StudentCourseDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Soru Sor', style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                AppStrings.t('Ask Question'),
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: 12),
               TextField(
                 controller: questionController,
-                decoration: const InputDecoration(labelText: 'Soru'),
+                decoration: InputDecoration(
+                  labelText: AppStrings.t('Question'),
+                ),
                 textInputAction: TextInputAction.next,
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: descriptionController,
-                decoration: const InputDecoration(labelText: 'Açıklama'),
+                decoration: InputDecoration(
+                  labelText: AppStrings.t('Description'),
+                ),
                 maxLines: 3,
               ),
               const SizedBox(height: 16),
@@ -149,7 +159,9 @@ class _StudentCourseDetailScreenState extends State<StudentCourseDetailScreen> {
                     final description = descriptionController.text.trim();
                     if (question.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Soru alanı boş olamaz.')),
+                        SnackBar(
+                          content: Text(AppStrings.t('Question is required.')),
+                        ),
                       );
                       return;
                     }
@@ -161,7 +173,7 @@ class _StudentCourseDetailScreenState extends State<StudentCourseDetailScreen> {
                       ),
                     );
                   },
-                  child: const Text('Gönder'),
+                  child: Text(AppStrings.t('Submit')),
                 ),
               ),
             ],
@@ -175,7 +187,7 @@ class _StudentCourseDetailScreenState extends State<StudentCourseDetailScreen> {
     if (error is Exception) {
       return error.toString().replaceAll('Exception: ', '');
     }
-    return 'Bir hata oluştu. Lütfen tekrar deneyin.';
+    return AppStrings.t('An unexpected error occurred. Please try again.');
   }
 
   void _openLearning(
@@ -185,7 +197,8 @@ class _StudentCourseDetailScreenState extends State<StudentCourseDetailScreen> {
   }) {
     if (course == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kurs içeriği yüklenemedi.')),
+        SnackBar(
+            content: Text(AppStrings.t('Course content could not be loaded.'))),
       );
       return;
     }
@@ -248,12 +261,14 @@ class _StudentCourseDetailScreenState extends State<StudentCourseDetailScreen> {
         }
 
         final payload = snapshot.data!;
-        final reviewCount =
-            payload.reviews.isNotEmpty ? payload.reviews.length : widget.reviews;
+        final reviewCount = payload.reviews.isNotEmpty
+            ? payload.reviews.length
+            : widget.reviews;
         return _buildScaffold(
           context,
-          title:
-              payload.course.title.isNotEmpty ? payload.course.title : widget.title,
+          title: payload.course.title.isNotEmpty
+              ? payload.course.title
+              : widget.title,
           instructor: payload.course.instructorName.isNotEmpty
               ? payload.course.instructorName
               : widget.instructor,
@@ -290,7 +305,7 @@ class _StudentCourseDetailScreenState extends State<StudentCourseDetailScreen> {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Kurs Detayı')),
+        appBar: AppBar(title: Text(AppStrings.t('Course Details'))),
         body: Column(
           children: [
             Padding(
@@ -307,14 +322,14 @@ class _StudentCourseDetailScreenState extends State<StudentCourseDetailScreen> {
                     : null,
               ),
             ),
-            const TabBar(
+            TabBar(
               labelColor: AppColors.ink,
               indicatorColor: AppColors.brand,
               tabs: [
-                Tab(text: 'Genel'),
-                Tab(text: 'Müfredat'),
-                Tab(text: 'Yorumlar'),
-                Tab(text: 'Soru-Cevap'),
+                Tab(text: AppStrings.t('Overview')),
+                Tab(text: AppStrings.t('Curriculum')),
+                Tab(text: AppStrings.t('Reviews')),
+                Tab(text: AppStrings.t('Q&A')),
               ],
             ),
             Expanded(
@@ -371,7 +386,8 @@ class CourseDetailPayload {
 }
 
 class _QuestionFormResult {
-  const _QuestionFormResult({required this.question, required this.description});
+  const _QuestionFormResult(
+      {required this.question, required this.description});
 
   final String question;
   final String description;
@@ -405,7 +421,7 @@ class _HeaderCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -428,8 +444,10 @@ class _HeaderCard extends StatelessWidget {
                   children: [
                     Text(title, style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 4),
-                    Text('Eğitmen: $instructor',
-                        style: Theme.of(context).textTheme.bodyMedium),
+                    Text(
+                      '${AppStrings.t('Instructor')}: $instructor',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
                   ],
                 ),
               ),
@@ -439,10 +457,10 @@ class _HeaderCard extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: const [
-              _Tag(text: 'General English'),
-              _Tag(text: 'Speaking'),
-              _Tag(text: 'Business'),
+            children: [
+              _Tag(text: AppStrings.t('General English')),
+              _Tag(text: AppStrings.t('Speaking Lessons')),
+              _Tag(text: AppStrings.t('Business English')),
             ],
           ),
           const SizedBox(height: 12),
@@ -450,14 +468,20 @@ class _HeaderCard extends StatelessWidget {
             children: [
               const Icon(Icons.star, size: 18, color: AppColors.brand),
               const SizedBox(width: 4),
-              Text('$rating / 5',
-                  style: const TextStyle(fontWeight: FontWeight.w700)),
+              Text(
+                '$rating / 5',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
               const SizedBox(width: 6),
-              Text('($reviews değerlendirme)',
-                  style: Theme.of(context).textTheme.bodySmall),
+              Text(
+                '${AppStrings.t('Reviews')}: $reviews',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               const Spacer(),
-              Text('${(progress * 100).round()}% tamamlandı',
-                  style: Theme.of(context).textTheme.bodySmall),
+              Text(
+                '${(progress * 100).round()}% ${AppStrings.t('Completed')}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -476,7 +500,7 @@ class _HeaderCard extends StatelessWidget {
               Expanded(
                 child: ElevatedButton(
                   onPressed: onContinue,
-                  child: const Text('Derse Devam Et'),
+                  child: Text(AppStrings.t('Continue Lesson')),
                 ),
               ),
               if (hasLive) ...[
@@ -495,7 +519,7 @@ class _HeaderCard extends StatelessWidget {
                       foregroundColor: AppColors.brand,
                       side: const BorderSide(color: AppColors.brand),
                     ),
-                    child: const Text('Canlı Derse Katıl'),
+                    child: Text(AppStrings.t('Join Live Lesson')),
                   ),
                 ),
               ],
@@ -519,32 +543,41 @@ class _OverviewTab extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       children: [
         _Section(
-          title: 'Kurs Açıklaması',
+          title: AppStrings.t('Course Description'),
           child: Text(
             hasDescription
                 ? description
-                : 'Bu kursta konuşma pratiği, kelime bilgisi ve günlük iletişim konularında güçlü bir temel oluşturacaksın.',
+                : AppStrings.t(
+                    'This course will help you build a strong foundation in speaking, vocabulary, and daily communication.',
+                  ),
             style: const TextStyle(height: 1.5),
           ),
         ),
         const SizedBox(height: 16),
         _Section(
-          title: 'Öğrenilecekler',
+          title: AppStrings.t('What You Will Learn'),
           child: Column(
-            children: const [
-              _Bullet(text: 'Akıcı konuşma ve doğru telaffuz'),
-              _Bullet(text: 'Günlük ve iş İngilizcesi kalıpları'),
-              _Bullet(text: 'Sınavlara yönelik stratejiler'),
+            children: [
+              _Bullet(
+                text:
+                    AppStrings.t('Fluent speaking and accurate pronunciation'),
+              ),
+              _Bullet(
+                text: AppStrings.t('Daily and business English expressions'),
+              ),
+              _Bullet(
+                text: AppStrings.t('Exam-focused strategies and confidence'),
+              ),
             ],
           ),
         ),
         const SizedBox(height: 16),
         _Section(
-          title: 'Gereksinimler',
+          title: AppStrings.t('Requirements'),
           child: Column(
-            children: const [
-              _Bullet(text: 'Temel seviye İngilizce bilgisi'),
-              _Bullet(text: 'Mikrofon ve stabil internet'),
+            children: [
+              _Bullet(text: AppStrings.t('Basic English knowledge')),
+              _Bullet(text: AppStrings.t('Microphone and stable internet')),
             ],
           ),
         ),
@@ -562,7 +595,7 @@ class _CurriculumTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (chapters.isEmpty) {
-      return const Center(child: Text('Müfredat bulunamadı.'));
+      return Center(child: Text(AppStrings.t('No curriculum found.')));
     }
 
     return ListView.separated(
@@ -595,11 +628,15 @@ class _CurriculumTab extends StatelessWidget {
                                   : Icons.play_circle_outline,
                       color: AppColors.brand,
                     ),
-                    title: Text(lesson.title.isNotEmpty
-                        ? lesson.title
-                        : 'İçerik'),
+                    title: Text(
+                      lesson.title.isNotEmpty
+                          ? lesson.title
+                          : AppStrings.t('Content'),
+                    ),
                     trailing: Text(
-                      lesson.duration.isNotEmpty ? lesson.duration : lesson.type,
+                      lesson.duration.isNotEmpty
+                          ? lesson.duration
+                          : lesson.type,
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     onTap: onItemTap == null ? null : () => onItemTap!(lesson),
@@ -621,7 +658,7 @@ class _ReviewsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (reviews.isEmpty) {
-      return const Center(child: Text('Henüz yorum yok.'));
+      return Center(child: Text(AppStrings.t('No reviews yet.')));
     }
 
     return ListView.separated(
@@ -656,16 +693,16 @@ class _QnaTab extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: onAsk,
             icon: const Icon(Icons.question_answer),
-            label: const Text('Soru Sor'),
+            label: Text(AppStrings.t('Ask Question')),
           )
         else
-          const Text(
-            'Soru sorabilmek için bir ders seçili olmalı.',
-            style: TextStyle(color: AppColors.muted),
+          Text(
+            AppStrings.t('You must select a lesson before asking a question.'),
+            style: const TextStyle(color: AppColors.muted),
           ),
         const SizedBox(height: 12),
         if (questions.isEmpty)
-          const Text('Henüz soru yok.')
+          Text(AppStrings.t('No questions yet.'))
         else
           ...questions.map((item) => _QnaTile(question: item)),
       ],
@@ -710,7 +747,7 @@ class _Tag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.brand.withOpacity(0.15),
+        color: AppColors.brand.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
@@ -779,8 +816,7 @@ class _ReviewTile extends StatelessWidget {
                           width: 36,
                           height: 36,
                           fit: BoxFit.cover,
-                          webHtmlElementStrategy:
-                              WebHtmlElementStrategy.prefer,
+                          webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
                           errorBuilder: (_, __, ___) => const SizedBox(
                             width: 36,
                             height: 36,
@@ -801,7 +837,8 @@ class _ReviewTile extends StatelessWidget {
               (index) => Icon(
                 Icons.star,
                 size: 16,
-                color: index < rating ? AppColors.brand : const Color(0xFFE2E8F0),
+                color:
+                    index < rating ? AppColors.brand : const Color(0xFFE2E8F0),
               ),
             ),
           ),
@@ -828,8 +865,10 @@ class _QnaTile extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: ExpansionTile(
-        title: Text(question.question,
-            style: const TextStyle(fontWeight: FontWeight.w700)),
+        title: Text(
+          question.question,
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
         subtitle: Text(question.userName),
         children: [
           Padding(
@@ -837,11 +876,10 @@ class _QnaTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (question.description.isNotEmpty)
-                  Text(question.description),
+                if (question.description.isNotEmpty) Text(question.description),
                 const SizedBox(height: 10),
                 if (question.replies.isEmpty)
-                  const Text('Henüz cevap yok.')
+                  Text(AppStrings.t('No replies yet.'))
                 else
                   ...question.replies.map(
                     (reply) => Padding(
@@ -849,15 +887,19 @@ class _QnaTile extends StatelessWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.reply, size: 18, color: AppColors.brand),
+                          const Icon(Icons.reply,
+                              size: 18, color: AppColors.brand),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(reply.userName,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w700)),
+                                Text(
+                                  reply.userName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                                 Text(reply.reply),
                               ],
                             ),

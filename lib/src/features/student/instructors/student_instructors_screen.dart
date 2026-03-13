@@ -1,8 +1,10 @@
-﻿import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/storage/secure_storage.dart';
+import 'package:intl/intl.dart';
+
 import '../../../core/localization/app_strings.dart';
+import '../../../core/storage/secure_storage.dart';
+import '../../../core/theme/app_colors.dart';
 import 'instructor_repository.dart';
 
 class StudentInstructorsScreen extends StatefulWidget {
@@ -11,7 +13,8 @@ class StudentInstructorsScreen extends StatefulWidget {
   final bool standalone;
 
   @override
-  State<StudentInstructorsScreen> createState() => _StudentInstructorsScreenState();
+  State<StudentInstructorsScreen> createState() =>
+      _StudentInstructorsScreenState();
 }
 
 class _StudentInstructorsScreenState extends State<StudentInstructorsScreen> {
@@ -21,10 +24,10 @@ class _StudentInstructorsScreenState extends State<StudentInstructorsScreen> {
   late Future<List<InstructorCardData>> _future;
 
   static const _filters = [
-    'Türk',
-    'Yabancı',
-    'Konuşma Dersleri',
-    'İş İngilizcesi',
+    'Turkish',
+    'Foreign',
+    'Speaking Lessons',
+    'Business English',
     'IELTS & TOEFL',
   ];
 
@@ -47,17 +50,22 @@ class _StudentInstructorsScreenState extends State<StudentInstructorsScreen> {
           : _searchController.text.trim(),
       tags: _selectedTags,
     );
+
     return list
-        .map((item) => InstructorCardData(
-              id: item.id,
-              name: item.name,
-              role: item.jobTitle.isNotEmpty ? item.jobTitle : 'Eğitmen',
-              tags: item.tags,
-              about: item.shortBio.isNotEmpty ? item.shortBio : item.bio,
-              rating: item.avgRating,
-              courseCount: item.courseCount,
-              imageUrl: item.imageUrl,
-            ))
+        .map(
+          (item) => InstructorCardData(
+            id: item.id,
+            name: item.name,
+            role: item.jobTitle.isNotEmpty
+                ? item.jobTitle
+                : AppStrings.t('Instructor'),
+            tags: item.tags,
+            about: item.shortBio.isNotEmpty ? item.shortBio : item.bio,
+            rating: item.avgRating,
+            courseCount: item.courseCount,
+            imageUrl: item.imageUrl,
+          ),
+        )
         .toList();
   }
 
@@ -112,17 +120,21 @@ class _StudentInstructorsScreenState extends State<StudentInstructorsScreen> {
                   child: Center(child: CircularProgressIndicator()),
                 );
               }
+
               if (snapshot.hasError) {
-                final message = _extractError(snapshot.error);
                 return _EmptyState(
-                  message: message,
+                  message: _extractError(snapshot.error),
                   onRetry: _refresh,
                 );
               }
+
               final instructors = snapshot.data ?? [];
               if (instructors.isEmpty) {
-                return const _EmptyState(message: 'Eğitmen bulunamadı.');
+                return _EmptyState(
+                  message: AppStrings.t('No instructors found.'),
+                );
               }
+
               return Column(
                 children: instructors
                     .map(
@@ -203,16 +215,18 @@ class _StudentInstructorDetailScreenState
     final goLogin = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Giriş gerekli'),
-            content: const Text('Rezervasyon yapmak için önce giriş yapmalısın.'),
+            title: Text(AppStrings.t('Login Required')),
+            content: Text(
+              AppStrings.t('You need to log in before booking a reservation.'),
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Vazgeç'),
+                child: Text(AppStrings.t('Cancel')),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Giriş Yap'),
+                child: Text(AppStrings.t('Login')),
               ),
             ],
           ),
@@ -237,8 +251,12 @@ class _StudentInstructorDetailScreenState
     if (!mounted) return false;
     if (role == 'instructor') {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Rezervasyon için öğrenci hesabıyla giriş yapmalısın.'),
+        SnackBar(
+          content: Text(
+            AppStrings.t(
+              'You must log in with a student account to book a reservation.',
+            ),
+          ),
         ),
       );
       return false;
@@ -256,7 +274,8 @@ class _StudentInstructorDetailScreenState
         instructorId: widget.data.id,
         slot: _selectedSlot!,
       );
-      final message = response['message']?.toString() ?? 'Rezervasyon alındı.';
+      final message = response['message']?.toString() ??
+          AppStrings.t('Reservation received.');
       if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(message)));
@@ -267,10 +286,9 @@ class _StudentInstructorDetailScreenState
         await _promptLoginRequired();
         return;
       }
-      final message = _extractError(error);
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(message)));
+            .showSnackBar(SnackBar(content: Text(_extractError(error))));
       }
     } finally {
       if (mounted) {
@@ -292,11 +310,15 @@ class _StudentInstructorDetailScreenState
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            final message = _extractError(snapshot.error);
-            return _EmptyState(message: message, onRetry: () => _loadSchedule());
+            return _EmptyState(
+              message: _extractError(snapshot.error),
+              onRetry: () => _loadSchedule(),
+            );
           }
+
           final schedule = snapshot.data!;
-          final rangeLabel = _weekRangeLabel(schedule.weekStart, schedule.weekEnd);
+          final rangeLabel =
+              _weekRangeLabel(schedule.weekStart, schedule.weekEnd);
 
           return ListView(
             padding: const EdgeInsets.all(20),
@@ -304,12 +326,14 @@ class _StudentInstructorDetailScreenState
               _InstructorHeader(data: widget.data),
               const SizedBox(height: 18),
               Text(
-                'Ders Rezervasyonu',
+                AppStrings.t('Lesson Reservation'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 4),
               Text(
-                'Müsait saatlerden birini seçerek rezervasyon oluşturabilirsin.',
+                AppStrings.t(
+                  'Pick one of the available time slots to create a reservation.',
+                ),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 12),
@@ -318,7 +342,7 @@ class _StudentInstructorDetailScreenState
                 children: [
                   TextButton(
                     onPressed: () => _loadSchedule(start: schedule.prevStart),
-                    child: const Text('Önceki'),
+                    child: Text(AppStrings.t('Previous')),
                   ),
                   Text(
                     rangeLabel,
@@ -328,7 +352,7 @@ class _StudentInstructorDetailScreenState
                   ),
                   TextButton(
                     onPressed: () => _loadSchedule(start: schedule.nextStart),
-                    child: const Text('Sonraki'),
+                    child: Text(AppStrings.t('Next')),
                   ),
                 ],
               ),
@@ -339,7 +363,7 @@ class _StudentInstructorDetailScreenState
                   scrollDirection: Axis.horizontal,
                   itemBuilder: (_, index) {
                     final day = schedule.days[index];
-                    final dayLabel = _dayLabel(day.dayOfWeek);
+                    final dayLabel = _dayLabel(day.date);
                     final dateLabel = _formatDateShort(day.date);
                     final slots = schedule.slotsByDate[day.date] ?? [];
                     return _DayColumn(
@@ -365,13 +389,13 @@ class _StudentInstructorDetailScreenState
                       : () => _bookSlot(schedule),
                   child: Text(
                     _selectedSlot == null
-                        ? 'Saat Seç'
+                        ? AppStrings.t('Select Time')
                         : _booking
-                            ? 'Gönderiliyor...'
-                            : 'Rezervasyon Yap',
+                            ? '${AppStrings.t('Submitting')}...'
+                            : AppStrings.t('Book Reservation'),
                   ),
                 ),
-              )
+              ),
             ],
           );
         },
@@ -394,7 +418,7 @@ class _InstructorHeader extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.06),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -416,23 +440,25 @@ class _InstructorHeader extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 6,
                     children: data.tags
-                        .map((tag) => Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
+                        .map(
+                          (tag) => Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.brand.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              tag,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
                               ),
-                              decoration: BoxDecoration(
-                                color: AppColors.brand.withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                tag,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ))
+                            ),
+                          ),
+                        )
                         .toList(),
                   ),
                 ],
@@ -480,7 +506,7 @@ class _DayColumn extends StatelessWidget {
             child: slots.isEmpty
                 ? Center(
                     child: Text(
-                      'Uygun saat yok',
+                      AppStrings.t('No available time slots'),
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   )
@@ -494,9 +520,8 @@ class _DayColumn extends StatelessWidget {
                         label: slot.label,
                         isSelected: isSelected,
                         available: slot.available,
-                        onTap: slot.available
-                            ? () => onSelect(slot.value)
-                            : null,
+                        onTap:
+                            slot.available ? () => onSelect(slot.value) : null,
                       );
                     },
                   ),
@@ -575,7 +600,7 @@ class _SearchBar extends StatelessWidget {
       onSubmitted: onSubmitted,
       decoration: InputDecoration(
         prefixIcon: const Icon(Icons.search),
-        hintText: 'Eğitmenini bul',
+        hintText: AppStrings.t('Find your instructor'),
         filled: true,
         fillColor: AppColors.surface,
         suffixIcon: controller.text.isEmpty
@@ -606,20 +631,24 @@ class _FilterRow extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: filters
-            .map((text) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    label: Text(text,
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
-                    selected: selectedTags.contains(text),
-                    onSelected: (_) => onToggle(text),
-                    selectedColor: AppColors.brand.withOpacity(0.2),
-                    backgroundColor: AppColors.surface,
-                    shape: StadiumBorder(
-                      side: BorderSide(color: const Color(0xFFE2E8F0)),
-                    ),
+            .map(
+              (text) => Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: FilterChip(
+                  label: Text(
+                    AppStrings.t(text),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
-                ))
+                  selected: selectedTags.contains(text),
+                  onSelected: (_) => onToggle(text),
+                  selectedColor: AppColors.brand.withValues(alpha: 0.2),
+                  backgroundColor: AppColors.surface,
+                  shape: const StadiumBorder(
+                    side: BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                ),
+              ),
+            )
             .toList(),
       ),
     );
@@ -644,7 +673,7 @@ class _InstructorCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 16,
               offset: const Offset(0, 8),
             ),
@@ -677,23 +706,25 @@ class _InstructorCard extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 6,
                 children: data.tags
-                    .map((tag) => Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
+                    .map(
+                      (tag) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.brand,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          tag,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
                           ),
-                          decoration: BoxDecoration(
-                            color: AppColors.brand,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            tag,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ))
+                        ),
+                      ),
+                    )
                     .toList(),
               ),
             ],
@@ -704,14 +735,16 @@ class _InstructorCard extends StatelessWidget {
               children: [
                 const Icon(Icons.star, size: 16, color: AppColors.brand),
                 const SizedBox(width: 4),
-                Text('${data.rating.toStringAsFixed(1)} / 5 · ${data.courseCount} kurs'),
+                Text(
+                  '${data.rating.toStringAsFixed(1)} / 5 • ${data.courseCount} ${AppStrings.t('Courses')}',
+                ),
                 const Spacer(),
                 ElevatedButton(
                   onPressed: onTap,
-                  child: const Text('Rezervasyon Yap'),
+                  child: Text(AppStrings.t('Book Reservation')),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),
@@ -720,7 +753,8 @@ class _InstructorCard extends StatelessWidget {
 }
 
 class _Avatar extends StatelessWidget {
-  const _Avatar({required this.imageUrl, required this.name, required this.radius});
+  const _Avatar(
+      {required this.imageUrl, required this.name, required this.radius});
 
   final String? imageUrl;
   final String name;
@@ -729,11 +763,12 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final url = (imageUrl ?? '').trim();
-    final fallbackLetter = name.trim().isNotEmpty ? name.trim().substring(0, 1) : '?';
+    final fallbackLetter =
+        name.trim().isNotEmpty ? name.trim().substring(0, 1) : '?';
 
     return CircleAvatar(
       radius: radius,
-      backgroundColor: AppColors.brand.withOpacity(0.2),
+      backgroundColor: AppColors.brand.withValues(alpha: 0.2),
       child: url.isEmpty
           ? Text(
               fallbackLetter,
@@ -745,8 +780,6 @@ class _Avatar extends StatelessWidget {
                 width: radius * 2,
                 height: radius * 2,
                 fit: BoxFit.cover,
-                // Avoid CORS / Same-Origin issues on Flutter Web by preferring
-                // an <img> element renderer for cross-origin images.
                 webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
                 errorBuilder: (_, __, ___) => Center(
                   child: Text(
@@ -797,7 +830,10 @@ class _EmptyState extends StatelessWidget {
           Text(message, textAlign: TextAlign.center),
           if (onRetry != null) ...[
             const SizedBox(height: 12),
-            ElevatedButton(onPressed: onRetry, child: const Text('Tekrar Dene')),
+            ElevatedButton(
+              onPressed: onRetry,
+              child: Text(AppStrings.t('Try Again')),
+            ),
           ]
         ],
       ),
@@ -805,44 +841,23 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-String _dayLabel(int dayOfWeek) {
-  const labels = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
-  if (dayOfWeek < 0 || dayOfWeek > 6) return '';
-  return labels[dayOfWeek];
+String _dayLabel(String dateValue) {
+  final parsed = DateTime.tryParse(dateValue);
+  if (parsed == null) return '';
+  return DateFormat('EEE', _localeName()).format(parsed);
 }
 
 String _formatDateShort(String dateValue) {
-  try {
-    final date = DateTime.parse(dateValue);
-    final day = date.day.toString().padLeft(2, '0');
-    final month = _monthName(date.month);
-    return '$day $month';
-  } catch (_) {
-    return dateValue;
-  }
-}
-
-String _monthName(int month) {
-  const months = [
-    'Ocak',
-    'Şubat',
-    'Mart',
-    'Nisan',
-    'Mayıs',
-    'Haziran',
-    'Temmuz',
-    'Ağustos',
-    'Eylül',
-    'Ekim',
-    'Kasım',
-    'Aralık',
-  ];
-  return months[month - 1];
+  final parsed = DateTime.tryParse(dateValue);
+  if (parsed == null) return dateValue;
+  return DateFormat('dd MMM', _localeName()).format(parsed);
 }
 
 String _weekRangeLabel(String start, String end) {
-  if (start.isEmpty || end.isEmpty) return '';
-  return '${_formatDateShort(start)} - ${_formatDateShort(end)} ${DateTime.now().year}';
+  final parsedStart = DateTime.tryParse(start);
+  final parsedEnd = DateTime.tryParse(end);
+  if (parsedStart == null || parsedEnd == null) return '';
+  return '${DateFormat('dd MMM', _localeName()).format(parsedStart)} - ${DateFormat('dd MMM yyyy', _localeName()).format(parsedEnd)}';
 }
 
 String _extractError(Object? error) {
@@ -858,8 +873,7 @@ String _extractError(Object? error) {
       }
     }
   }
-  return 'Bir hata oluştu. Lütfen tekrar deneyin.';
+  return AppStrings.t('An unexpected error occurred. Please try again.');
 }
 
-
-
+String _localeName() => AppStrings.code == 'tr' ? 'tr_TR' : 'en_US';
