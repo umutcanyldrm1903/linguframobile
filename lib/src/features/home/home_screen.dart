@@ -1199,6 +1199,9 @@ class InstructorSection extends StatelessWidget {
               image: '',
             ),
           ];
+    final compactListHeight = items.any((item) => item.rating > 0)
+        ? 250.0
+        : 232.0;
 
     return _Section(
       eyebrow: AppStrings.t('Instructors'),
@@ -1219,7 +1222,7 @@ class InstructorSection extends StatelessWidget {
             ],
             if (compact)
               SizedBox(
-                height: 210,
+                height: compactListHeight,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: items.length,
@@ -3853,6 +3856,14 @@ class _InstructorCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasImage = item.image.isNotEmpty;
+    final tags = <String>[
+      AppStrings.t('Speaking Lessons'),
+      AppStrings.t('General English'),
+      AppStrings.t('Business English'),
+    ];
+    final visibleTags = compact ? tags.take(1).toList(growable: false) : tags;
+    final avatarRadius = compact ? 30.0 : 36.0;
+    final avatarSize = compact ? 60.0 : 72.0;
 
     return Container(
       width: compact ? 220 : 260,
@@ -3873,25 +3884,35 @@ class _InstructorCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
-            radius: 36,
+            radius: avatarRadius,
             backgroundColor: const Color(0xFFF1F5F9),
             child: ClipOval(
               child: hasImage
                   ? _HomeNetworkImage(
                       imageUrl: item.image,
-                      width: 72,
-                      height: 72,
+                      width: avatarSize,
+                      height: avatarSize,
                       fit: BoxFit.cover,
                       errorFallback: _InitialsAvatar(name: item.name),
                     )
                   : _InitialsAvatar(name: item.name),
             ),
           ),
-          const SizedBox(height: 10),
-          Text(item.name, style: const TextStyle(fontWeight: FontWeight.w800)),
-          Text(item.title, style: const TextStyle(color: AppColors.muted)),
+          SizedBox(height: compact ? 8 : 10),
+          Text(
+            item.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          Text(
+            item.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: AppColors.muted),
+          ),
           if (item.rating > 0) ...[
-            const SizedBox(height: 6),
+            SizedBox(height: compact ? 4 : 6),
             Text(
               '${item.rating.toStringAsFixed(1)} / 5 • ${item.courseCount} ${AppStrings.t('Courses')}',
               style: TextStyle(
@@ -3900,16 +3921,13 @@ class _InstructorCard extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 10),
+          SizedBox(height: compact ? 8 : 10),
           Wrap(
             spacing: 6,
-            children: [
-              _Tag(text: AppStrings.t('Speaking Lessons')),
-              _Tag(text: AppStrings.t('General English')),
-              _Tag(text: AppStrings.t('Business English')),
-            ],
+            runSpacing: 6,
+            children: [for (final tag in visibleTags) _Tag(text: tag)],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: compact ? 8 : 10),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
@@ -3922,6 +3940,9 @@ class _InstructorCard extends StatelessWidget {
                   ),
                 );
               },
+              style: OutlinedButton.styleFrom(
+                minimumSize: Size.fromHeight(compact ? 36 : 40),
+              ),
               child: Text(AppStrings.t('Schedule Lesson')),
             ),
           ),
