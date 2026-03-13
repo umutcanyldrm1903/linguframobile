@@ -10,32 +10,39 @@ import '../../shared/content_webview_screen.dart';
 import 'student_homeworks_repository.dart';
 
 class StudentHomeworksScreen extends StatefulWidget {
-  const StudentHomeworksScreen({super.key});
+  const StudentHomeworksScreen({
+    super.key,
+    this.repository,
+  });
+
+  final StudentHomeworksRepository? repository;
 
   @override
   State<StudentHomeworksScreen> createState() => _StudentHomeworksScreenState();
 }
 
 class _StudentHomeworksScreenState extends State<StudentHomeworksScreen> {
-  final StudentHomeworksRepository _repo = StudentHomeworksRepository();
   late Future<StudentHomeworksPayload?> _future;
   bool _submitting = false;
 
   @override
   void initState() {
     super.initState();
-    _future = _repo.fetchHomeworks();
+    _future =
+        (widget.repository ?? StudentHomeworksRepository()).fetchHomeworks();
   }
 
   Future<void> _reload({bool silent = false}) async {
     if (!silent) {
       setState(() {
-        _future = _repo.fetchHomeworks();
+        _future = (widget.repository ?? StudentHomeworksRepository())
+            .fetchHomeworks();
       });
       return;
     }
 
-    final payload = await _repo.fetchHomeworks();
+    final payload = await (widget.repository ?? StudentHomeworksRepository())
+        .fetchHomeworks();
     if (!mounted) return;
     setState(() {
       _future = Future<StudentHomeworksPayload?>.value(payload);
@@ -111,7 +118,7 @@ class _StudentHomeworksScreenState extends State<StudentHomeworksScreen> {
 
     setState(() => _submitting = true);
     try {
-      await _repo.submitHomework(
+      await (widget.repository ?? StudentHomeworksRepository()).submitHomework(
         homeworkId: item.id,
         filePath: draft.filePath,
         fileName: draft.fileName,
@@ -283,7 +290,8 @@ class _HomeworkCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(item.title, style: Theme.of(context).textTheme.titleLarge),
+                  Text(item.title,
+                      style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 4),
                   Text(dueLabel, style: Theme.of(context).textTheme.bodyMedium),
                   if (item.instructorName.isNotEmpty) ...[
@@ -326,8 +334,8 @@ class _HomeworkCard extends StatelessWidget {
 
   String _dueLabel(StudentHomeworkItem item) {
     if (item.submission?.submittedAt != null) {
-      final formatted =
-          DateFormat('dd MMM yyyy, HH:mm').format(item.submission!.submittedAt!);
+      final formatted = DateFormat('dd MMM yyyy, HH:mm')
+          .format(item.submission!.submittedAt!);
       return '${AppStrings.t('Submitted')}: $formatted';
     }
     if (item.dueAt == null) {
@@ -407,9 +415,7 @@ class _HomeworkDetailSheet extends StatelessWidget {
               const SizedBox(height: 12),
               _InfoRow(
                 label: AppStrings.t('Instructor'),
-                value: item.instructorName.isEmpty
-                    ? '-'
-                    : item.instructorName,
+                value: item.instructorName.isEmpty ? '-' : item.instructorName,
               ),
               _InfoRow(
                 label: AppStrings.t('End Date'),
@@ -555,9 +561,8 @@ class _SubmissionSheetState extends State<_SubmissionSheet> {
         allowMultiple: false,
       );
 
-      final selected = result == null || result.files.isEmpty
-          ? null
-          : result.files.first;
+      final selected =
+          result == null || result.files.isEmpty ? null : result.files.first;
       if (selected == null || selected.path == null) return;
 
       setState(() {

@@ -7,7 +7,12 @@ import '../messages/student_chat_screen.dart';
 import 'student_notifications_repository.dart';
 
 class StudentNotificationsScreen extends StatefulWidget {
-  const StudentNotificationsScreen({super.key});
+  const StudentNotificationsScreen({
+    super.key,
+    this.repository,
+  });
+
+  final StudentNotificationsRepository? repository;
 
   @override
   State<StudentNotificationsScreen> createState() =>
@@ -16,9 +21,6 @@ class StudentNotificationsScreen extends StatefulWidget {
 
 class _StudentNotificationsScreenState
     extends State<StudentNotificationsScreen> {
-  final StudentNotificationsRepository _repository =
-      StudentNotificationsRepository();
-
   bool _loading = true;
   bool _markingAllRead = false;
   bool _hasError = false;
@@ -40,7 +42,9 @@ class _StudentNotificationsScreenState
     }
 
     try {
-      final items = await _repository.fetchNotifications();
+      final items =
+          await (widget.repository ?? StudentNotificationsRepository())
+              .fetchNotifications();
       if (!mounted) return;
       setState(() {
         _items = items;
@@ -72,7 +76,8 @@ class _StudentNotificationsScreenState
     });
 
     try {
-      await _repository.markAllAsRead();
+      await (widget.repository ?? StudentNotificationsRepository())
+          .markAllAsRead();
       if (!mounted) return;
       setState(() {
         _items = _items
@@ -156,7 +161,8 @@ class _StudentNotificationsScreenState
                 ),
                 const Spacer(),
                 TextButton(
-                  onPressed: anyUnread && !_markingAllRead ? _markAllAsRead : null,
+                  onPressed:
+                      anyUnread && !_markingAllRead ? _markAllAsRead : null,
                   child: Text(
                     _markingAllRead
                         ? AppStrings.t('Loading...')

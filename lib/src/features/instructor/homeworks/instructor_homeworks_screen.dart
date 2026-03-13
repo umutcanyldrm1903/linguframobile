@@ -10,7 +10,14 @@ import '../students/instructor_students_repository.dart';
 import 'instructor_homeworks_repository.dart';
 
 class InstructorHomeworksScreen extends StatefulWidget {
-  const InstructorHomeworksScreen({super.key});
+  const InstructorHomeworksScreen({
+    super.key,
+    this.repository,
+    this.studentsRepository,
+  });
+
+  final InstructorHomeworksRepository? repository;
+  final InstructorStudentsRepository? studentsRepository;
 
   @override
   State<InstructorHomeworksScreen> createState() =>
@@ -18,10 +25,6 @@ class InstructorHomeworksScreen extends StatefulWidget {
 }
 
 class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
-  final InstructorHomeworksRepository _repo = InstructorHomeworksRepository();
-  final InstructorStudentsRepository _studentsRepo =
-      InstructorStudentsRepository();
-
   late Future<InstructorHomeworksPayload?> _homeworksFuture;
   List<InstructorStudent> _students = const [];
   bool _studentsLoading = false;
@@ -35,14 +38,17 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
   }
 
   Future<InstructorHomeworksPayload?> _fetchHomeworks() {
-    return _repo.fetchHomeworks();
+    return (widget.repository ?? InstructorHomeworksRepository())
+        .fetchHomeworks();
   }
 
   Future<void> _loadStudents() async {
     if (_studentsLoading) return;
     setState(() => _studentsLoading = true);
     try {
-      final students = await _studentsRepo.fetchStudents();
+      final students =
+          await (widget.studentsRepository ?? InstructorStudentsRepository())
+              .fetchStudents();
       if (!mounted) return;
       setState(() => _students = students);
     } catch (_) {
@@ -76,7 +82,8 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
 
     setState(() => _saving = true);
     try {
-      await _repo.createHomework(
+      await (widget.repository ?? InstructorHomeworksRepository())
+          .createHomework(
         studentId: form.studentId!,
         title: form.title,
         description: form.description,
@@ -100,7 +107,8 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
 
     setState(() => _saving = true);
     try {
-      await _repo.updateHomework(
+      await (widget.repository ?? InstructorHomeworksRepository())
+          .updateHomework(
         id: homework.id,
         title: form.title,
         description: form.description,
@@ -142,7 +150,8 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
 
     setState(() => _saving = true);
     try {
-      await _repo.archiveHomework(homework.id);
+      await (widget.repository ?? InstructorHomeworksRepository())
+          .archiveHomework(homework.id);
       if (!mounted) return;
       _snack(AppStrings.t('Homework archived.'));
       _reload();
@@ -187,11 +196,9 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
       return;
     }
 
-    String selectedStatus = submission.status.isNotEmpty
-        ? submission.status
-        : 'submitted';
-    final noteController =
-        TextEditingController(text: submission.instructorNote);
+    String selectedStatus =
+        submission.status.isNotEmpty ? submission.status : 'submitted';
+    String noteValue = submission.instructorNote;
 
     final payload = await showDialog<_ReviewFormValue>(
       context: context,
@@ -243,13 +250,14 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
                     },
                   ),
                   const SizedBox(height: 12),
-                  TextField(
-                    controller: noteController,
+                  TextFormField(
+                    initialValue: noteValue,
                     minLines: 3,
                     maxLines: 5,
                     decoration: InputDecoration(
                       labelText: AppStrings.t('Instructor Feedback'),
                     ),
+                    onChanged: (value) => noteValue = value,
                   ),
                 ],
               ),
@@ -264,7 +272,7 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
                   Navigator.of(context).pop(
                     _ReviewFormValue(
                       status: selectedStatus,
-                      note: noteController.text.trim(),
+                      note: noteValue.trim(),
                     ),
                   );
                 },
@@ -276,12 +284,12 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
       ),
     );
 
-    noteController.dispose();
     if (payload == null) return;
 
     setState(() => _saving = true);
     try {
-      await _repo.reviewHomework(
+      await (widget.repository ?? InstructorHomeworksRepository())
+          .reviewHomework(
         id: homework.id,
         status: payload.status,
         instructorNote: payload.note,
@@ -554,15 +562,16 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
                                     : AppStrings.t('Homework File'),
                                 rawUrl: hw.attachmentPath,
                               ),
-                      onOpenSubmission: hw.submission?.submissionPath.isNotEmpty ==
-                              true
-                          ? () => _openContent(
-                                title: hw.submission!.submissionName.isNotEmpty
-                                    ? hw.submission!.submissionName
-                                    : AppStrings.t('Submission'),
-                                rawUrl: hw.submission!.submissionPath,
-                              )
-                          : null,
+                      onOpenSubmission:
+                          hw.submission?.submissionPath.isNotEmpty == true
+                              ? () => _openContent(
+                                    title:
+                                        hw.submission!.submissionName.isNotEmpty
+                                            ? hw.submission!.submissionName
+                                            : AppStrings.t('Submission'),
+                                    rawUrl: hw.submission!.submissionPath,
+                                  )
+                              : null,
                     ),
                   ),
                 ),
@@ -590,15 +599,16 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
                                     : AppStrings.t('Homework File'),
                                 rawUrl: hw.attachmentPath,
                               ),
-                      onOpenSubmission: hw.submission?.submissionPath.isNotEmpty ==
-                              true
-                          ? () => _openContent(
-                                title: hw.submission!.submissionName.isNotEmpty
-                                    ? hw.submission!.submissionName
-                                    : AppStrings.t('Submission'),
-                                rawUrl: hw.submission!.submissionPath,
-                              )
-                          : null,
+                      onOpenSubmission:
+                          hw.submission?.submissionPath.isNotEmpty == true
+                              ? () => _openContent(
+                                    title:
+                                        hw.submission!.submissionName.isNotEmpty
+                                            ? hw.submission!.submissionName
+                                            : AppStrings.t('Submission'),
+                                    rawUrl: hw.submission!.submissionPath,
+                                  )
+                              : null,
                     ),
                   ),
                 ),
