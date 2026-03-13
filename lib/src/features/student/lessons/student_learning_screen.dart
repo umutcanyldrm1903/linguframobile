@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/content_uri.dart';
-import '../../shared/content_webview_screen.dart';
+import '../../shared/content_preview_launcher.dart';
 import '../../zoom/live_lesson_launcher.dart';
 import 'student_course_repository.dart';
 import 'student_quiz_screen.dart';
@@ -143,32 +142,23 @@ class _StudentLearningScreenState extends State<StudentLearningScreen> {
         return;
       }
 
-      final externalUri = tryResolveWebUri(rawUrl);
-      if (externalUri == null) {
+      if ((rawUrl ?? '').trim().isEmpty) {
         _showSnack(AppStrings.t('Link not found.'));
         return;
       }
 
       if (!mounted) return;
-      await Navigator.push(
+      await openContentPreview(
         context,
-        MaterialPageRoute(
-          builder: (_) => ContentWebViewScreen(
-            title: info.title.isNotEmpty
-                ? info.title
-                : (item.title.isNotEmpty
-                    ? item.title
-                    : AppStrings.t(
-                        item.type == 'live' ? 'Live Lesson' : 'Lesson',
-                      )),
-            loadUrl:
-                (tryBuildEmbeddedContentUri(rawUrl) ?? externalUri).toString(),
-            externalUrl: externalUri.toString(),
-            actionLabel: AppStrings.t(
-              item.type == 'live' ? 'Open Externally' : 'Open in Browser',
-            ),
-          ),
-        ),
+        title: info.title.isNotEmpty
+            ? info.title
+            : (item.title.isNotEmpty
+                ? item.title
+                : AppStrings.t(
+                    item.type == 'live' ? 'Live Lesson' : 'Lesson',
+                  )),
+        rawUrl: rawUrl!,
+        browserActionLabel: AppStrings.t('Open in Browser'),
       );
 
       if (!mounted) return;

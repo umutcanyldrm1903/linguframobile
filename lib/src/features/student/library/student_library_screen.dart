@@ -3,8 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/content_uri.dart';
-import '../../shared/content_webview_screen.dart';
+import '../../shared/content_preview_launcher.dart';
 import 'student_library_repository.dart';
 
 class StudentLibraryScreen extends StatefulWidget {
@@ -44,29 +43,11 @@ class _StudentLibraryScreenState extends State<StudentLibraryScreen> {
   }
 
   Future<void> _openFile(StudentLibraryItem item) async {
-    final externalUri = tryResolveWebUri(item.filePath);
-    if (externalUri == null) {
-      _showSnack(AppStrings.t('Link not found.'));
-      return;
-    }
-
-    final loadUri = tryBuildEmbeddedContentUri(item.filePath) ?? externalUri;
-    await Navigator.push(
+    await openContentPreview(
       context,
-      MaterialPageRoute(
-        builder: (_) => ContentWebViewScreen(
-          title: item.fileName.isNotEmpty ? item.fileName : item.title,
-          loadUrl: loadUri.toString(),
-          externalUrl: externalUri.toString(),
-          actionLabel: AppStrings.t('Open Externally'),
-        ),
-      ),
-    );
-  }
-
-  void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      title: item.fileName.isNotEmpty ? item.fileName : item.title,
+      rawUrl: item.filePath,
+      browserActionLabel: AppStrings.t('Open Externally'),
     );
   }
 

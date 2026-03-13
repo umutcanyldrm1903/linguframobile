@@ -1,5 +1,13 @@
 import 'url_resolver.dart';
 
+enum ContentPreviewType {
+  web,
+  pdf,
+  office,
+  video,
+  image,
+}
+
 const _documentExtensions = <String>{
   '.pdf',
   '.doc',
@@ -18,10 +26,39 @@ const _inlineMediaExtensions = <String>{
   '.m3u8',
 };
 
+const _imageExtensions = <String>{
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+  '.gif',
+};
+
 Uri? tryResolveWebUri(String? raw) {
   final value = (raw ?? '').trim();
   if (value.isEmpty) return null;
   return Uri.tryParse(resolveWebUrl(value));
+}
+
+ContentPreviewType detectContentPreviewType(String? raw) {
+  final uri = tryResolveWebUri(raw);
+  if (uri == null) return ContentPreviewType.web;
+
+  final path = uri.path.toLowerCase();
+  if (path.endsWith('.pdf')) {
+    return ContentPreviewType.pdf;
+  }
+  if (_documentExtensions.any(path.endsWith)) {
+    return ContentPreviewType.office;
+  }
+  if (_inlineMediaExtensions.any(path.endsWith)) {
+    return ContentPreviewType.video;
+  }
+  if (_imageExtensions.any(path.endsWith)) {
+    return ContentPreviewType.image;
+  }
+
+  return ContentPreviewType.web;
 }
 
 Uri? tryBuildEmbeddedContentUri(String? raw) {

@@ -4,8 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/content_uri.dart';
-import '../../shared/content_webview_screen.dart';
+import '../../shared/content_preview_launcher.dart';
 import '../students/instructor_students_repository.dart';
 import 'instructor_homeworks_repository.dart';
 
@@ -168,24 +167,11 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
     required String title,
     required String rawUrl,
   }) async {
-    final externalUri = tryResolveWebUri(rawUrl);
-    if (externalUri == null) {
-      _snack(AppStrings.t('Link not found.'));
-      return;
-    }
-
-    final loadUri = tryBuildEmbeddedContentUri(rawUrl) ?? externalUri;
-    if (!mounted) return;
-    await Navigator.push(
+    await openContentPreview(
       context,
-      MaterialPageRoute(
-        builder: (_) => ContentWebViewScreen(
-          title: title,
-          loadUrl: loadUri.toString(),
-          externalUrl: externalUri.toString(),
-          actionLabel: AppStrings.t('Open Externally'),
-        ),
-      ),
+      title: title,
+      rawUrl: rawUrl,
+      browserActionLabel: AppStrings.t('Open Externally'),
     );
   }
 
