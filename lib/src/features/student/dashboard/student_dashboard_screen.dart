@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_strings.dart';
 import 'package:lingufranca_mobile/src/core/theme/app_colors.dart';
 import 'package:lingufranca_mobile/src/features/student/dashboard/student_dashboard_repository.dart';
@@ -41,14 +41,6 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       }
     }
     return AppStrings.t('Something went wrong');
-  }
-
-  Future<void> _openExternal(String rawUrl) async {
-    final value = rawUrl.trim();
-    if (value.isEmpty) return;
-    final uri = Uri.tryParse(value);
-    if (uri == null) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   Future<void> _handleTrialRequest(DashboardPayload? payload) async {
@@ -101,9 +93,10 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text(message)));
 
-      if (result.whatsappUrl.trim().isNotEmpty) {
-        await _openExternal(result.whatsappUrl);
-      }
+      await _showTrialRequestResult(
+        message: message,
+        supportLink: result.whatsappUrl.trim(),
+      );
     } catch (error) {
       if (!mounted) return;
       if (error is DioException && error.response?.statusCode == 401) {
@@ -118,6 +111,108 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         setState(() => _requestingTrial = false);
       }
     }
+  }
+
+  Future<void> _showTrialRequestResult({
+    required String message,
+    required String supportLink,
+  }) async {
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return SafeArea(
+          child: Container(
+            margin: const EdgeInsets.only(top: 40),
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 48,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFD1D5DB),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  AppStrings.t('Trial lesson request received'),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                if (supportLink.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppStrings.t('Support Link'),
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 8),
+                        SelectableText(supportLink),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        await Clipboard.setData(
+                          ClipboardData(text: supportLink),
+                        );
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              AppStrings.t('Support link copied.'),
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.copy_outlined),
+                      label: Text(AppStrings.t('Copy Support Link')),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text(AppStrings.t('Done')),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -390,10 +485,10 @@ class _WelcomeCard extends StatelessWidget {
               'Nice to see you again, :name!',
             ).replaceAll(':name', name),
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: AppColors.ink,
-              fontWeight: FontWeight.w800,
-              fontSize: compact ? 18 : null,
-            ),
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w800,
+                  fontSize: compact ? 18 : null,
+                ),
           ),
           const SizedBox(height: 6),
           Text(
@@ -415,9 +510,8 @@ class _PlanBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final planTitle = plan?.title.isNotEmpty == true
-        ? plan!.title
-        : AppStrings.t('No Plan');
+    final planTitle =
+        plan?.title.isNotEmpty == true ? plan!.title : AppStrings.t('No Plan');
     final lessons = plan?.lessonsRemaining ?? 0;
     final cancelRemaining = plan?.cancelRemaining ?? 0;
     final assignedInstructor =

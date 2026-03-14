@@ -47,7 +47,6 @@ class _StudentLibraryScreenState extends State<StudentLibraryScreen> {
       context,
       title: item.fileName.isNotEmpty ? item.fileName : item.title,
       rawUrl: item.filePath,
-      browserActionLabel: AppStrings.t('Open Externally'),
     );
   }
 
@@ -59,9 +58,11 @@ class _StudentLibraryScreenState extends State<StudentLibraryScreen> {
         future: _future,
         builder: (context, snapshot) {
           final payload = snapshot.data;
-          final categories = payload?.categories ?? const <StudentLibraryCategory>[];
+          final categories =
+              payload?.categories ?? const <StudentLibraryCategory>[];
           final items = payload?.items ?? const <StudentLibraryItem>[];
-          final selectedCategory = payload?.selectedCategory ?? _selectedCategory;
+          final selectedCategory =
+              payload?.selectedCategory ?? _selectedCategory;
 
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -312,9 +313,10 @@ class _LibraryItemCard extends StatelessWidget {
                     children: [
                       Text(
                         item.title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w800,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
                       ),
                       const SizedBox(height: 4),
                       if (item.description.trim().isNotEmpty)
@@ -334,8 +336,7 @@ class _LibraryItemCard extends StatelessWidget {
               spacing: 12,
               runSpacing: 8,
               children: [
-                if (item.fileName.isNotEmpty)
-                  _MetaPill(label: item.fileName),
+                if (item.fileName.isNotEmpty) _MetaPill(label: item.fileName),
                 if (item.instructorName.isNotEmpty)
                   _MetaPill(
                     label:

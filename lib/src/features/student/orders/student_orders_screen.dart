@@ -91,7 +91,6 @@ class _StudentOrdersScreenState extends State<StudentOrdersScreen> {
       context,
       title: '${AppStrings.t('Invoice')} $invoiceId',
       rawUrl: uri.toString(),
-      browserActionLabel: AppStrings.t('Open Externally'),
     );
   }
 

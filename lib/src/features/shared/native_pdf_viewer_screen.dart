@@ -8,12 +8,12 @@ class NativePdfViewerScreen extends StatelessWidget {
     super.key,
     required this.title,
     required this.pdfUrl,
-    required this.onOpenExternally,
+    this.onOpenExternally,
   });
 
   final String title;
   final String pdfUrl;
-  final Future<void> Function() onOpenExternally;
+  final Future<void> Function()? onOpenExternally;
 
   @override
   Widget build(BuildContext context) {
@@ -21,11 +21,12 @@ class NativePdfViewerScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(title),
         actions: [
-          IconButton(
-            onPressed: onOpenExternally,
-            icon: const Icon(Icons.open_in_new),
-            tooltip: AppStrings.t('Open Externally'),
-          ),
+          if (onOpenExternally != null)
+            IconButton(
+              onPressed: onOpenExternally,
+              icon: const Icon(Icons.open_in_new),
+              tooltip: AppStrings.t('Open Externally'),
+            ),
         ],
       ),
       body: PDF(
@@ -55,7 +56,7 @@ class _PdfErrorState extends StatelessWidget {
   });
 
   final String message;
-  final Future<void> Function() onOpenExternally;
+  final Future<void> Function()? onOpenExternally;
 
   @override
   Widget build(BuildContext context) {
@@ -78,11 +79,12 @@ class _PdfErrorState extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: onOpenExternally,
-              icon: const Icon(Icons.open_in_new),
-              label: Text(AppStrings.t('Open Externally')),
-            ),
+            if (onOpenExternally != null)
+              FilledButton.icon(
+                onPressed: onOpenExternally,
+                icon: const Icon(Icons.open_in_new),
+                label: Text(AppStrings.t('Open Externally')),
+              ),
           ],
         ),
       ),

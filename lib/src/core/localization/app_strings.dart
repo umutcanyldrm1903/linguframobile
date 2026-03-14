@@ -25,6 +25,15 @@ class AppStrings {
     'The easiest way to learn a language.': 'Dil öğrenmenin en pratik yolu.',
     'Payment Method': 'Ödeme Yöntemi',
     'Follow Us On': 'Bizi Takip Edin',
+    'Zoom native support is not available on this device.':
+        'Bu cihazda native Zoom destegi kullanilamiyor.',
+    'Zoom SDK credentials are missing.': 'Zoom SDK bilgileri eksik.',
+    'Zoom could not start. Please try again.':
+        'Zoom baslatilamadi. Lutfen tekrar deneyin.',
+    'Camera and microphone permissions are required to join the lesson.':
+        'Derse katilmak icin kamera ve mikrofon izinleri gerekir.',
+    'Zoom could not join the lesson. Please try again.':
+        'Zoom derse baglanamadi. Lutfen tekrar deneyin.',
   };
 
   static String get code => _code;

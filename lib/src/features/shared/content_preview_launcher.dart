@@ -21,6 +21,7 @@ Future<void> openContentPreview(
     return;
   }
 
+  final canOpenExternally = (browserActionLabel ?? '').trim().isNotEmpty;
   Future<void> openExternally() async {
     final opened =
         await launchUrl(externalUri, mode: LaunchMode.externalApplication);
@@ -28,6 +29,8 @@ Future<void> openContentPreview(
       _showSnack(context, AppStrings.t('Could not open link.'));
     }
   }
+
+  final externalAction = canOpenExternally ? openExternally : null;
 
   final previewType = detectContentPreviewType(rawUrl);
   final embeddedUri = tryBuildEmbeddedContentUri(rawUrl);
@@ -38,21 +41,21 @@ Future<void> openContentPreview(
       screen = NativePdfViewerScreen(
         title: title,
         pdfUrl: externalUri.toString(),
-        onOpenExternally: openExternally,
+        onOpenExternally: externalAction,
       );
       break;
     case ContentPreviewType.video:
       screen = NativeVideoPlayerScreen(
         title: title,
         videoUrl: externalUri.toString(),
-        onOpenExternally: openExternally,
+        onOpenExternally: externalAction,
       );
       break;
     case ContentPreviewType.image:
       screen = NativeImageViewerScreen(
         title: title,
         imageUrl: externalUri.toString(),
-        onOpenExternally: openExternally,
+        onOpenExternally: externalAction,
       );
       break;
     case ContentPreviewType.office:
@@ -60,15 +63,15 @@ Future<void> openContentPreview(
         title: title,
         documentUrl: externalUri.toString(),
         previewUrl: embeddedUri?.toString(),
-        onOpenExternally: openExternally,
+        onOpenExternally: externalAction,
       );
       break;
     case ContentPreviewType.web:
       screen = ContentWebViewScreen(
         title: title,
         loadUrl: (embeddedUri ?? externalUri).toString(),
-        externalUrl: externalUri.toString(),
-        actionLabel: browserActionLabel ?? AppStrings.t('Open in Browser'),
+        externalUrl: canOpenExternally ? externalUri.toString() : null,
+        actionLabel: canOpenExternally ? browserActionLabel : null,
       );
       break;
   }

@@ -5,7 +5,6 @@ import 'package:lingufranca_mobile/src/core/localization/app_currency_provider.d
 import 'package:lingufranca_mobile/src/core/localization/app_locale_provider.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_strings.dart';
 import 'package:lingufranca_mobile/src/core/storage/secure_storage.dart';
-import 'package:lingufranca_mobile/src/core/theme/app_colors.dart';
 import 'package:lingufranca_mobile/src/core/theme/app_theme.dart';
 import 'package:lingufranca_mobile/src/features/auth/login_screen.dart';
 import 'package:lingufranca_mobile/src/features/auth/register_screen.dart';
@@ -102,43 +101,34 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.brand, Color(0xFFFBBF24)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              CircleAvatar(
-                radius: 36,
-                backgroundColor: Colors.white,
-                child: Icon(Icons.school, color: AppColors.brand, size: 40),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Lingufranca',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
+      backgroundColor: Colors.white,
+      body: const Center(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Color(0x14000000),
+                blurRadius: 20,
+                offset: Offset(0, 8),
               ),
             ],
           ),
+          child: Padding(
+            padding: EdgeInsets.all(14),
+            child: ClipOval(
+              child: Image(
+                image: AssetImage('assets/icon/app_icon_source.png'),
+                width: 72,
+                height: 72,
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
+              ),
+            ),
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.ink,
-        label: Text(AppStrings.t('Start')),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

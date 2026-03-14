@@ -10,13 +10,13 @@ class DocumentContentScreen extends StatelessWidget {
     required this.title,
     required this.documentUrl,
     this.previewUrl,
-    required this.onOpenExternally,
+    this.onOpenExternally,
   });
 
   final String title;
   final String documentUrl;
   final String? previewUrl;
-  final Future<void> Function() onOpenExternally;
+  final Future<void> Function()? onOpenExternally;
 
   @override
   Widget build(BuildContext context) {
@@ -82,8 +82,11 @@ class DocumentContentScreen extends StatelessWidget {
                         builder: (_) => ContentWebViewScreen(
                           title: title,
                           loadUrl: previewUrl!,
-                          externalUrl: documentUrl,
-                          actionLabel: AppStrings.t('Open Externally'),
+                          externalUrl:
+                              onOpenExternally == null ? null : documentUrl,
+                          actionLabel: onOpenExternally == null
+                              ? null
+                              : AppStrings.t('Open Externally'),
                         ),
                       ),
                     );
@@ -92,15 +95,17 @@ class DocumentContentScreen extends StatelessWidget {
                   label: Text(AppStrings.t('Preview Document')),
                 ),
               ),
-            if ((previewUrl ?? '').trim().isNotEmpty) const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: onOpenExternally,
-                icon: const Icon(Icons.open_in_new),
-                label: Text(AppStrings.t('Open Externally')),
+            if ((previewUrl ?? '').trim().isNotEmpty)
+              const SizedBox(height: 10),
+            if (onOpenExternally != null)
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onOpenExternally,
+                  icon: const Icon(Icons.open_in_new),
+                  label: Text(AppStrings.t('Open Externally')),
+                ),
               ),
-            ),
           ],
         ),
       ),

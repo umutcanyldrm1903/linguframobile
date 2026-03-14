@@ -171,7 +171,6 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
       context,
       title: title,
       rawUrl: rawUrl,
-      browserActionLabel: AppStrings.t('Open Externally'),
     );
   }
 

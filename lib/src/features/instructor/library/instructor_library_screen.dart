@@ -621,7 +621,6 @@ class _LibraryItemCard extends StatelessWidget {
       context,
       title: item.fileName.isNotEmpty ? item.fileName : item.title,
       rawUrl: uri.toString(),
-      browserActionLabel: AppStrings.t('Open Externally'),
     );
   }
 

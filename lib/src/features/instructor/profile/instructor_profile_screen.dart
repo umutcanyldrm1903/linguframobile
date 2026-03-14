@@ -2,11 +2,11 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../profile/profile_repository.dart';
+import '../../shared/content_preview_launcher.dart';
 import '../schedule/instructor_schedule_screen.dart';
 
 class InstructorProfileScreen extends StatefulWidget {
@@ -118,9 +118,11 @@ class _InstructorProfileScreenState extends State<InstructorProfileScreen> {
   Future<void> _openIntroVideo() async {
     final url = _profile?.introVideoUrl ?? '';
     if (url.isEmpty) return;
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
-    await launchUrl(uri, mode: LaunchMode.externalApplication);
+    await openContentPreview(
+      context,
+      title: AppStrings.t('Intro Video'),
+      rawUrl: url,
+    );
   }
 
   void _toggleCertificate(String key) {

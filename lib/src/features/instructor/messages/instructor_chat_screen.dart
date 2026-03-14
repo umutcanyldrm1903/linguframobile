@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_strings.dart';
@@ -7,7 +7,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../messages/chat_repository.dart';
 
 class InstructorChatScreen extends StatefulWidget {
-  const InstructorChatScreen({super.key, required this.partnerId, required this.name});
+  const InstructorChatScreen(
+      {super.key, required this.partnerId, required this.name});
 
   final int partnerId;
   final String name;
@@ -41,16 +42,23 @@ class _InstructorChatScreenState extends State<InstructorChatScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserId();
-    _loadMessages();
-    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) => _loadMessages(silent: true));
+    _bootstrapThread();
+  }
+
+  Future<void> _bootstrapThread() async {
+    await _loadUserId();
+    if (!mounted) return;
+    await _loadMessages();
+    if (!mounted) return;
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 8),
+      (_) => _loadMessages(silent: true),
+    );
   }
 
   Future<void> _loadUserId() async {
     final stored = await SecureStorage.getUserId();
-    if (stored != null) {
-      _userId = int.tryParse(stored) ?? 0;
-    }
+    _userId = stored == null ? 0 : int.tryParse(stored) ?? 0;
   }
 
   Future<void> _loadMessages({bool silent = false}) async {
@@ -58,13 +66,19 @@ class _InstructorChatScreenState extends State<InstructorChatScreen> {
       setState(() => _loading = true);
     }
     try {
+      final shouldAutoScroll = !silent || _isNearBottom();
+      final previousLastId = _messages.isEmpty ? null : _messages.last.id;
       final items = await _repository.fetchThreadMessages(widget.partnerId);
       if (mounted) {
         setState(() {
           _messages = items;
           _loading = false;
         });
-        _jumpToBottom();
+        final hasNewTailMessage =
+            items.isNotEmpty && items.last.id != previousLastId;
+        if (hasNewTailMessage && shouldAutoScroll) {
+          _jumpToBottom(animated: silent);
+        }
       }
     } catch (error) {
       if (!mounted) return;
@@ -84,7 +98,7 @@ class _InstructorChatScreenState extends State<InstructorChatScreen> {
     try {
       final message = await _repository.sendMessage(widget.partnerId, text);
       setState(() => _messages = [..._messages, message]);
-      _jumpToBottom();
+      _jumpToBottom(animated: true);
     } catch (error) {
       _controller.text = text;
       if (!mounted) return;
@@ -94,10 +108,25 @@ class _InstructorChatScreenState extends State<InstructorChatScreen> {
     }
   }
 
-  void _jumpToBottom() {
+  bool _isNearBottom() {
+    if (!_scrollController.hasClients) return true;
+    final position = _scrollController.position;
+    return (position.maxScrollExtent - position.pixels) <= 120;
+  }
+
+  void _jumpToBottom({bool animated = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.jumpTo(_scrollController.position.maxScrollExtent + 50);
+        final target = _scrollController.position.maxScrollExtent + 50;
+        if (animated) {
+          _scrollController.animateTo(
+            target,
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+          );
+          return;
+        }
+        _scrollController.jumpTo(target);
       }
     });
   }
@@ -179,7 +208,8 @@ class _ChatBubble extends StatelessWidget {
           border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
         child: Column(
-          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Text(
               text,

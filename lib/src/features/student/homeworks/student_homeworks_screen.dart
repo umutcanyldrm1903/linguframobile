@@ -86,7 +86,6 @@ class _StudentHomeworksScreenState extends State<StudentHomeworksScreen> {
       context,
       title: title,
       rawUrl: rawUrl,
-      browserActionLabel: AppStrings.t('Open Externally'),
     );
   }
 

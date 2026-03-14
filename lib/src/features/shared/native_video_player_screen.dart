@@ -9,15 +9,16 @@ class NativeVideoPlayerScreen extends StatefulWidget {
     super.key,
     required this.title,
     required this.videoUrl,
-    required this.onOpenExternally,
+    this.onOpenExternally,
   });
 
   final String title;
   final String videoUrl;
-  final Future<void> Function() onOpenExternally;
+  final Future<void> Function()? onOpenExternally;
 
   @override
-  State<NativeVideoPlayerScreen> createState() => _NativeVideoPlayerScreenState();
+  State<NativeVideoPlayerScreen> createState() =>
+      _NativeVideoPlayerScreenState();
 }
 
 class _NativeVideoPlayerScreenState extends State<NativeVideoPlayerScreen> {
@@ -60,11 +61,12 @@ class _NativeVideoPlayerScreenState extends State<NativeVideoPlayerScreen> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          IconButton(
-            onPressed: widget.onOpenExternally,
-            icon: const Icon(Icons.open_in_new),
-            tooltip: AppStrings.t('Open Externally'),
-          ),
+          if (widget.onOpenExternally != null)
+            IconButton(
+              onPressed: widget.onOpenExternally,
+              icon: const Icon(Icons.open_in_new),
+              tooltip: AppStrings.t('Open Externally'),
+            ),
         ],
       ),
       body: FutureBuilder<void>(
@@ -145,11 +147,12 @@ class _NativeVideoPlayerScreenState extends State<NativeVideoPlayerScreen> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        OutlinedButton.icon(
-                          onPressed: widget.onOpenExternally,
-                          icon: const Icon(Icons.open_in_browser),
-                          label: Text(AppStrings.t('Open Externally')),
-                        ),
+                        if (widget.onOpenExternally != null)
+                          OutlinedButton.icon(
+                            onPressed: widget.onOpenExternally,
+                            icon: const Icon(Icons.open_in_browser),
+                            label: Text(AppStrings.t('Open Externally')),
+                          ),
                       ],
                     ),
                   ],
@@ -166,7 +169,7 @@ class _NativeVideoPlayerScreenState extends State<NativeVideoPlayerScreen> {
 class _VideoErrorState extends StatelessWidget {
   const _VideoErrorState({required this.onOpenExternally});
 
-  final Future<void> Function() onOpenExternally;
+  final Future<void> Function()? onOpenExternally;
 
   @override
   Widget build(BuildContext context) {
@@ -183,11 +186,12 @@ class _VideoErrorState extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: onOpenExternally,
-              icon: const Icon(Icons.open_in_new),
-              label: Text(AppStrings.t('Open Externally')),
-            ),
+            if (onOpenExternally != null)
+              FilledButton.icon(
+                onPressed: onOpenExternally,
+                icon: const Icon(Icons.open_in_new),
+                label: Text(AppStrings.t('Open Externally')),
+              ),
           ],
         ),
       ),

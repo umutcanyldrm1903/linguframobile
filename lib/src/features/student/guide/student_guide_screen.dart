@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../shared/content_webview_screen.dart';
+import '../../shared/content_preview_launcher.dart';
 import 'student_guide_repository.dart';
 
 class StudentGuideScreen extends StatefulWidget {
@@ -135,20 +135,12 @@ class _GuideItemTile extends StatelessWidget {
   Future<void> _openUrl(BuildContext context, String value) async {
     final url = value.trim();
     if (url.isEmpty) return;
-    final uri = Uri.tryParse(url);
-    if (uri == null) return;
 
     if (!context.mounted) return;
-    await Navigator.push(
+    await openContentPreview(
       context,
-      MaterialPageRoute(
-        builder: (_) => ContentWebViewScreen(
-          loadUrl: uri.toString(),
-          title: item.title.isNotEmpty ? item.title : AppStrings.t('User Guide'),
-          externalUrl: uri.toString(),
-          actionLabel: AppStrings.t('Open'),
-        ),
-      ),
+      title: item.title.isNotEmpty ? item.title : AppStrings.t('User Guide'),
+      rawUrl: url,
     );
   }
 }

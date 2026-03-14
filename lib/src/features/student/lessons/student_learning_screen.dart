@@ -158,7 +158,6 @@ class _StudentLearningScreenState extends State<StudentLearningScreen> {
                     item.type == 'live' ? 'Live Lesson' : 'Lesson',
                   )),
         rawUrl: rawUrl!,
-        browserActionLabel: AppStrings.t('Open in Browser'),
       );
 
       if (!mounted) return;

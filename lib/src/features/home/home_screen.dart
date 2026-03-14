@@ -8,7 +8,6 @@ import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../shared/content_preview_launcher.dart';
 import '../student/instructors/student_instructors_screen.dart';
-import '../student/packages/student_packages_screen.dart';
 import '../public/public_repository.dart';
 import '../public/public_header.dart';
 
@@ -301,9 +300,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 SizedBox(height: sectionGap),
                 const InstructorCtaSection(),
                 SizedBox(height: sectionGap),
-                AppDownloadSection(key: _appKey),
-                SizedBox(height: sectionGap),
-                FooterSection(onNavTap: _handleNav),
               ],
             ),
           ),
@@ -624,17 +620,6 @@ class HeroSection extends StatelessWidget {
         'Start live lessons with native English instructors who also speak Turkish.',
       ),
     );
-    final primaryLabel = _readSectionText(
-      content,
-      'action_button_text',
-      AppStrings.t('Start now with a free trial lesson!'),
-    );
-    final secondaryLabel = _readSectionText(
-      content,
-      'video_button_text',
-      AppStrings.t('Explore packages'),
-    );
-
     if (compact) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
@@ -730,37 +715,8 @@ class HeroSection extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 18),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pushNamed(context, '/login'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: AppColors.brandDeep,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: Text(primaryLabel),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
                     Row(
                       children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const StudentPackagesScreen(),
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              side: const BorderSide(color: Colors.white54),
-                            ),
-                            child: Text(secondaryLabel),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () =>
@@ -871,23 +827,6 @@ class HeroSection extends StatelessWidget {
             spacing: 12,
             runSpacing: 12,
             children: [
-              ElevatedButton(
-                onPressed: () => Navigator.pushNamed(context, '/login'),
-                child: Text(primaryLabel),
-              ),
-              OutlinedButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const StudentPackagesScreen(),
-                  ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white54),
-                ),
-                child: Text(secondaryLabel),
-              ),
               OutlinedButton(
                 onPressed: () =>
                     Navigator.pushNamed(context, '/placement-test'),
@@ -1727,19 +1666,7 @@ class _PackagesSectionState extends State<PackagesSection> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const StudentPackagesScreen(),
-                          ),
-                        ),
-                        child: Text(AppStrings.t('View All')),
-                      ),
-                    ),
+                    const SizedBox(height: 6),
                   ],
                 );
               },
@@ -3804,9 +3731,10 @@ class _CorporatePreviewFallback extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final tightHeight = constraints.maxHeight <= 164;
+        final veryTightHeight = constraints.maxHeight <= 150;
         final horizontalPadding = tightHeight ? 14.0 : 18.0;
         final verticalPadding = tightHeight ? 14.0 : 18.0;
-        final iconRadius = tightHeight ? 18.0 : 22.0;
+        final iconRadius = veryTightHeight ? 16.0 : (tightHeight ? 18.0 : 22.0);
 
         return DecoratedBox(
           decoration: const BoxDecoration(
@@ -3838,7 +3766,6 @@ class _CorporatePreviewFallback extends StatelessWidget {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     CircleAvatar(
                       radius: iconRadius,
@@ -3846,34 +3773,46 @@ class _CorporatePreviewFallback extends StatelessWidget {
                       child: Icon(
                         Icons.apartment_rounded,
                         color: AppColors.brand,
-                        size: tightHeight ? 18 : 22,
+                        size: veryTightHeight ? 16 : (tightHeight ? 18 : 22),
                       ),
                     ),
                     SizedBox(height: tightHeight ? 8 : 12),
-                    Text(
-                      AppStrings.t('Corporate language training'),
-                      maxLines: tightHeight ? 1 : 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: AppColors.brandDeep,
-                        fontWeight: FontWeight.w800,
-                        fontSize: tightHeight ? 16 : 18,
-                        height: 1.2,
-                      ),
-                    ),
-                    SizedBox(height: tightHeight ? 4 : 6),
-                    Flexible(
-                      child: Text(
-                        AppStrings.t(
-                          'Flexible planning, progress tracking, and instructor matching for teams.',
-                        ),
-                        maxLines: tightHeight ? 2 : 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: AppColors.muted,
-                          height: 1.35,
-                          fontSize: tightHeight ? 12.5 : 13.5,
-                        ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text(
+                            AppStrings.t('Corporate language training'),
+                            maxLines: tightHeight ? 1 : 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: AppColors.brandDeep,
+                              fontWeight: FontWeight.w800,
+                              fontSize: veryTightHeight
+                                  ? 15
+                                  : (tightHeight ? 16 : 18),
+                              height: 1.2,
+                            ),
+                          ),
+                          SizedBox(height: tightHeight ? 4 : 6),
+                          Expanded(
+                            child: Text(
+                              AppStrings.t(
+                                'Flexible planning, progress tracking, and instructor matching for teams.',
+                              ),
+                              maxLines: tightHeight ? 2 : 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: AppColors.muted,
+                                height: 1.35,
+                                fontSize: veryTightHeight
+                                    ? 12
+                                    : (tightHeight ? 12.5 : 13.5),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],

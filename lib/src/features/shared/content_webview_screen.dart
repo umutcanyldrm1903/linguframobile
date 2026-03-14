@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-import '../../core/localization/app_strings.dart';
-
 class ContentWebViewScreen extends StatefulWidget {
   const ContentWebViewScreen({
     super.key,
@@ -54,16 +52,19 @@ class _ContentWebViewScreenState extends State<ContentWebViewScreen> {
   @override
   Widget build(BuildContext context) {
     final externalUri = _externalUri;
+    final actionLabel = widget.actionLabel?.trim();
+    final showExternalAction =
+        externalUri != null && actionLabel != null && actionLabel.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          if (externalUri != null)
+          if (showExternalAction)
             TextButton.icon(
               onPressed: _openExternally,
               icon: const Icon(Icons.open_in_new),
-              label: Text(widget.actionLabel ?? AppStrings.t('Open')),
+              label: Text(actionLabel),
             ),
         ],
       ),
