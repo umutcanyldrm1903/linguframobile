@@ -160,7 +160,7 @@ import UIKit
       return
     }
 
-    if let controller = presentableRootController() {
+    if let controller = zoomRootNavigationController() {
       sdk.setMobileRTCRootController(controller)
     }
 
@@ -211,7 +211,7 @@ import UIKit
 
       let sdk = MobileRTC.shared()
 
-      if let controller = self.presentableRootController() {
+      if let controller = self.zoomRootNavigationController() {
         sdk.setMobileRTCRootController(controller)
       }
 
@@ -298,10 +298,27 @@ import UIKit
     return window?.rootViewController as? FlutterViewController
   }
 
-  private func presentableRootController() -> UIViewController? {
-    if let presented = window?.rootViewController?.presentedViewController {
-      return presented
+  private func zoomRootNavigationController() -> UINavigationController? {
+    if let rootNav = window?.rootViewController as? UINavigationController {
+      return rootNav
     }
-    return window?.rootViewController
+
+    if let presentedNav = window?.rootViewController?.presentedViewController as? UINavigationController {
+      return presentedNav
+    }
+
+    if let existingNav = window?.rootViewController?.navigationController {
+      return existingNav
+    }
+
+    guard let root = window?.rootViewController else {
+      return nil
+    }
+
+    let wrapped = UINavigationController(rootViewController: root)
+    wrapped.setNavigationBarHidden(true, animated: false)
+    window?.rootViewController = wrapped
+    window?.makeKeyAndVisible()
+    return wrapped
   }
 }
