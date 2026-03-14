@@ -43,6 +43,10 @@
 	<string>Canli derslere katilmak ve profil islemleri icin kameraya erisim gerekir.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Canli derslerde ses iletimi icin mikrofon erisimi gerekir.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Canli ders tarihlerini takviminize ekleyebilmeniz icin takvim erisimi gerekir.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Ders davetlerinde kisi secimi yapabilmeniz icin kisiler erisimi gerekir.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Profil resmi veya dokuman secimi icin galeri erisimi gerekir.</string>
 	<key>UILaunchStoryboardName</key>
