@@ -16,6 +16,7 @@ workflows:
     scripts:
       - name: Flutter packages
         script: |
+          git lfs pull
           flutter pub get
 
       - name: CocoaPods install
