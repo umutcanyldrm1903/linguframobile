@@ -294,13 +294,23 @@ class _NativeHomeTopBar extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: AppColors.brand.withValues(alpha: 0.16),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                      color: AppColors.brand.withValues(alpha: 0.20)),
                 ),
-                child: const Icon(
-                  Icons.auto_awesome_rounded,
-                  size: 20,
-                  color: AppColors.brandDeep,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    'assets/icon/app_icon_source.png',
+                    fit: BoxFit.cover,
+                    filterQuality: FilterQuality.high,
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 20,
+                      color: AppColors.brandDeep,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -580,19 +590,20 @@ class HeroSection extends StatelessWidget {
                     const SizedBox(height: 14),
                     Text(
                       title,
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                        height: 1.1,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                height: 1.1,
+                              ),
                     ),
                     const SizedBox(height: 10),
                     Text(
                       description,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.white.withValues(alpha: 0.82),
-                        height: 1.55,
-                      ),
+                            color: Colors.white.withValues(alpha: 0.82),
+                            height: 1.55,
+                          ),
                     ),
                     const SizedBox(height: 16),
                     Wrap(
@@ -1265,9 +1276,8 @@ class InstructorSection extends StatelessWidget {
               image: '',
             ),
           ];
-    final compactListHeight = items.any((item) => item.rating > 0)
-        ? 250.0
-        : 232.0;
+    final compactListHeight =
+        items.any((item) => item.rating > 0) ? 250.0 : 232.0;
 
     return _Section(
       eyebrow: AppStrings.t('Instructors'),
@@ -1315,8 +1325,8 @@ class InstructorSection extends StatelessWidget {
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) =>
-                                const StudentInstructorsScreen(standalone: true),
+                            builder: (_) => const StudentInstructorsScreen(
+                                standalone: true),
                           ),
                         ),
                         child: _InstructorCard(item: item),
@@ -1591,7 +1601,8 @@ class _PackagesSectionState extends State<PackagesSection> {
                         boxShadow: _highlightForm
                             ? [
                                 BoxShadow(
-                                  color: AppColors.brand.withValues(alpha: 0.18),
+                                  color:
+                                      AppColors.brand.withValues(alpha: 0.18),
                                   blurRadius: 30,
                                   offset: const Offset(0, 18),
                                 ),
@@ -2543,8 +2554,10 @@ class JourneySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final content = about?.content ?? const <String, dynamic>{};
 
-    final eyebrow = _readSectionText(content, 'short_title', AppStrings.t('Öğrenim yolu'));
-    final title = _readSectionText(content, 
+    final eyebrow =
+        _readSectionText(content, 'short_title', AppStrings.t('Öğrenim yolu'));
+    final title = _readSectionText(
+      content,
       'title',
       AppStrings.t('Özgüvenli İngilizceye giden net bir yol'),
     );
@@ -2625,11 +2638,13 @@ class CorporateSection extends StatelessWidget {
     final content = banner?.content ?? const <String, dynamic>{};
     final global = banner?.global ?? const <String, dynamic>{};
 
-    final title = _readSectionText(content, 
+    final title = _readSectionText(
+      content,
       'title',
       AppStrings.t('Corporate language training for companies'),
     );
-    final description = _readSectionText(content, 
+    final description = _readSectionText(
+      content,
       'sub_title',
       AppStrings.t(
         'Improve your team\'s skills with online English training programs. Let your company cover the training costs and move forward with a flexible, reportable system.',
@@ -2958,17 +2973,20 @@ class SliderSection extends StatelessWidget {
         itemBuilder: (context, index) {
           final item = items[index];
 
-          final title = _readSectionText(item, 
+          final title = _readSectionText(
+            item,
             'title',
             AppStrings.t('Start your Learning Journey Today!'),
           );
-          final subtitle = _readSectionText(item, 
+          final subtitle = _readSectionText(
+            item,
             'sub_title',
             AppStrings.t(
               'Discover a World of Knowledge and Skills at Your Fingertips - Unlock Your Potential and Achieve Your Dreams with Our Comprehensive Learning Resources!',
             ),
           );
-          final buttonText = _readSectionText(item, 
+          final buttonText = _readSectionText(
+            item,
             'action_button_text',
             AppStrings.t('Get Started'),
           );
@@ -3305,15 +3323,18 @@ class _NewsletterSectionState extends State<NewsletterSection> {
   Widget build(BuildContext context) {
     final content = widget.newsletter?.content ?? const <String, dynamic>{};
 
-    final title = _readSectionText(content, 
+    final title = _readSectionText(
+      content,
       'title',
       AppStrings.t('Want to stay informed about'),
     );
-    final subtitle = _readSectionText(content, 
+    final subtitle = _readSectionText(
+      content,
       'sub_title',
       AppStrings.t('new courses and study'),
     );
-    final buttonLabel = _readSectionText(content, 
+    final buttonLabel = _readSectionText(
+      content,
       'action_button_text',
       AppStrings.t('Subscribe Now'),
     );
@@ -3641,7 +3662,11 @@ class _InitialsAvatar extends StatelessWidget {
         .toList(growable: false);
     final initials = parts.isEmpty
         ? 'LF'
-        : parts.take(2).map((part) => part.substring(0, 1)).join().toUpperCase();
+        : parts
+            .take(2)
+            .map((part) => part.substring(0, 1))
+            .join()
+            .toUpperCase();
 
     return Container(
       width: 72,
@@ -4194,7 +4219,8 @@ class _PlanCard extends StatelessWidget {
                               color: (plan.featured
                                       ? const Color(0xFF0EA5E9)
                                       : warmAccent)
-                                  .withValues(alpha: plan.featured ? 0.30 : 0.25),
+                                  .withValues(
+                                      alpha: plan.featured ? 0.30 : 0.25),
                               blurRadius: 24,
                               offset: const Offset(0, 10),
                             ),
@@ -4349,7 +4375,8 @@ class _PlanCard extends StatelessWidget {
                     end: Alignment.bottomCenter,
                   ),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.40)),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.40)),
                 ),
                 child: Text(
                   plan.lessons.toUpperCase(),
@@ -4799,5 +4826,3 @@ class _FooterLink extends StatelessWidget {
     );
   }
 }
-
-

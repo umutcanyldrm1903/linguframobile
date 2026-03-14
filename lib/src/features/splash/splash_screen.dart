@@ -19,14 +19,34 @@ class SplashScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: const [
-              CircleAvatar(
-                radius: 36,
-                backgroundColor: Colors.white,
-                child: Icon(Icons.school, color: AppColors.brand, size: 40),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 16,
+                      offset: Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(10),
+                  child: ClipOval(
+                    child: Image(
+                      image: AssetImage('assets/icon/app_icon_source.png'),
+                      width: 52,
+                      height: 52,
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.high,
+                    ),
+                  ),
+                ),
               ),
               SizedBox(height: 16),
               Text(
-                'Lingufranca',
+                'LinguFranca',
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
@@ -41,7 +61,7 @@ class SplashScreen extends StatelessWidget {
         onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.ink,
-        label: const Text('Baþla'),
+        label: const Text('Ba?la'),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
