@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_currency_provider.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_locale_provider.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_strings.dart';
@@ -25,6 +26,8 @@ import 'package:lingufranca_mobile/src/features/payment/payment_native_service.d
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // DateFormat(...) calls across student/instructor screens require intl locale data.
+  await initializeDateFormatting();
   // Initialize the platform channel early so deep-links aren't missed.
   PaymentNativeService.deepLinkStream.listen((_) {});
   await AppStrings.load();
