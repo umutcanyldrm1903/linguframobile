@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/localization/app_locale_provider.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../student/instructors/student_instructors_screen.dart';
 import 'public_repository.dart';
 
-class PublicHeader extends StatefulWidget {
+class PublicHeader extends ConsumerStatefulWidget {
   const PublicHeader({super.key, this.onNavTap});
 
   final ValueChanged<String>? onNavTap;
 
   @override
-  State<PublicHeader> createState() => _PublicHeaderState();
+  ConsumerState<PublicHeader> createState() => _PublicHeaderState();
 }
 
-class _PublicHeaderState extends State<PublicHeader> {
+class _PublicHeaderState extends ConsumerState<PublicHeader> {
   late final Future<_HeaderPayload> _future = _HeaderPayload.load();
 
   void _handleNav(BuildContext context, String id) {
@@ -123,6 +125,19 @@ class _PublicHeaderState extends State<PublicHeader> {
                 label: AppStrings.t('Privacy Policy'),
                 onTap: () => _handleNav(context, 'privacy'),
               ),
+              const Divider(),
+              _MoreItem(
+                label: 'Türkçe',
+                onTap: () async {
+                  await AppLocale.set(ref, 'tr');
+                },
+              ),
+              _MoreItem(
+                label: 'English',
+                onTap: () async {
+                  await AppLocale.set(ref, 'en');
+                },
+              ),
             ],
           ),
         );
@@ -130,8 +145,47 @@ class _PublicHeaderState extends State<PublicHeader> {
     );
   }
 
+  Future<void> _showLanguagePicker(BuildContext context) async {
+    final current = AppStrings.code;
+    await showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(
+                current == 'tr' ? Icons.check_circle : Icons.circle_outlined,
+              ),
+              title: const Text('Türkçe'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await AppLocale.set(ref, 'tr');
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                current == 'en' ? Icons.check_circle : Icons.circle_outlined,
+              ),
+              title: const Text('English'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await AppLocale.set(ref, 'en');
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.watch(appLocaleProvider);
     return FutureBuilder<_HeaderPayload>(
       future: _future,
       builder: (context, snapshot) {
@@ -222,6 +276,15 @@ class _PublicHeaderState extends State<PublicHeader> {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
+                    ),
+                    const SizedBox(width: 6),
+                    IconButton.filledTonal(
+                      onPressed: () => _showLanguagePicker(context),
+                      icon: Text(
+                        AppStrings.code.toUpperCase(),
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                      tooltip: AppStrings.t('Language and Currency'),
                     ),
                     const SizedBox(width: 6),
                     IconButton.filled(
@@ -346,6 +409,18 @@ class _PublicHeaderState extends State<PublicHeader> {
                           ),
                         ),
                         child: Text(AppStrings.t('Sign Up')),
+                      ),
+                      const SizedBox(width: 6),
+                      OutlinedButton(
+                        onPressed: () => _showLanguagePicker(context),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(64, 38),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                        ),
+                        child: Text(
+                          AppStrings.code.toUpperCase(),
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
                       ),
                       const SizedBox(width: 6),
                       IconButton(

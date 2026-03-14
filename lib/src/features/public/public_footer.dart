@@ -196,7 +196,7 @@ class _PublicFooterState extends State<PublicFooter> {
           ),
           const SizedBox(height: 12),
           Text(
-            AppStrings.t('Dil öğrenmenin en pratik yolu.'),
+            AppStrings.t('The easiest way to learn a language.'),
             style: const TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 16),

@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/config/app_config.dart';
+import '../../core/localization/app_locale_provider.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../shared/content_preview_launcher.dart';
@@ -10,14 +12,14 @@ import '../student/packages/student_packages_screen.dart';
 import '../public/public_repository.dart';
 import '../public/public_header.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   Future<HomePayload?>? _homeFuture;
   final GlobalKey _heroKey = GlobalKey();
@@ -161,6 +163,57 @@ class _HomeScreenState extends State<HomeScreen> {
               label: AppStrings.t('2-Minute English Level Test'),
               onTap: () => _handleNav('placement'),
             ),
+            const Divider(),
+            _NativeMenuItem(
+              label: 'Türkçe',
+              onTap: () async {
+                await AppLocale.set(ref, 'tr');
+              },
+            ),
+            _NativeMenuItem(
+              label: 'English',
+              onTap: () async {
+                await AppLocale.set(ref, 'en');
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showLanguageSheet(BuildContext context) async {
+    final current = AppStrings.code;
+    await showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(
+                current == 'tr' ? Icons.check_circle : Icons.circle_outlined,
+              ),
+              title: const Text('Türkçe'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await AppLocale.set(ref, 'tr');
+              },
+            ),
+            ListTile(
+              leading: Icon(
+                current == 'en' ? Icons.check_circle : Icons.circle_outlined,
+              ),
+              title: const Text('English'),
+              onTap: () async {
+                Navigator.pop(ctx);
+                await AppLocale.set(ref, 'en');
+              },
+            ),
+            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -188,6 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(appLocaleProvider);
     final width = MediaQuery.sizeOf(context).width;
     final compact = width < 900;
     final sectionGap = compact ? 14.0 : 24.0;
@@ -208,6 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     onLogin: () => Navigator.pushNamed(context, '/login'),
                     onRegister: () => Navigator.pushNamed(context, '/register'),
                     onMenu: () => _showNativeMenu(context),
+                    onLanguage: () => _showLanguageSheet(context),
                   )
                 else
                   PublicHeader(onNavTap: _handleNav),
@@ -263,11 +318,13 @@ class _NativeHomeTopBar extends StatelessWidget {
     required this.onLogin,
     required this.onRegister,
     required this.onMenu,
+    required this.onLanguage,
   });
 
   final VoidCallback onLogin;
   final VoidCallback onRegister;
   final VoidCallback onMenu;
+  final VoidCallback onLanguage;
 
   @override
   Widget build(BuildContext context) {
@@ -360,6 +417,15 @@ class _NativeHomeTopBar extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
+              IconButton.filledTonal(
+                onPressed: onLanguage,
+                icon: Text(
+                  AppStrings.code.toUpperCase(),
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                tooltip: AppStrings.t('Language and Currency'),
+              ),
+              const SizedBox(width: 6),
               IconButton.filled(
                 onPressed: onRegister,
                 style: IconButton.styleFrom(
@@ -423,7 +489,28 @@ String _readSectionText(
   String fallback,
 ) {
   final cleaned = _cleanRichText(content[key]);
-  return cleaned.isEmpty ? fallback : cleaned;
+  final base = cleaned.isEmpty ? fallback : cleaned;
+  if (AppStrings.code == 'tr') {
+    return _normalizeTrMarketingText(base);
+  }
+  return base;
+}
+
+String _normalizeTrMarketingText(String value) {
+  if (value.isEmpty) return value;
+
+  const phrases = <String, String>{
+    'Watch Our Class Demo': 'Canlı Ders Tanıtımını İzle',
+    'Find your Course': 'Size Uygun Programı Bul',
+    'Continue Learning': 'Öğrenmeye Devam Et',
+    'Live lessons': 'Canlı dersler',
+    'Native instructors': 'Native eğitmenler',
+    'Flexible schedule': 'Esnek program',
+    'Contact Us': 'Bize Ulaşın',
+    'The easiest way to learn a language.': 'Dil öğrenmenin en pratik yolu.',
+  };
+
+  return phrases[value] ?? value;
 }
 
 String _cleanRichText(dynamic raw) {
@@ -481,7 +568,25 @@ String _decodeHtmlEntities(String input) {
     });
   }
 
-  return output;
+  return _repairMojibake(output);
+}
+
+String _repairMojibake(String text) {
+  if (text.isEmpty) return text;
+  return text
+      .replaceAll('Ã¼', 'ü')
+      .replaceAll('Ãœ', 'Ü')
+      .replaceAll('Ã¶', 'ö')
+      .replaceAll('Ã–', 'Ö')
+      .replaceAll('Ã§', 'ç')
+      .replaceAll('Ã‡', 'Ç')
+      .replaceAll('ÄŸ', 'ğ')
+      .replaceAll('Äž', 'Ğ')
+      .replaceAll('ÅŸ', 'ş')
+      .replaceAll('Åž', 'Ş')
+      .replaceAll('Ä±', 'ı')
+      .replaceAll('Ä°', 'İ')
+      .replaceAll('Â©', '©');
 }
 
 class HeroSection extends StatelessWidget {
@@ -609,18 +714,18 @@ class HeroSection extends StatelessWidget {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: const [
+                      children: [
                         _NativeHeroBadge(
                           icon: Icons.play_circle_outline,
-                          label: 'Live lessons',
+                          label: AppStrings.t('Live lessons'),
                         ),
                         _NativeHeroBadge(
                           icon: Icons.verified_user_outlined,
-                          label: 'Native instructors',
+                          label: AppStrings.t('Native instructors'),
                         ),
                         _NativeHeroBadge(
                           icon: Icons.schedule_outlined,
-                          label: 'Flexible schedule',
+                          label: AppStrings.t('Flexible schedule'),
                         ),
                       ],
                     ),
@@ -2846,7 +2951,7 @@ class FooterSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            AppStrings.t('Dil öğrenmenin en pratik yolu.'),
+            AppStrings.t('The easiest way to learn a language.'),
             style: const TextStyle(color: Colors.white70),
           ),
           const SizedBox(height: 16),
@@ -2911,7 +3016,7 @@ class FooterSection extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            '© 2010-2024 lingufranca.com',
+            '© 2010-2026 lingufranca.com',
             style: TextStyle(color: Colors.white54, fontSize: 12),
           ),
         ],
