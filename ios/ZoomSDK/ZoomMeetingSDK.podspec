@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
   s.author = { 'Zoom Video Communications' => 'developersupport@zoom.us' }
   s.platform = :ios, '13.0'
   s.source = { :path => '.' }
-  s.vendored_frameworks = 'MobileRTC.xcframework'
+  s.vendored_frameworks = 'MobileRTC.xcframework', 'zoomcml.xcframework'
   s.resources = 'MobileRTCResources.bundle'
   s.frameworks = 'AVFoundation', 'AudioToolbox', 'CoreAudio', 'CoreGraphics', 'CoreMedia', 'SystemConfiguration', 'VideoToolbox'
   s.libraries = 'c++', 'sqlite3', 'z'
