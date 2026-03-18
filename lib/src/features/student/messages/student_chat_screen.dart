@@ -1,14 +1,21 @@
 import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+
 import '../../../core/localization/app_strings.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../messages/chat_repository.dart';
 
+enum _ThreadAction { report, block, unblock }
+
 class StudentChatScreen extends StatefulWidget {
-  const StudentChatScreen(
-      {super.key, required this.partnerId, required this.name});
+  const StudentChatScreen({
+    super.key,
+    required this.partnerId,
+    required this.name,
+  });
 
   final int partnerId;
   final String name;
@@ -22,8 +29,14 @@ class _StudentChatScreenState extends State<StudentChatScreen> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   Timer? _pollTimer;
+
   bool _loading = true;
+  bool _busyAction = false;
   List<ChatMessage> _messages = [];
+  ChatModerationState _moderation = const ChatModerationState(
+    blockedByMe: false,
+    blockedByPartner: false,
+  );
   int _userId = 0;
 
   String _errorMessage(Object error) {
@@ -33,6 +46,9 @@ class _StudentChatScreenState extends State<StudentChatScreen> {
         final message = data['message'];
         if (message is String && message.trim().isNotEmpty) {
           return message.trim();
+        }
+        if (message is Map) {
+          return message.values.map((value) => value.toString()).join('\n');
         }
       }
     }
@@ -48,17 +64,40 @@ class _StudentChatScreenState extends State<StudentChatScreen> {
   Future<void> _bootstrapThread() async {
     await _loadUserId();
     if (!mounted) return;
-    await _loadMessages();
+    await Future.wait([
+      _loadMessages(),
+      _loadModerationState(),
+    ]);
     if (!mounted) return;
     _pollTimer = Timer.periodic(
       const Duration(seconds: 8),
-      (_) => _loadMessages(silent: true),
+      (_) => _refreshThreadState(),
     );
+  }
+
+  Future<void> _refreshThreadState() async {
+    await _loadMessages(silent: true);
+    if (!mounted) return;
+    await _loadModerationState(silent: true);
   }
 
   Future<void> _loadUserId() async {
     final stored = await SecureStorage.getUserId();
     _userId = stored == null ? 0 : int.tryParse(stored) ?? 0;
+  }
+
+  Future<void> _loadModerationState({bool silent = false}) async {
+    try {
+      final moderation =
+          await _repository.fetchModerationState(widget.partnerId);
+      if (!mounted) return;
+      setState(() => _moderation = moderation);
+    } catch (error) {
+      if (!mounted || silent) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_errorMessage(error))),
+      );
+    }
   }
 
   Future<void> _loadMessages({bool silent = false}) async {
@@ -94,9 +133,15 @@ class _StudentChatScreenState extends State<StudentChatScreen> {
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+    if (!_moderation.canSend) {
+      _showSnack(_blockedBannerText);
+      return;
+    }
+
     _controller.clear();
     try {
       final message = await _repository.sendMessage(widget.partnerId, text);
+      if (!mounted) return;
       setState(() => _messages = [..._messages, message]);
       _jumpToBottom(animated: true);
     } catch (error) {
@@ -105,7 +150,168 @@ class _StudentChatScreenState extends State<StudentChatScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(_errorMessage(error))),
       );
+      await _loadModerationState(silent: true);
     }
+  }
+
+  Future<void> _handleThreadAction(_ThreadAction action) async {
+    switch (action) {
+      case _ThreadAction.report:
+        await _reportUser();
+        return;
+      case _ThreadAction.block:
+        await _blockUser();
+        return;
+      case _ThreadAction.unblock:
+        await _unblockUser();
+        return;
+    }
+  }
+
+  Future<void> _reportUser() async {
+    final reason = await _askForReason(
+      title: AppStrings.t('Report User'),
+      hint: AppStrings.t('Tell us why you are reporting this user.'),
+      actionLabel: AppStrings.t('Send Report'),
+    );
+    if (!mounted || reason == null || reason.trim().isEmpty) return;
+
+    setState(() => _busyAction = true);
+    try {
+      final latestIncoming = _messages.lastWhere(
+        (message) => message.senderId == widget.partnerId,
+        orElse: () => const ChatMessage(
+          id: 0,
+          senderId: 0,
+          body: '',
+          timeLabel: '',
+          createdAt: null,
+        ),
+      );
+      await _repository.reportUser(
+        widget.partnerId,
+        reason: reason,
+        messageId: latestIncoming.id > 0 ? latestIncoming.id : null,
+      );
+      if (!mounted) return;
+      _showSnack(AppStrings.t('Report submitted successfully.'));
+    } catch (error) {
+      if (!mounted) return;
+      _showSnack(_errorMessage(error));
+    } finally {
+      if (mounted) {
+        setState(() => _busyAction = false);
+      }
+    }
+  }
+
+  Future<void> _blockUser() async {
+    final confirmed = await _confirmAction(
+      title: AppStrings.t('Block User'),
+      body: AppStrings.t(
+        'Blocking this user will stop new messages in this conversation.',
+      ),
+      actionLabel: AppStrings.t('Block User'),
+    );
+    if (!mounted || !confirmed) return;
+
+    setState(() => _busyAction = true);
+    try {
+      final state = await _repository.blockUser(widget.partnerId);
+      if (!mounted) return;
+      setState(() => _moderation = state);
+      _showSnack(AppStrings.t('User blocked successfully.'));
+    } catch (error) {
+      if (!mounted) return;
+      _showSnack(_errorMessage(error));
+    } finally {
+      if (mounted) {
+        setState(() => _busyAction = false);
+      }
+    }
+  }
+
+  Future<void> _unblockUser() async {
+    setState(() => _busyAction = true);
+    try {
+      final state = await _repository.unblockUser(widget.partnerId);
+      if (!mounted) return;
+      setState(() => _moderation = state);
+      _showSnack(AppStrings.t('User unblocked successfully.'));
+    } catch (error) {
+      if (!mounted) return;
+      _showSnack(_errorMessage(error));
+    } finally {
+      if (mounted) {
+        setState(() => _busyAction = false);
+      }
+    }
+  }
+
+  Future<bool> _confirmAction({
+    required String title,
+    required String body,
+    required String actionLabel,
+  }) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(title),
+            content: Text(body),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(AppStrings.t('Cancel')),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(actionLabel),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<String?> _askForReason({
+    required String title,
+    required String hint,
+    required String actionLabel,
+  }) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: TextField(
+          controller: controller,
+          minLines: 3,
+          maxLines: 5,
+          decoration: InputDecoration(
+            hintText: hint,
+            border: const OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(AppStrings.t('Cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            child: Text(actionLabel),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    return result;
+  }
+
+  void _showSnack(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   bool _isNearBottom() {
@@ -131,6 +337,18 @@ class _StudentChatScreenState extends State<StudentChatScreen> {
     });
   }
 
+  String get _blockedBannerText {
+    if (_moderation.blockedByMe) {
+      return AppStrings.t(
+        'You blocked this user. Unblock the user to send messages again.',
+      );
+    }
+    if (_moderation.blockedByPartner) {
+      return AppStrings.t('This user is not accepting messages from you.');
+    }
+    return '';
+  }
+
   @override
   void dispose() {
     _pollTimer?.cancel();
@@ -144,13 +362,45 @@ class _StudentChatScreenState extends State<StudentChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.name),
-        actions: const [
-          Icon(Icons.more_vert),
-          SizedBox(width: 8),
+        actions: [
+          PopupMenuButton<_ThreadAction>(
+            enabled: !_busyAction,
+            onSelected: _handleThreadAction,
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: _ThreadAction.report,
+                child: Text(AppStrings.t('Report User')),
+              ),
+              PopupMenuItem(
+                value: _moderation.blockedByMe
+                    ? _ThreadAction.unblock
+                    : _ThreadAction.block,
+                child: Text(
+                  AppStrings.t(
+                    _moderation.blockedByMe ? 'Unblock User' : 'Block User',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: [
+          if (_blockedBannerText.isNotEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: const Color(0xFFFFF7ED),
+              child: Text(
+                _blockedBannerText,
+                style: const TextStyle(
+                  color: Color(0xFF9A3412),
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
@@ -171,7 +421,7 @@ class _StudentChatScreenState extends State<StudentChatScreen> {
           ),
           _ChatInput(
             controller: _controller,
-            onSend: _sendMessage,
+            onSend: _moderation.canSend ? _sendMessage : null,
           ),
         ],
       ),
@@ -194,7 +444,7 @@ class _ChatBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final alignment = isMe ? Alignment.centerRight : Alignment.centerLeft;
     final background = isMe ? AppColors.brand : AppColors.surface;
-    final textColor = isMe ? AppColors.ink : AppColors.ink;
+    const textColor = AppColors.ink;
     return Align(
       alignment: alignment,
       child: Container(
@@ -212,7 +462,7 @@ class _ChatBubble extends StatelessWidget {
           children: [
             Text(
               text,
-              style: TextStyle(
+              style: const TextStyle(
                 color: textColor,
                 fontWeight: FontWeight.w600,
               ),
@@ -233,13 +483,17 @@ class _ChatBubble extends StatelessWidget {
 }
 
 class _ChatInput extends StatelessWidget {
-  const _ChatInput({required this.controller, required this.onSend});
+  const _ChatInput({
+    required this.controller,
+    required this.onSend,
+  });
 
   final TextEditingController controller;
-  final VoidCallback onSend;
+  final VoidCallback? onSend;
 
   @override
   Widget build(BuildContext context) {
+    final disabled = onSend == null;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       decoration: const BoxDecoration(
@@ -251,8 +505,13 @@ class _ChatInput extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
+              enabled: !disabled,
               decoration: InputDecoration(
-                hintText: AppStrings.t('Write your message...'),
+                hintText: AppStrings.t(
+                  disabled
+                      ? 'Messaging is disabled for this conversation.'
+                      : 'Write your message...',
+                ),
                 filled: true,
                 fillColor: const Color(0xFFF8FAFC),
                 border: OutlineInputBorder(
@@ -267,10 +526,11 @@ class _ChatInput extends StatelessWidget {
             onTap: onSend,
             child: CircleAvatar(
               radius: 22,
-              backgroundColor: AppColors.brand,
+              backgroundColor:
+                  disabled ? const Color(0xFFCBD5E1) : AppColors.brand,
               child: const Icon(Icons.send, color: AppColors.ink),
             ),
-          )
+          ),
         ],
       ),
     );

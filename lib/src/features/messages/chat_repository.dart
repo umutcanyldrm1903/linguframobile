@@ -19,6 +19,17 @@ class ChatRepository {
     ).map(ChatMessage.fromJson).toList(growable: false);
   }
 
+  Future<ChatModerationState> fetchModerationState(int partnerId) async {
+    final response =
+        await ApiClient.dio.get('/messages/thread/$partnerId/moderation');
+    return ChatModerationState.fromJson(
+      ApiResponseParser.requireMap(
+        response.data,
+        context: '/messages/thread/$partnerId/moderation',
+      ),
+    );
+  }
+
   Future<ChatMessage> sendMessage(int partnerId, String body) async {
     final response = await ApiClient.dio.post(
       '/messages/thread/$partnerId',
@@ -31,6 +42,49 @@ class ChatRepository {
         response.data,
         context: '/messages/thread/$partnerId',
       ),
+    );
+  }
+
+  Future<ChatModerationState> blockUser(
+    int partnerId, {
+    String? reason,
+  }) async {
+    final response = await ApiClient.dio.post(
+      '/messages/thread/$partnerId/block',
+      data: {
+        if ((reason ?? '').trim().isNotEmpty) 'reason': reason!.trim(),
+      },
+    );
+    return ChatModerationState.fromJson(
+      ApiResponseParser.requireMap(
+        response.data,
+        context: '/messages/thread/$partnerId/block',
+      ),
+    );
+  }
+
+  Future<ChatModerationState> unblockUser(int partnerId) async {
+    final response =
+        await ApiClient.dio.delete('/messages/thread/$partnerId/block');
+    return ChatModerationState.fromJson(
+      ApiResponseParser.requireMap(
+        response.data,
+        context: '/messages/thread/$partnerId/block',
+      ),
+    );
+  }
+
+  Future<void> reportUser(
+    int partnerId, {
+    required String reason,
+    int? messageId,
+  }) async {
+    await ApiClient.dio.post(
+      '/messages/thread/$partnerId/report',
+      data: {
+        'reason': reason.trim(),
+        if (messageId != null) 'message_id': messageId,
+      },
     );
   }
 }
@@ -59,7 +113,9 @@ class ChatThread {
     final last = json['last_message'];
     final created = last is Map ? last['created_at']?.toString() ?? '' : '';
     return ChatThread(
-      partnerId: partner is Map && partner['id'] is int ? partner['id'] as int : int.tryParse('${partner?['id']}') ?? 0,
+      partnerId: partner is Map && partner['id'] is int
+          ? partner['id'] as int
+          : int.tryParse('${partner?['id']}') ?? 0,
       partnerName: partner is Map ? (partner['name'] ?? '').toString() : '',
       partnerImage: partner is Map ? (partner['image'] ?? '').toString() : '',
       partnerRole: partner is Map ? (partner['role'] ?? '').toString() : '',
@@ -91,13 +147,34 @@ class ChatMessage {
     final createdRaw = (json['created_at'] ?? '').toString();
     final createdAt = DateTime.tryParse(createdRaw);
     return ChatMessage(
-      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse('${json['id']}') ?? 0,
       senderId: json['sender_id'] is int
           ? json['sender_id'] as int
           : int.tryParse('${json['sender_id']}') ?? 0,
       body: (json['body'] ?? '').toString(),
       timeLabel: _formatTime(createdRaw),
       createdAt: createdAt,
+    );
+  }
+}
+
+class ChatModerationState {
+  const ChatModerationState({
+    required this.blockedByMe,
+    required this.blockedByPartner,
+  });
+
+  final bool blockedByMe;
+  final bool blockedByPartner;
+
+  bool get canSend => !blockedByMe && !blockedByPartner;
+
+  factory ChatModerationState.fromJson(Map<String, dynamic> json) {
+    return ChatModerationState(
+      blockedByMe: json['blocked_by_me'] == true,
+      blockedByPartner: json['blocked_by_partner'] == true,
     );
   }
 }

@@ -34,6 +34,23 @@ class AppStrings {
         'Derse katilmak icin kamera ve mikrofon izinleri gerekir.',
     'Zoom could not join the lesson. Please try again.':
         'Zoom derse baglanamadi. Lutfen tekrar deneyin.',
+    'Report User': 'Kullaniciyi bildir',
+    'Block User': 'Kullaniciyi engelle',
+    'Unblock User': 'Kullanicinin engelini kaldir',
+    'Send Report': 'Bildirimi gonder',
+    'Tell us why you are reporting this user.':
+        'Bu kullaniciyi neden bildirdiginizi yazin.',
+    'Blocking this user will stop new messages in this conversation.':
+        'Bu kullaniciyi engellerseniz bu konusmada yeni mesajlasma durur.',
+    'User blocked successfully.': 'Kullanici basariyla engellendi.',
+    'User unblocked successfully.': 'Kullanici engeli kaldirildi.',
+    'Report submitted successfully.': 'Bildirim basariyla gonderildi.',
+    'You blocked this user. Unblock the user to send messages again.':
+        'Bu kullaniciyi engellediniz. Tekrar mesaj gondermek icin engeli kaldirin.',
+    'This user is not accepting messages from you.':
+        'Bu kullanici sizden mesaj kabul etmiyor.',
+    'Messaging is disabled for this conversation.':
+        'Bu konusma icin mesajlasma kapali.',
   };
 
   static String get code => _code;
