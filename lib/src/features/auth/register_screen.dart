@@ -112,12 +112,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             TextFormField(
               controller: _phoneController,
               keyboardType: TextInputType.phone,
-              decoration: InputDecoration(labelText: AppStrings.t('Phone')),
+              decoration: InputDecoration(
+                labelText: AppStrings.t('Phone (optional)'),
+              ),
               validator: (value) {
                 final phone = value?.trim() ?? '';
-                if (phone.isEmpty) {
-                  return AppStrings.t('Phone is required');
-                }
+                if (phone.isEmpty) return null;
                 final digitCount =
                     phone.replaceAll(RegExp(r'\D'), '').length;
                 if (digitCount < 7) {

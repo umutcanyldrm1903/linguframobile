@@ -17,7 +17,7 @@ class AppStrings {
     'Google Play Link': 'Google Play Bağlantısı',
     'Account': 'Hesap',
     'Watch Our Class Demo': 'Canlı Ders Tanıtımını İzle',
-    'Find your Course': 'Size Uygun Programı Bul',
+    'Find your Course': 'Size Uygun Paketi Bul',
     'Continue Learning': 'Öğrenmeye Devam Et',
     'Live lessons': 'Canlı dersler',
     'Native instructors': 'Native eğitmenler',

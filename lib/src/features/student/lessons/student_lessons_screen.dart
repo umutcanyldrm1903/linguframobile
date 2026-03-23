@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
-import 'student_course_detail_screen.dart';
 import 'student_live_lesson_screen.dart';
 import 'student_lessons_repository.dart';
 
@@ -126,15 +125,7 @@ class _StudentLessonsScreenState extends State<StudentLessonsScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => StudentCourseDetailScreen(
-          title: item.title,
-          instructor: item.instructorName,
-          courseSlug: item.courseSlug,
-          rating: 4.9,
-          reviews: 128,
-          progress: item.isCompleted ? 1 : 0.45,
-          hasLive: !item.isCompleted,
-        ),
+        builder: (_) => StudentLiveLessonScreen(lesson: item),
       ),
     );
   }

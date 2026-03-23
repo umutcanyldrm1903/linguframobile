@@ -497,7 +497,7 @@ String _normalizeTrMarketingText(String value) {
 
   const phrases = <String, String>{
     'Watch Our Class Demo': 'Canlı Ders Tanıtımını İzle',
-    'Find your Course': 'Size Uygun Programı Bul',
+    'Find your Course': 'Size Uygun Paketi Bul',
     'Continue Learning': 'Öğrenmeye Devam Et',
     'Live lessons': 'Canlı dersler',
     'Native instructors': 'Native eğitmenler',
@@ -1831,7 +1831,7 @@ class _PlanFlowSheetState extends State<_PlanFlowSheet> {
     ].where((value) => value.trim().isNotEmpty).join(' - ');
 
     final lines = <String>[
-      AppStrings.t('New Language Course Request'),
+      AppStrings.t('New Private Lesson Request'),
       '${AppStrings.t('Package')}: $plan',
       '',
       '${AppStrings.t('Lesson location')}: ${AppStrings.t(_lessonPlace)}',
@@ -3223,7 +3223,7 @@ class _TrendingCategoryCard extends StatelessWidget {
                   .map(
                     (sub) => Chip(
                       label: Text(
-                        '${sub.name} (${sub.courseCount})',
+                        sub.name,
                         style: const TextStyle(fontSize: 12),
                       ),
                       backgroundColor: AppColors.brand.withValues(alpha: 0.12),
@@ -3363,7 +3363,7 @@ class _NewsletterSectionState extends State<NewsletterSection> {
     final subtitle = _readSectionText(
       content,
       'sub_title',
-      AppStrings.t('new courses and study'),
+      AppStrings.t('new lessons and study tips'),
     );
     final buttonLabel = _readSectionText(
       content,
@@ -4042,7 +4042,7 @@ class _InstructorCard extends StatelessWidget {
           if (item.rating > 0) ...[
             SizedBox(height: compact ? 4 : 6),
             Text(
-              '${item.rating.toStringAsFixed(1)} / 5 • ${item.courseCount} ${AppStrings.t('Courses')}',
+              '${item.rating.toStringAsFixed(1)} / 5',
               style: TextStyle(
                 color: AppColors.muted,
                 fontSize: compact ? 11 : 12,

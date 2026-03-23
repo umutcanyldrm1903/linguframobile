@@ -39,15 +39,16 @@ class AuthRepository {
   Future<Map<String, dynamic>> register({
     required String name,
     required String email,
-    required String phone,
+    String? phone,
     required String role,
     required String password,
     required String passwordConfirmation,
   }) async {
+    final trimmedPhone = phone?.trim() ?? '';
     final response = await ApiClient.dio.post('/register', data: {
       'name': name,
       'email': email,
-      'phone': phone,
+      if (trimmedPhone.isNotEmpty) 'phone': trimmedPhone,
       'role': role,
       'password': password,
       'password_confirmation': passwordConfirmation,

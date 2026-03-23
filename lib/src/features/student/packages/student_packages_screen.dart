@@ -146,7 +146,7 @@ class _HeroCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             AppStrings.t(
-                'Compare course duration, lesson count, and features to pick the package that fits you best.'),
+                'Compare lesson duration, package credits, and support options to pick the package that fits you best.'),
             style: const TextStyle(color: AppColors.ink),
           ),
         ],

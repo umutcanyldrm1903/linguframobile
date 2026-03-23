@@ -64,7 +64,6 @@ class _StudentInstructorsScreenState extends State<StudentInstructorsScreen> {
             tags: item.tags,
             about: item.shortBio.isNotEmpty ? item.shortBio : item.bio,
             rating: item.avgRating,
-            courseCount: item.courseCount,
             imageUrl: item.imageUrl,
           ),
         )
@@ -834,7 +833,7 @@ class _InstructorCard extends StatelessWidget {
                 const Icon(Icons.star, size: 16, color: AppColors.brand),
                 const SizedBox(width: 4),
                 Text(
-                  '${data.rating.toStringAsFixed(1)} / 5 • ${data.courseCount} ${AppStrings.t('Courses')}',
+                  '${data.rating.toStringAsFixed(1)} / 5',
                 ),
                 const Spacer(),
                 ElevatedButton(
@@ -899,7 +898,6 @@ class InstructorCardData {
     required this.tags,
     required this.about,
     required this.rating,
-    required this.courseCount,
     required this.imageUrl,
   });
 
@@ -909,7 +907,6 @@ class InstructorCardData {
   final List<String> tags;
   final String about;
   final double rating;
-  final int courseCount;
   final String? imageUrl;
 }
 

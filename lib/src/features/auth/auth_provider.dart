@@ -39,7 +39,7 @@ class AuthNotifier extends StateNotifier<bool> {
   Future<String> register({
     required String name,
     required String email,
-    required String phone,
+    String? phone,
     required String role,
     required String password,
     required String passwordConfirmation,

@@ -5,9 +5,6 @@ import '../../../core/storage/secure_storage.dart';
 import '../../auth/auth_repository.dart';
 import '../../profile/profile_repository.dart';
 import '../library/student_library_screen.dart';
-import '../wishlist/student_wishlist_screen.dart';
-import '../cart/student_cart_screen.dart';
-import '../orders/student_orders_screen.dart';
 import '../reports/student_reports_screen.dart';
 import '../support/student_support_screen.dart';
 import '../guide/student_guide_screen.dart';
@@ -145,24 +142,6 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
               title: AppStrings.t('Library'),
               icon: Icons.menu_book,
               onTap: () => _open(context, const StudentLibraryScreen()),
-            ),
-            const SizedBox(height: 12),
-            _ProfileTile(
-              title: AppStrings.t('Wishlist'),
-              icon: Icons.favorite,
-              onTap: () => _open(context, const StudentWishlistScreen()),
-            ),
-            const SizedBox(height: 12),
-            _ProfileTile(
-              title: AppStrings.t('Cart'),
-              icon: Icons.shopping_cart,
-              onTap: () => _open(context, const StudentCartScreen()),
-            ),
-            const SizedBox(height: 12),
-            _ProfileTile(
-              title: AppStrings.t('Orders'),
-              icon: Icons.receipt_long,
-              onTap: () => _open(context, const StudentOrdersScreen()),
             ),
             const SizedBox(height: 12),
             _ProfileTile(

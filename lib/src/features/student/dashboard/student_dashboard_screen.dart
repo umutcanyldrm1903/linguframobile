@@ -12,8 +12,7 @@ import 'package:lingufranca_mobile/src/features/student/packages/student_package
 import 'package:lingufranca_mobile/src/features/student/homeworks/student_homeworks_repository.dart';
 import 'package:lingufranca_mobile/src/features/student/homeworks/student_homeworks_screen.dart';
 import 'package:lingufranca_mobile/src/features/student/instructors/student_instructors_screen.dart';
-import 'package:lingufranca_mobile/src/features/student/orders/student_orders_screen.dart';
-import 'package:lingufranca_mobile/src/features/student/profile/student_profile_screen.dart';
+import 'package:lingufranca_mobile/src/features/student/reports/student_reports_screen.dart';
 
 class StudentDashboardScreen extends StatefulWidget {
   const StudentDashboardScreen({super.key});
@@ -49,11 +48,13 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppStrings.t('Please add your phone number first.')),
+          content: Text(
+            AppStrings.t(
+              'Trial lesson request will continue without a phone number.',
+            ),
+          ),
         ),
       );
-      _open(context, const StudentProfileScreen());
-      return;
     }
 
     final confirmed = await showDialog<bool>(
@@ -285,9 +286,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                   onTap: () => _open(context, const StudentPackagesScreen()),
                 ),
                 _QuickAction(
-                  label: AppStrings.t('Payment'),
-                  icon: Icons.payment,
-                  onTap: () => _open(context, const StudentOrdersScreen()),
+                  label: AppStrings.t('Reports'),
+                  icon: Icons.bar_chart,
+                  onTap: () => _open(context, const StudentReportsScreen()),
                 ),
                 _QuickAction(
                   label: AppStrings.t('Notifications'),
