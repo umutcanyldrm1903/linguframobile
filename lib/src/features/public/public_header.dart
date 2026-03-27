@@ -37,6 +37,9 @@ class _PublicHeaderState extends ConsumerState<PublicHeader> {
       case 'blog':
         Navigator.pushNamed(context, '/blog');
         break;
+      case 'start-speaking':
+        Navigator.pushNamed(context, '/start-speaking');
+        break;
       case 'contact':
         Navigator.pushNamed(context, '/contact');
         break;
@@ -95,6 +98,12 @@ class _PublicHeaderState extends ConsumerState<PublicHeader> {
               _MoreItem(
                 label: AppStrings.t('About Us'),
                 onTap: () => _handleNav(context, 'about'),
+              ),
+              _MoreItem(
+                label: AppStrings.code == 'tr'
+                    ? 'Konusmaya Basla'
+                    : 'Start Speaking',
+                onTap: () => _handleNav(context, 'start-speaking'),
               ),
               _MoreItem(
                 label: AppStrings.t('Blog'),

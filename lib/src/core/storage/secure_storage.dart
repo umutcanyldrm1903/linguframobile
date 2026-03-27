@@ -65,4 +65,16 @@ class SecureStorage {
   static Future<String?> getCurrencyCode() {
     return _storage.read(key: _currencyKey);
   }
+
+  static Future<void> setValue(String key, String value) {
+    return _storage.write(key: key, value: value);
+  }
+
+  static Future<String?> getValue(String key) {
+    return _storage.read(key: key);
+  }
+
+  static Future<void> deleteValue(String key) {
+    return _storage.delete(key: key);
+  }
 }

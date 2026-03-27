@@ -18,6 +18,7 @@ import 'package:lingufranca_mobile/src/features/public/corporate_screen.dart';
 import 'package:lingufranca_mobile/src/features/public/placement_test_screen.dart';
 import 'package:lingufranca_mobile/src/features/public/privacy_screen.dart';
 import 'package:lingufranca_mobile/src/features/public/public_theme.dart';
+import 'package:lingufranca_mobile/src/features/public/speak_coach_screen.dart';
 import 'package:lingufranca_mobile/src/features/public/terms_screen.dart';
 import 'package:lingufranca_mobile/src/features/shell/instructor_shell.dart';
 import 'package:lingufranca_mobile/src/features/shell/student_shell.dart';
@@ -62,6 +63,7 @@ class LingufrancaApp extends ConsumerWidget {
             const PublicTheme(child: PlacementTestScreen()),
         '/terms': (_) => const PublicTheme(child: TermsScreen()),
         '/privacy': (_) => const PublicTheme(child: PrivacyScreen()),
+        '/start-speaking': (_) => const PublicTheme(child: SpeakCoachScreen()),
         '/student': (_) => const StudentShell(),
         '/instructor': (_) => const InstructorShell(),
       },

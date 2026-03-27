@@ -38,6 +38,9 @@ class _PublicFooterState extends State<PublicFooter> {
       case 'blog':
         Navigator.pushNamed(context, '/blog');
         break;
+      case 'start-speaking':
+        Navigator.pushNamed(context, '/start-speaking');
+        break;
       case 'contact':
         Navigator.pushNamed(context, '/contact');
         break;
@@ -117,6 +120,12 @@ class _PublicFooterState extends State<PublicFooter> {
                   _CompactFooterButton(
                     label: AppStrings.t('Packages'),
                     onTap: () => _handleNav(context, 'packages'),
+                  ),
+                  _CompactFooterButton(
+                    label: AppStrings.code == 'tr'
+                        ? 'Konusmaya Basla'
+                        : 'Start Speaking',
+                    onTap: () => _handleNav(context, 'start-speaking'),
                   ),
                   _CompactFooterButton(
                     label: AppStrings.t('Contact Us'),
@@ -219,6 +228,12 @@ class _PublicFooterState extends State<PublicFooter> {
               _FooterLink(
                 label: AppStrings.t('Blog'),
                 onTap: () => _handleNav(context, 'blog'),
+              ),
+              _FooterLink(
+                label: AppStrings.code == 'tr'
+                    ? 'Konusmaya Basla'
+                    : 'Start Speaking',
+                onTap: () => _handleNav(context, 'start-speaking'),
               ),
               _FooterLink(
                 label: AppStrings.t('Contact Us'),

@@ -10,6 +10,7 @@ import '../shared/content_preview_launcher.dart';
 import '../student/instructors/student_instructors_screen.dart';
 import '../public/public_repository.dart';
 import '../public/public_header.dart';
+import '../public/speak_coach_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -104,6 +105,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 'blog':
         Navigator.pushNamed(context, '/blog');
         break;
+      case 'start-speaking':
+        Navigator.pushNamed(context, '/start-speaking');
+        break;
       case 'contact':
         Navigator.pushNamed(context, '/contact');
         break;
@@ -149,6 +153,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             _NativeMenuItem(
               label: AppStrings.t('About Us'),
               onTap: () => _handleNav('about'),
+            ),
+            _NativeMenuItem(
+              label: AppStrings.code == 'tr'
+                  ? 'Konusmaya Basla'
+                  : 'Start Speaking',
+              onTap: () => _handleNav('start-speaking'),
             ),
             _NativeMenuItem(
               label: AppStrings.t('Blog'),
@@ -273,6 +283,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   onOpenLeadForm: compact ? _openLeadFormSheet : null,
                 ),
                 SizedBox(height: compact ? 12 : 16),
+                const SpeakCoachPromoBanner(),
+                SizedBox(height: sectionGap),
                 StatsSection(counter: payload?.counter),
                 SizedBox(height: sectionGap),
                 InstructorSection(
