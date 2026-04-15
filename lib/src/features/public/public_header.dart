@@ -5,6 +5,7 @@ import '../../core/localization/app_locale_provider.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../student/instructors/student_instructors_screen.dart';
+import 'public_page_scaffold.dart';
 import 'public_repository.dart';
 
 class PublicHeader extends ConsumerStatefulWidget {
@@ -195,6 +196,9 @@ class _PublicHeaderState extends ConsumerState<PublicHeader> {
   @override
   Widget build(BuildContext context) {
     ref.watch(appLocaleProvider);
+    if (isCompactPublicLayout(context)) {
+      return const SizedBox.shrink();
+    }
     return FutureBuilder<_HeaderPayload>(
       future: _future,
       builder: (context, snapshot) {

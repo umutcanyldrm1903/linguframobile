@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../student/instructors/student_instructors_screen.dart';
+import 'public_page_scaffold.dart';
 import 'public_repository.dart';
 
 class PublicFooter extends StatefulWidget {
@@ -71,113 +72,10 @@ class _PublicFooterState extends State<PublicFooter> {
 
   @override
   Widget build(BuildContext context) {
-    final isCompact = MediaQuery.sizeOf(context).width < 900;
+    final isCompact = isCompactPublicLayout(context);
 
     if (isCompact) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(14, 8, 14, 24),
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: AppColors.brandDeep,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.ink.withValues(alpha: 0.12),
-                blurRadius: 22,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'LinguFranca',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppStrings.t('Contact Us'),
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _CompactFooterButton(
-                    label: AppStrings.t('Home'),
-                    onTap: () => _handleNav(context, 'home'),
-                  ),
-                  _CompactFooterButton(
-                    label: AppStrings.t('Packages'),
-                    onTap: () => _handleNav(context, 'packages'),
-                  ),
-                  _CompactFooterButton(
-                    label: AppStrings.code == 'tr'
-                        ? 'Konusmaya Basla'
-                        : 'Start Speaking',
-                    onTap: () => _handleNav(context, 'start-speaking'),
-                  ),
-                  _CompactFooterButton(
-                    label: AppStrings.t('Contact Us'),
-                    onTap: () => _handleNav(context, 'contact'),
-                  ),
-                  _CompactFooterButton(
-                    label: AppStrings.t('Corporate'),
-                    onTap: () => _handleNav(context, 'corporate'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              FutureBuilder<List<SocialLinkItem>>(
-                future: _future,
-                builder: (context, snapshot) {
-                  final socials = snapshot.data ?? const <SocialLinkItem>[];
-                  final items = socials.isNotEmpty
-                      ? socials
-                      : const <SocialLinkItem>[
-                          SocialLinkItem(icon: 'facebook', url: ''),
-                          SocialLinkItem(icon: 'instagram', url: ''),
-                          SocialLinkItem(icon: 'youtube', url: ''),
-                        ];
-
-                  return Row(
-                    children: items.take(4).map((item) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 10),
-                        child: InkWell(
-                          onTap: item.url.isNotEmpty
-                              ? () => _openUrl(item.url)
-                              : null,
-                          borderRadius: BorderRadius.circular(20),
-                          child: CircleAvatar(
-                            radius: 16,
-                            backgroundColor: Colors.white24,
-                            child: Icon(
-                              _iconFor(item.icon),
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  );
-                },
-              ),
-            ],
-          ),
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
     return Container(
@@ -315,26 +213,6 @@ class _PublicFooterState extends State<PublicFooter> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _CompactFooterButton extends StatelessWidget {
-  const _CompactFooterButton({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton(
-      onPressed: onTap,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
-        side: const BorderSide(color: Colors.white24),
-        backgroundColor: Colors.white.withValues(alpha: 0.08),
-      ),
-      child: Text(label),
     );
   }
 }

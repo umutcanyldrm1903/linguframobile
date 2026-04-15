@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:intl/intl.dart';
 
@@ -173,6 +174,13 @@ class SpeakCoachLocalState {
     required this.accentId,
     required this.budgetId,
     required this.scheduleId,
+    required this.reminderWindow,
+    required this.onboardingCompleted,
+    required this.onboardingLevelId,
+    required this.challengeStartDate,
+    required this.referralCode,
+    required this.favoriteInstructorIds,
+    required this.activityLog,
     required this.weeklyTarget,
     required this.activeDates,
     required this.completedMissionIdsByDate,
@@ -182,6 +190,13 @@ class SpeakCoachLocalState {
   final String accentId;
   final String budgetId;
   final String scheduleId;
+  final String reminderWindow;
+  final bool onboardingCompleted;
+  final String onboardingLevelId;
+  final String? challengeStartDate;
+  final String referralCode;
+  final List<int> favoriteInstructorIds;
+  final List<SpeakCoachActivityEntry> activityLog;
   final int weeklyTarget;
   final List<String> activeDates;
   final Map<String, List<String>> completedMissionIdsByDate;
@@ -192,6 +207,13 @@ class SpeakCoachLocalState {
       accentId: 'foreign',
       budgetId: 'balanced',
       scheduleId: 'evening',
+      reminderWindow: 'evening',
+      onboardingCompleted: false,
+      onboardingLevelId: 'beginner',
+      challengeStartDate: null,
+      referralCode: '',
+      favoriteInstructorIds: <int>[],
+      activityLog: <SpeakCoachActivityEntry>[],
       weeklyTarget: 4,
       activeDates: <String>[],
       completedMissionIdsByDate: <String, List<String>>{},
@@ -216,11 +238,32 @@ class SpeakCoachLocalState {
       });
     }
 
+    final favoriteInstructorIds =
+        (json['favorite_instructor_ids'] as List<dynamic>? ?? const [])
+            .map((item) => int.tryParse(item.toString()) ?? 0)
+            .where((id) => id > 0)
+            .toList(growable: false);
+
+    final activityLog = (json['activity_log'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(SpeakCoachActivityEntry.fromJson)
+        .toList(growable: false);
+
     return SpeakCoachLocalState(
       goalId: (json['goal_id'] ?? 'speaking').toString(),
       accentId: (json['accent_id'] ?? 'foreign').toString(),
       budgetId: (json['budget_id'] ?? 'balanced').toString(),
       scheduleId: (json['schedule_id'] ?? 'evening').toString(),
+      reminderWindow: (json['reminder_window'] ?? 'evening').toString(),
+      onboardingCompleted: json['onboarding_completed'] == true,
+      onboardingLevelId: (json['onboarding_level_id'] ?? 'beginner').toString(),
+      challengeStartDate:
+          (json['challenge_start_date'] as String?)?.trim().isEmpty ?? true
+              ? null
+              : (json['challenge_start_date'] as String?)?.trim(),
+      referralCode: (json['referral_code'] ?? '').toString(),
+      favoriteInstructorIds: favoriteInstructorIds,
+      activityLog: activityLog,
       weeklyTarget: _parseInt(json['weekly_target'], 4),
       activeDates: activeDates,
       completedMissionIdsByDate: completedMissionIdsByDate,
@@ -232,6 +275,13 @@ class SpeakCoachLocalState {
     String? accentId,
     String? budgetId,
     String? scheduleId,
+    String? reminderWindow,
+    bool? onboardingCompleted,
+    String? onboardingLevelId,
+    String? challengeStartDate,
+    String? referralCode,
+    List<int>? favoriteInstructorIds,
+    List<SpeakCoachActivityEntry>? activityLog,
     int? weeklyTarget,
     List<String>? activeDates,
     Map<String, List<String>>? completedMissionIdsByDate,
@@ -241,6 +291,14 @@ class SpeakCoachLocalState {
       accentId: accentId ?? this.accentId,
       budgetId: budgetId ?? this.budgetId,
       scheduleId: scheduleId ?? this.scheduleId,
+      reminderWindow: reminderWindow ?? this.reminderWindow,
+      onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
+      onboardingLevelId: onboardingLevelId ?? this.onboardingLevelId,
+      challengeStartDate: challengeStartDate ?? this.challengeStartDate,
+      referralCode: referralCode ?? this.referralCode,
+      favoriteInstructorIds:
+          favoriteInstructorIds ?? this.favoriteInstructorIds,
+      activityLog: activityLog ?? this.activityLog,
       weeklyTarget: weeklyTarget ?? this.weeklyTarget,
       activeDates: activeDates ?? this.activeDates,
       completedMissionIdsByDate:
@@ -254,6 +312,13 @@ class SpeakCoachLocalState {
       'accent_id': accentId,
       'budget_id': budgetId,
       'schedule_id': scheduleId,
+      'reminder_window': reminderWindow,
+      'onboarding_completed': onboardingCompleted,
+      'onboarding_level_id': onboardingLevelId,
+      'challenge_start_date': challengeStartDate,
+      'referral_code': referralCode,
+      'favorite_instructor_ids': favoriteInstructorIds,
+      'activity_log': activityLog.map((item) => item.toJson()).toList(),
       'weekly_target': weeklyTarget,
       'active_dates': activeDates,
       'completed_mission_ids_by_date': completedMissionIdsByDate,
@@ -264,6 +329,40 @@ class SpeakCoachLocalState {
     if (raw is int) return raw;
     return int.tryParse('${raw ?? ''}') ?? fallback;
   }
+}
+
+class SpeakCoachActivityEntry {
+  const SpeakCoachActivityEntry({
+    required this.type,
+    required this.title,
+    required this.timestampIso,
+  });
+
+  final String type;
+  final String title;
+  final String timestampIso;
+
+  factory SpeakCoachActivityEntry.fromJson(Map<String, dynamic> json) {
+    return SpeakCoachActivityEntry(
+      type: (json['type'] ?? '').toString(),
+      title: (json['title'] ?? '').toString(),
+      timestampIso: (json['timestamp_iso'] ?? '').toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'type': type,
+      'title': title,
+      'timestamp_iso': timestampIso,
+    };
+  }
+}
+
+String generateSpeakCoachReferralCode() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  final random = Random();
+  return List.generate(8, (_) => chars[random.nextInt(chars.length)]).join();
 }
 
 class InstructorAvailabilitySnapshot {

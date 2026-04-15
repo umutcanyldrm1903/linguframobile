@@ -25,7 +25,9 @@ dependencies:
   webview_flutter: ^4.8.0
   video_player: ^2.11.1
   flutter_cached_pdfview: ^0.4.3
-  speech_to_text: ^7.3.0
+  flutter_local_notifications: ^17.2.3
+  flutter_timezone: ^4.1.1
+  timezone: ^0.9.4
 
 dev_dependencies:
   flutter_test:

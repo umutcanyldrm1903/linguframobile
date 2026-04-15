@@ -6,6 +6,7 @@ import '../../../core/localization/app_strings.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/auth_repository.dart';
+import '../../public/public_page_scaffold.dart';
 import '../packages/student_packages_screen.dart';
 import 'instructor_repository.dart';
 
@@ -173,7 +174,7 @@ class _StudentInstructorsScreenState extends State<StudentInstructorsScreen> {
       appBar: AppBar(
         title: Text(AppStrings.t('Instructors')),
       ),
-      body: content,
+      body: publicAppViewport(context, content, expandHeight: true),
     );
   }
 }
@@ -400,102 +401,106 @@ class _StudentInstructorDetailScreenState
       appBar: AppBar(
         title: Text(widget.data.name),
       ),
-      body: FutureBuilder<InstructorSchedule>(
-        future: _scheduleFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return _EmptyState(
-              message: _extractError(snapshot.error),
-              onRetry: () => _loadSchedule(),
+      body: publicAppViewport(
+        context,
+        FutureBuilder<InstructorSchedule>(
+          future: _scheduleFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return _EmptyState(
+                message: _extractError(snapshot.error),
+                onRetry: () => _loadSchedule(),
+              );
+            }
+
+            final schedule = snapshot.data!;
+            final rangeLabel =
+                _weekRangeLabel(schedule.weekStart, schedule.weekEnd);
+
+            return ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                _InstructorHeader(data: widget.data),
+                const SizedBox(height: 18),
+                Text(
+                  AppStrings.t('Lesson Reservation'),
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  AppStrings.t(
+                    'Pick one of the available time slots to create a reservation.',
+                  ),
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    TextButton(
+                      onPressed: () => _loadSchedule(start: schedule.prevStart),
+                      child: Text(AppStrings.t('Previous')),
+                    ),
+                    Text(
+                      rangeLabel,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    TextButton(
+                      onPressed: () => _loadSchedule(start: schedule.nextStart),
+                      child: Text(AppStrings.t('Next')),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 360,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemBuilder: (_, index) {
+                      final day = schedule.days[index];
+                      final dayLabel = _dayLabel(day.date);
+                      final dateLabel = _formatDateShort(day.date);
+                      final slots = schedule.slotsByDate[day.date] ?? [];
+                      return _DayColumn(
+                        label: dayLabel,
+                        date: dateLabel,
+                        slots: slots,
+                        selectedSlot: _selectedSlot,
+                        onSelect: (slotValue) {
+                          setState(() => _selectedSlot = slotValue);
+                        },
+                      );
+                    },
+                    separatorBuilder: (_, __) => const SizedBox(width: 12),
+                    itemCount: schedule.days.length,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _selectedSlot == null || _booking
+                        ? null
+                        : () => _bookSlot(schedule),
+                    child: Text(
+                      _selectedSlot == null
+                          ? AppStrings.t('Select Time')
+                          : _booking
+                              ? '${AppStrings.t('Submitting')}...'
+                              : AppStrings.t('Book Reservation'),
+                    ),
+                  ),
+                ),
+              ],
             );
-          }
-
-          final schedule = snapshot.data!;
-          final rangeLabel =
-              _weekRangeLabel(schedule.weekStart, schedule.weekEnd);
-
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              _InstructorHeader(data: widget.data),
-              const SizedBox(height: 18),
-              Text(
-                AppStrings.t('Lesson Reservation'),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                AppStrings.t(
-                  'Pick one of the available time slots to create a reservation.',
-                ),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  TextButton(
-                    onPressed: () => _loadSchedule(start: schedule.prevStart),
-                    child: Text(AppStrings.t('Previous')),
-                  ),
-                  Text(
-                    rangeLabel,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                  ),
-                  TextButton(
-                    onPressed: () => _loadSchedule(start: schedule.nextStart),
-                    child: Text(AppStrings.t('Next')),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 360,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemBuilder: (_, index) {
-                    final day = schedule.days[index];
-                    final dayLabel = _dayLabel(day.date);
-                    final dateLabel = _formatDateShort(day.date);
-                    final slots = schedule.slotsByDate[day.date] ?? [];
-                    return _DayColumn(
-                      label: dayLabel,
-                      date: dateLabel,
-                      slots: slots,
-                      selectedSlot: _selectedSlot,
-                      onSelect: (slotValue) {
-                        setState(() => _selectedSlot = slotValue);
-                      },
-                    );
-                  },
-                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                  itemCount: schedule.days.length,
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _selectedSlot == null || _booking
-                      ? null
-                      : () => _bookSlot(schedule),
-                  child: Text(
-                    _selectedSlot == null
-                        ? AppStrings.t('Select Time')
-                        : _booking
-                            ? '${AppStrings.t('Submitting')}...'
-                            : AppStrings.t('Book Reservation'),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
+          },
+        ),
+        expandHeight: true,
       ),
     );
   }

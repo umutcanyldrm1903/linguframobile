@@ -4,8 +4,68 @@ import '../../core/theme/app_colors.dart';
 import 'public_footer.dart';
 import 'public_header.dart';
 
-bool isCompactPublicLayout(BuildContext context) =>
-    MediaQuery.sizeOf(context).width < 900;
+// Keep the app in native-mode across all viewport sizes.
+bool isCompactPublicLayout(BuildContext context) => true;
+
+Widget publicAppViewport(
+  BuildContext context,
+  Widget child, {
+  bool expandHeight = false,
+}) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      if (constraints.maxWidth <= 520) {
+        return child;
+      }
+
+      final viewportChild = SizedBox(
+        width: 430,
+        height: expandHeight ? MediaQuery.sizeOf(context).height : null,
+        child: child,
+      );
+
+      return DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFEFF4FF),
+              Color(0xFFF7FAFF),
+              Color(0xFFF2F7FD),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.86),
+                borderRadius: BorderRadius.circular(36),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.74),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.brandNight.withValues(alpha: 0.08),
+                    blurRadius: 34,
+                    offset: const Offset(0, 16),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(34),
+                child: viewportChild,
+              ),
+            ),
+          ),
+        ),
+      );
+    },
+  );
+}
 
 class PublicPageShell extends StatelessWidget {
   const PublicPageShell({
@@ -29,6 +89,34 @@ class PublicPageShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final compact = isCompactPublicLayout(context);
     final spacing = sectionSpacing ?? (compact ? 12 : 16);
+
+    if (compact) {
+      return publicAppViewport(
+        context,
+        ListView(
+          padding: EdgeInsets.fromLTRB(
+            0,
+            MediaQuery.paddingOf(context).top + 8,
+            0,
+            MediaQuery.paddingOf(context).bottom + 24,
+          ),
+          children: [
+            PublicPageHero(
+              title: title,
+              breadcrumb: breadcrumb,
+              description: description,
+              icon: icon,
+            ),
+            SizedBox(height: spacing),
+            for (var i = 0; i < children.length; i++) ...[
+              children[i],
+              if (i != children.length - 1) SizedBox(height: spacing),
+            ],
+          ],
+        ),
+        expandHeight: true,
+      );
+    }
 
     return ListView(
       padding: EdgeInsets.zero,
@@ -77,9 +165,9 @@ class PublicPageHero extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [
-                Color(0xFF0D5B90),
-                Color(0xFF0B466F),
-                Color(0xFF082C46),
+                Color(0xFF3D5CFF),
+                Color(0xFF2C49E7),
+                Color(0xFF2237A7),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -112,7 +200,7 @@ class PublicPageHero extends StatelessWidget {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppColors.brand.withValues(alpha: 0.16),
+                    color: AppColors.accent.withValues(alpha: 0.18),
                   ),
                   child: const SizedBox(width: 110, height: 110),
                 ),

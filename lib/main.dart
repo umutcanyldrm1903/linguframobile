@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_currency_provider.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_locale_provider.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_strings.dart';
+import 'package:lingufranca_mobile/src/core/notifications/app_notification_service.dart';
 import 'package:lingufranca_mobile/src/core/storage/secure_storage.dart';
 import 'package:lingufranca_mobile/src/core/theme/app_theme.dart';
 import 'package:lingufranca_mobile/src/features/auth/login_screen.dart';
@@ -30,6 +31,7 @@ Future<void> main() async {
   await initializeDateFormatting();
   // Initialize the platform channel early so deep-links aren't missed.
   PaymentNativeService.deepLinkStream.listen((_) {});
+  await AppNotificationService.instance.initialize();
   await AppStrings.load();
   await AppCurrency.load();
   runApp(const ProviderScope(child: LingufrancaApp()));

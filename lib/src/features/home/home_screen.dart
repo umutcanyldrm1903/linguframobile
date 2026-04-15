@@ -7,9 +7,12 @@ import '../../core/localization/app_locale_provider.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
 import '../shared/content_preview_launcher.dart';
+import '../shared/trial_lesson_gate.dart';
+import '../shared/whatsapp_launcher.dart';
 import '../student/instructors/student_instructors_screen.dart';
 import '../public/public_repository.dart';
 import '../public/public_header.dart';
+import '../public/public_page_scaffold.dart';
 import '../public/speak_coach_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -21,6 +24,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
+  final PublicRepository _publicRepository = PublicRepository();
   Future<HomePayload?>? _homeFuture;
   final GlobalKey _heroKey = GlobalKey();
   final GlobalKey _packagesKey = GlobalKey();
@@ -34,7 +38,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _homeFuture = PublicRepository().fetchHomePage();
+    _homeFuture = _publicRepository.fetchHomePage();
   }
 
   @override
@@ -248,12 +252,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Future<void> _openTrialLessonLead() async {
+    await requestTrialLessonWithLoginGate(
+      context,
+      submitRequest: () async {
+        final result = await _publicRepository.requestTrialLesson();
+        return TrialLessonActionResult(
+          message: result.message,
+          supportUrl: result.whatsappUrl,
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.watch(appLocaleProvider);
-    final width = MediaQuery.sizeOf(context).width;
-    final compact = width < 900;
+    final compact = isCompactPublicLayout(context);
     final sectionGap = compact ? 14.0 : 24.0;
+
+    if (compact) {
+      return const SpeakCoachScreen();
+    }
 
     return FutureBuilder<HomePayload?>(
       future: _homeFuture,
@@ -281,10 +301,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   compact: compact,
                   showInlineForm: !compact,
                   onOpenLeadForm: compact ? _openLeadFormSheet : null,
+                  onOpenTrial: _openTrialLessonLead,
                 ),
                 SizedBox(height: compact ? 12 : 16),
-                const SpeakCoachPromoBanner(),
-                SizedBox(height: sectionGap),
                 StatsSection(counter: payload?.counter),
                 SizedBox(height: sectionGap),
                 InstructorSection(
@@ -308,6 +327,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   key: _corporateKey,
                   onNavTap: _handleNav,
                   banner: payload?.banner,
+                  onOpenTrial: _openTrialLessonLead,
                 ),
                 SizedBox(height: sectionGap),
                 const InstructorCtaSection(),
@@ -604,12 +624,14 @@ class HeroSection extends StatelessWidget {
     this.compact = false,
     this.showInlineForm = true,
     this.onOpenLeadForm,
+    this.onOpenTrial,
   });
 
   final SectionData? hero;
   final bool compact;
   final bool showInlineForm;
   final VoidCallback? onOpenLeadForm;
+  final VoidCallback? onOpenTrial;
 
   @override
   Widget build(BuildContext context) {
@@ -823,7 +845,11 @@ class HeroSection extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _Pill(text: AppStrings.t('Free Trial Lesson')),
+              _Pill(
+                text: AppStrings.code == 'tr'
+                    ? 'Kisiye ozel plan'
+                    : 'Personalized plan',
+              ),
               _Pill(
                 text: AppStrings.t('Native and expert instructors'),
                 ghost: true,
@@ -839,6 +865,16 @@ class HeroSection extends StatelessWidget {
             spacing: 12,
             runSpacing: 12,
             children: [
+              if (onOpenTrial != null)
+                ElevatedButton.icon(
+                  onPressed: onOpenTrial,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF6C453),
+                    foregroundColor: AppColors.ink,
+                  ),
+                  icon: const Icon(Icons.rocket_launch_rounded, size: 18),
+                  label: Text(AppStrings.t('Free Trial Lesson')),
+                ),
               OutlinedButton(
                 onPressed: () =>
                     Navigator.pushNamed(context, '/placement-test'),
@@ -973,18 +1009,11 @@ class _HeroFormCardState extends State<_HeroFormCard> {
         return;
       }
 
-      final encoded = Uri.encodeComponent(messageLines.join('\n'));
-      final cleaned = waPhone.replaceAll(RegExp(r'\\D'), '');
-      final waUrl = cleaned.isNotEmpty
-          ? 'https://wa.me/$cleaned?text=$encoded'
-          : 'https://wa.me/?text=$encoded';
-
       if (!mounted) return;
-      await openContentPreview(
+      await openWhatsAppLead(
         context,
-        title: 'WhatsApp',
-        rawUrl: waUrl,
-        browserActionLabel: AppStrings.t('Open Externally'),
+        phone: waPhone,
+        messageLines: messageLines,
       );
     } catch (_) {
       if (!mounted) return;
@@ -1864,16 +1893,10 @@ class _PlanFlowSheetState extends State<_PlanFlowSheet> {
   }
 
   Future<void> _sendWhatsApp(String phone) async {
-    final message = Uri.encodeComponent(_buildMessage());
-    final cleaned = phone.replaceAll(RegExp(r'\\D'), '');
-    final url = cleaned.isNotEmpty
-        ? 'https://wa.me/$cleaned?text=$message'
-        : 'https://wa.me/?text=$message';
-    await openContentPreview(
+    await openWhatsAppLead(
       context,
-      title: 'WhatsApp',
-      rawUrl: url,
-      browserActionLabel: AppStrings.t('Open Externally'),
+      phone: phone,
+      messageLines: _buildMessage().split('\n'),
     );
     if (!mounted) return;
     if (!widget.inline) {
@@ -2671,9 +2694,15 @@ class JourneySection extends StatelessWidget {
 }
 
 class CorporateSection extends StatelessWidget {
-  const CorporateSection({super.key, required this.onNavTap, this.banner});
+  const CorporateSection({
+    super.key,
+    required this.onNavTap,
+    required this.onOpenTrial,
+    this.banner,
+  });
 
   final ValueChanged<String> onNavTap;
+  final VoidCallback onOpenTrial;
   final SectionData? banner;
 
   @override
@@ -2723,7 +2752,7 @@ class CorporateSection extends StatelessWidget {
                 runSpacing: 12,
                 children: [
                   OutlinedButton(
-                    onPressed: () => Navigator.pushNamed(context, '/register'),
+                    onPressed: onOpenTrial,
                     child: Text(AppStrings.t('Free Trial Lesson')),
                   ),
                   ElevatedButton(

@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../core/localization/app_strings.dart';
-import '../../core/storage/secure_storage.dart';
 import '../../core/theme/app_colors.dart';
-import '../shared/content_preview_launcher.dart';
+import '../shared/trial_lesson_gate.dart';
+import '../student/instructors/instructor_repository.dart';
 import 'public_repository.dart';
 
 String _placementError(Object error) {
@@ -39,11 +39,14 @@ class PlacementTestScreen extends StatefulWidget {
 
 class _PlacementTestScreenState extends State<PlacementTestScreen> {
   final PublicRepository _repository = PublicRepository();
+  final InstructorRepository _instructorRepository = InstructorRepository();
   final TextEditingController _nameCtrl = TextEditingController();
   final TextEditingController _emailCtrl = TextEditingController();
   final TextEditingController _phoneCtrl = TextEditingController();
 
   late Future<List<PlacementQuestion>> _future;
+  late Future<PlanPayload?> _plansFuture;
+  late Future<List<InstructorSummary>> _instructorsFuture;
   final Map<String, String> _answers = {};
   int _step = 0;
   bool _submitting = false;
@@ -55,6 +58,8 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
   void initState() {
     super.initState();
     _future = _repository.fetchPlacementQuestions();
+    _plansFuture = _repository.fetchStudentPlans();
+    _instructorsFuture = _instructorRepository.fetchInstructors();
   }
 
   @override
@@ -65,92 +70,21 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
     super.dispose();
   }
 
-  Future<void> _openUrl(String raw) async {
-    final value = raw.trim();
-    if (value.isEmpty) return;
-    await openContentPreview(
-      context,
-      title: AppStrings.t('Open Link'),
-      rawUrl: value,
-      browserActionLabel: AppStrings.t('Open Externally'),
-    );
-  }
-
   Future<void> _requestTrialLesson() async {
-    final token = await SecureStorage.getToken();
-    if (!mounted) return;
-
-    if (token == null || token.isEmpty) {
-      Navigator.pushNamed(context, '/login');
-      return;
-    }
-
-    final role = await SecureStorage.getRole();
-    if (!mounted) return;
-
-    if (role == 'instructor') {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(AppStrings.t('Student Login'))));
-      return;
-    }
-
-    final shouldSubmit = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(AppStrings.t('Schedule Trial Lesson')),
-          content: Text(
-            AppStrings.t(
-              'You are about to request a one-time free trial lesson from our support team!',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text(AppStrings.t('Cancel')),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(AppStrings.t('Confirm')),
-            ),
-          ],
+    await requestTrialLessonWithLoginGate(
+      context,
+      submitRequest: () async {
+        final result = await _repository.requestTrialLesson();
+        return TrialLessonActionResult(
+          message: result.message,
+          supportUrl: result.whatsappUrl,
         );
       },
+      onLoadingChanged: (value) {
+        if (!mounted) return;
+        setState(() => _requestingTrial = value);
+      },
     );
-
-    if (shouldSubmit != true || !mounted) return;
-
-    setState(() => _requestingTrial = true);
-    try {
-      final response = await _repository.requestTrialLesson();
-      if (!mounted) return;
-
-      final message = response.message.trim().isNotEmpty
-          ? response.message.trim()
-          : AppStrings.t('Deneme dersi talebiniz alindi.');
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
-
-      if (response.whatsappUrl.trim().isNotEmpty) {
-        await _openUrl(response.whatsappUrl);
-      }
-    } catch (error) {
-      if (!mounted) return;
-      if (error is DioException && error.response?.statusCode == 401) {
-        Navigator.pushNamed(context, '/login');
-        return;
-      }
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_placementError(error))));
-    } finally {
-      if (mounted) {
-        setState(() => _requestingTrial = false);
-      }
-    }
   }
 
   Future<void> _submit() async {
@@ -209,21 +143,35 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
           }
 
           if (_result != null) {
-            return _PlacementResultView(
-              result: _result!,
-              onRetry: () {
-                setState(() {
-                  _result = null;
-                  _answers.clear();
-                  _step = 0;
-                  _submitError = null;
-                });
+            return FutureBuilder<List<dynamic>>(
+              future: Future.wait<dynamic>([_plansFuture, _instructorsFuture]),
+              builder: (context, conversionSnapshot) {
+                final planPayload = conversionSnapshot.data != null &&
+                        conversionSnapshot.data!.isNotEmpty
+                    ? conversionSnapshot.data![0] as PlanPayload?
+                    : null;
+                final instructors = conversionSnapshot.data != null &&
+                        conversionSnapshot.data!.length > 1
+                    ? conversionSnapshot.data![1] as List<InstructorSummary>
+                    : const <InstructorSummary>[];
+                return _PlacementResultView(
+                  result: _result!,
+                  planPayload: planPayload,
+                  instructors: instructors,
+                  loadingConversion: conversionSnapshot.connectionState ==
+                      ConnectionState.waiting,
+                  onRetry: () {
+                    setState(() {
+                      _result = null;
+                      _answers.clear();
+                      _step = 0;
+                      _submitError = null;
+                    });
+                  },
+                  onOpenSchedule: _requestTrialLesson,
+                  requestingTrial: _requestingTrial,
+                );
               },
-              onOpenSchedule: _requestTrialLesson,
-              requestingTrial: _requestingTrial,
-              onOpenWhatsapp: _result!.whatsappUrl.trim().isEmpty
-                  ? null
-                  : () => _openUrl(_result!.whatsappUrl),
             );
           }
 
@@ -299,10 +247,10 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
                         onPressed: _submitting
                             ? null
                             : isContactStep
-                            ? _submit
-                            : _answers[questions[_step].id] == null
-                            ? null
-                            : () => setState(() => _step = _step + 1),
+                                ? _submit
+                                : _answers[questions[_step].id] == null
+                                    ? null
+                                    : () => setState(() => _step = _step + 1),
                         child: _submitting
                             ? const SizedBox(
                                 height: 18,
@@ -349,9 +297,9 @@ class _QuestionStep extends StatelessWidget {
         Text(
           question.prompt,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: AppColors.ink,
-          ),
+                fontWeight: FontWeight.w800,
+                color: AppColors.ink,
+              ),
         ),
         const SizedBox(height: 14),
         Expanded(
@@ -429,9 +377,9 @@ class _ContactStep extends StatelessWidget {
             'Leave contact info to get a matching trial lesson plan.',
           ),
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            color: AppColors.ink,
-          ),
+                fontWeight: FontWeight.w800,
+                color: AppColors.ink,
+              ),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -467,20 +415,110 @@ class _ContactStep extends StatelessWidget {
 class _PlacementResultView extends StatelessWidget {
   const _PlacementResultView({
     required this.result,
+    required this.planPayload,
+    required this.instructors,
+    required this.loadingConversion,
     required this.onRetry,
     required this.onOpenSchedule,
     required this.requestingTrial,
-    this.onOpenWhatsapp,
   });
 
   final PlacementResult result;
+  final PlanPayload? planPayload;
+  final List<InstructorSummary> instructors;
+  final bool loadingConversion;
   final VoidCallback onRetry;
   final VoidCallback onOpenSchedule;
   final bool requestingTrial;
-  final VoidCallback? onOpenWhatsapp;
+
+  String _weakArea() {
+    final track = result.recommendedTrack.toLowerCase();
+    final summary = result.summary.toLowerCase();
+    if (track.contains('ielts') || track.contains('toefl')) {
+      return AppStrings.code == 'tr'
+          ? 'Uzun cevap yapisi ve linking words'
+          : 'Long-answer structure and linking words';
+    }
+    if (track.contains('business')) {
+      return AppStrings.code == 'tr'
+          ? 'Toplanti update dili ve netlik'
+          : 'Meeting updates and clarity';
+    }
+    if (summary.contains('fluency') || summary.contains('speaking')) {
+      return AppStrings.code == 'tr'
+          ? 'Akicilik ve cevap uzatma'
+          : 'Fluency and answer expansion';
+    }
+    return AppStrings.code == 'tr'
+        ? 'Gundelik speaking ritmi'
+        : 'Everyday speaking rhythm';
+  }
+
+  StudentPlan? _recommendedPlan() {
+    final plans = planPayload?.plans ?? const <StudentPlan>[];
+    if (plans.isEmpty) return null;
+    final track = result.recommendedTrack.toLowerCase();
+    final filtered = plans.where((plan) {
+      final bag =
+          '${plan.title} ${plan.displayTitle} ${plan.subtitle} ${plan.tagline}'
+              .toLowerCase();
+      if (track.contains('ielts') || track.contains('toefl')) {
+        return bag.contains('ielts') ||
+            bag.contains('toefl') ||
+            bag.contains('exam');
+      }
+      if (track.contains('business')) {
+        return bag.contains('business');
+      }
+      if (track.contains('travel')) {
+        return bag.contains('travel');
+      }
+      return bag.contains('speaking') || bag.contains('general');
+    }).toList();
+    final pool = filtered.isNotEmpty ? filtered : plans;
+    pool.sort((a, b) {
+      final scoreA = (a.featured ? 100 : 0) + a.lessonsTotal;
+      final scoreB = (b.featured ? 100 : 0) + b.lessonsTotal;
+      return scoreB.compareTo(scoreA);
+    });
+    return pool.first;
+  }
+
+  List<InstructorSummary> _matchedTutors() {
+    if (instructors.isEmpty) return const <InstructorSummary>[];
+    final track = result.recommendedTrack.toLowerCase();
+    final ranked = List<InstructorSummary>.from(instructors)
+      ..sort((a, b) => _scoreTutor(b, track).compareTo(_scoreTutor(a, track)));
+    return ranked.take(3).toList(growable: false);
+  }
+
+  int _scoreTutor(InstructorSummary instructor, String track) {
+    final bag =
+        '${instructor.name} ${instructor.jobTitle} ${instructor.shortBio} ${instructor.bio} ${instructor.tags.join(' ')}'
+            .toLowerCase();
+    var score = (instructor.avgRating * 10).round() + instructor.courseCount;
+    if (track.contains('ielts') || track.contains('toefl')) {
+      if (bag.contains('ielts') ||
+          bag.contains('toefl') ||
+          bag.contains('exam')) {
+        score += 40;
+      }
+    } else if (track.contains('business')) {
+      if (bag.contains('business')) score += 40;
+    } else if (track.contains('travel')) {
+      if (bag.contains('travel')) score += 40;
+    } else {
+      if (bag.contains('speaking') || bag.contains('general')) score += 40;
+    }
+    if (bag.contains('turkish')) score += 4;
+    return score;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final weakArea = _weakArea();
+    final plan = _recommendedPlan();
+    final tutors = _matchedTutors();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
       child: ListView(
@@ -531,6 +569,156 @@ class _PlacementResultView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFF),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFD9E4F4)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppStrings.code == 'tr'
+                      ? 'Ana zayif alan'
+                      : 'Primary weak area',
+                  style: const TextStyle(
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  weakArea,
+                  style: const TextStyle(
+                    color: AppColors.ink,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFF),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFD9E4F4)),
+            ),
+            child: loadingConversion
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppStrings.code == 'tr'
+                            ? 'Sana uygun plan'
+                            : 'Plan that fits you',
+                        style: const TextStyle(
+                          color: AppColors.muted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        plan?.displayTitle.isNotEmpty == true
+                            ? plan!.displayTitle
+                            : (plan?.title.isNotEmpty == true
+                                ? plan!.title
+                                : AppStrings.t('Plan will appear here')),
+                        style: const TextStyle(
+                          color: AppColors.ink,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        plan == null
+                            ? AppStrings.code == 'tr'
+                                ? 'Plan verisi hazir oldugunda burada gozukur.'
+                                : 'The matching plan will appear here once plan data is available.'
+                            : '${plan.lessonsTotal} ${AppStrings.code == 'tr' ? 'ders' : 'lessons'} • ${plan.lessonDuration}${AppStrings.code == 'tr' ? ' dk' : ' min'} • ${planPayload?.currency ?? ''} ${plan.price.toStringAsFixed(0)}',
+                      ),
+                      if (plan?.tagline.isNotEmpty == true) ...[
+                        const SizedBox(height: 6),
+                        Text(plan!.tagline),
+                      ],
+                    ],
+                  ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFF),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: const Color(0xFFD9E4F4)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  AppStrings.code == 'tr'
+                      ? 'Sana uygun 3 tutor'
+                      : '3 tutors that fit this result',
+                  style: const TextStyle(
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                if (loadingConversion)
+                  const Center(child: CircularProgressIndicator())
+                else if (tutors.isEmpty)
+                  Text(
+                    AppStrings.code == 'tr'
+                        ? 'Tutor listesi hazir oldugunda burada gozukur.'
+                        : 'Tutor picks will appear here once the list is available.',
+                  )
+                else
+                  ...tutors.map((tutor) {
+                    final tags = tutor.tags.take(2).join(' • ');
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFFD9E4F4)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tutor.name,
+                              style: const TextStyle(
+                                color: AppColors.ink,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              tutor.jobTitle.isNotEmpty
+                                  ? tutor.jobTitle
+                                  : AppStrings.t('Instructor'),
+                            ),
+                            if (tags.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Text(tags),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
           ElevatedButton(
             onPressed: requestingTrial ? null : onOpenSchedule,
             child: requestingTrial
@@ -541,12 +729,6 @@ class _PlacementResultView extends StatelessWidget {
                   )
                 : Text(AppStrings.t('Schedule Trial Lesson')),
           ),
-          const SizedBox(height: 10),
-          if (onOpenWhatsapp != null)
-            OutlinedButton(
-              onPressed: onOpenWhatsapp,
-              child: Text(AppStrings.t('Send via WhatsApp')),
-            ),
           const SizedBox(height: 10),
           TextButton(
             onPressed: onRetry,

@@ -33,6 +33,12 @@ Future<void> openContentPreview(
   final externalAction = canOpenExternally ? openExternally : null;
 
   final previewType = detectContentPreviewType(rawUrl);
+  if (previewType == ContentPreviewType.web ||
+      previewType == ContentPreviewType.office) {
+    await openExternally();
+    return;
+  }
+
   final embeddedUri = tryBuildEmbeddedContentUri(rawUrl);
 
   Widget screen;
