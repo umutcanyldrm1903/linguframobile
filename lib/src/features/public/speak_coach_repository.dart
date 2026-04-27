@@ -15,6 +15,8 @@ class SpeakCoachRepository {
         _instructorRepository = instructorRepository ?? InstructorRepository();
 
   static const _storageKey = 'speak_coach_state_v1';
+  static const _availabilityCacheKey = 'speak_coach_availability_cache_v1';
+  static const _availabilityRetryQueueKey = 'speak_coach_availability_retry_v1';
 
   final PublicRepository _publicRepository;
   final InstructorRepository _instructorRepository;
@@ -65,7 +67,7 @@ class SpeakCoachRepository {
     await SecureStorage.setValue(_storageKey, jsonEncode(state.toJson()));
   }
 
-  Future<InstructorAvailabilitySnapshot?> fetchAvailability(
+  Future<AvailabilityFetchResult> fetchAvailabilityWithFallback(
     int instructorId,
   ) async {
     try {
@@ -92,14 +94,42 @@ class SpeakCoachRepository {
         }
       }
 
-      return InstructorAvailabilitySnapshot(
+      final snapshot = InstructorAvailabilitySnapshot(
         todayAvailableCount: todayAvailableCount,
         nextAvailableDate: nextAvailableDate,
         nextAvailableSlotLabel: nextAvailableSlotLabel,
       );
+      await _cacheAvailability(instructorId, snapshot);
+      return AvailabilityFetchResult(
+        snapshot: snapshot,
+        fromCache: false,
+      );
     } catch (_) {
-      return null;
+      final cached = await _cachedAvailability(instructorId);
+      await _enqueueAvailabilityRetry(instructorId);
+      return AvailabilityFetchResult(
+        snapshot: cached,
+        fromCache: true,
+      );
     }
+  }
+
+  Future<int> pendingAvailabilityRetryCount() async {
+    final queue = await _readAvailabilityRetryQueue();
+    return queue.length;
+  }
+
+  Future<void> flushAvailabilityRetryQueue() async {
+    final queue = await _readAvailabilityRetryQueue();
+    if (queue.isEmpty) return;
+    final unresolved = <int>[];
+    for (final instructorId in queue) {
+      final fetched = await fetchAvailabilityWithFallback(instructorId);
+      if (fetched.fromCache) {
+        unresolved.add(instructorId);
+      }
+    }
+    await _writeAvailabilityRetryQueue(unresolved);
   }
 
   List<InstructorSummary> _fallbackInstructors(HomePayload? home) {
@@ -152,6 +182,63 @@ class SpeakCoachRepository {
       return null;
     }
   }
+
+  Future<void> _cacheAvailability(
+    int instructorId,
+    InstructorAvailabilitySnapshot snapshot,
+  ) async {
+    final all = await _readAvailabilityCache();
+    all['$instructorId'] = snapshot.toJson();
+    await SecureStorage.setValue(_availabilityCacheKey, jsonEncode(all));
+  }
+
+  Future<InstructorAvailabilitySnapshot?> _cachedAvailability(
+    int instructorId,
+  ) async {
+    final all = await _readAvailabilityCache();
+    final raw = all['$instructorId'];
+    if (raw is Map<String, dynamic>) {
+      return InstructorAvailabilitySnapshot.fromJson(raw);
+    }
+    return null;
+  }
+
+  Future<Map<String, dynamic>> _readAvailabilityCache() async {
+    final raw = await SecureStorage.getValue(_availabilityCacheKey);
+    if (raw == null || raw.trim().isEmpty) return {};
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) return decoded;
+    } catch (_) {}
+    return {};
+  }
+
+  Future<void> _enqueueAvailabilityRetry(int instructorId) async {
+    final queue = await _readAvailabilityRetryQueue();
+    if (!queue.contains(instructorId)) {
+      queue.add(instructorId);
+      await _writeAvailabilityRetryQueue(queue);
+    }
+  }
+
+  Future<List<int>> _readAvailabilityRetryQueue() async {
+    final raw = await SecureStorage.getValue(_availabilityRetryQueueKey);
+    if (raw == null || raw.trim().isEmpty) return <int>[];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded
+            .map((item) => int.tryParse('$item') ?? 0)
+            .where((id) => id > 0)
+            .toList(growable: true);
+      }
+    } catch (_) {}
+    return <int>[];
+  }
+
+  Future<void> _writeAvailabilityRetryQueue(List<int> queue) async {
+    await SecureStorage.setValue(_availabilityRetryQueueKey, jsonEncode(queue));
+  }
 }
 
 class SpeakCoachBootstrap {
@@ -175,11 +262,14 @@ class SpeakCoachLocalState {
     required this.budgetId,
     required this.scheduleId,
     required this.reminderWindow,
+    required this.preferredPracticeMode,
     required this.onboardingCompleted,
     required this.onboardingLevelId,
     required this.challengeStartDate,
     required this.referralCode,
     required this.favoriteInstructorIds,
+    required this.savedPhrases,
+    required this.compareSessions,
     required this.activityLog,
     required this.weeklyTarget,
     required this.activeDates,
@@ -191,11 +281,14 @@ class SpeakCoachLocalState {
   final String budgetId;
   final String scheduleId;
   final String reminderWindow;
+  final String preferredPracticeMode;
   final bool onboardingCompleted;
   final String onboardingLevelId;
   final String? challengeStartDate;
   final String referralCode;
   final List<int> favoriteInstructorIds;
+  final List<String> savedPhrases;
+  final List<SpeakCoachCompareSession> compareSessions;
   final List<SpeakCoachActivityEntry> activityLog;
   final int weeklyTarget;
   final List<String> activeDates;
@@ -208,11 +301,14 @@ class SpeakCoachLocalState {
       budgetId: 'balanced',
       scheduleId: 'evening',
       reminderWindow: 'evening',
+      preferredPracticeMode: 'shadow',
       onboardingCompleted: false,
       onboardingLevelId: 'beginner',
       challengeStartDate: null,
       referralCode: '',
       favoriteInstructorIds: <int>[],
+      savedPhrases: <String>[],
+      compareSessions: <SpeakCoachCompareSession>[],
       activityLog: <SpeakCoachActivityEntry>[],
       weeklyTarget: 4,
       activeDates: <String>[],
@@ -249,12 +345,20 @@ class SpeakCoachLocalState {
         .map(SpeakCoachActivityEntry.fromJson)
         .toList(growable: false);
 
+    final compareSessions =
+        (json['compare_sessions'] as List<dynamic>? ?? const [])
+            .whereType<Map<String, dynamic>>()
+            .map(SpeakCoachCompareSession.fromJson)
+            .toList(growable: false);
+
     return SpeakCoachLocalState(
       goalId: (json['goal_id'] ?? 'speaking').toString(),
       accentId: (json['accent_id'] ?? 'foreign').toString(),
       budgetId: (json['budget_id'] ?? 'balanced').toString(),
       scheduleId: (json['schedule_id'] ?? 'evening').toString(),
       reminderWindow: (json['reminder_window'] ?? 'evening').toString(),
+      preferredPracticeMode:
+          (json['preferred_practice_mode'] ?? 'shadow').toString(),
       onboardingCompleted: json['onboarding_completed'] == true,
       onboardingLevelId: (json['onboarding_level_id'] ?? 'beginner').toString(),
       challengeStartDate:
@@ -263,6 +367,11 @@ class SpeakCoachLocalState {
               : (json['challenge_start_date'] as String?)?.trim(),
       referralCode: (json['referral_code'] ?? '').toString(),
       favoriteInstructorIds: favoriteInstructorIds,
+      savedPhrases: (json['saved_phrases'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .where((item) => item.trim().isNotEmpty)
+          .toList(growable: false),
+      compareSessions: compareSessions,
       activityLog: activityLog,
       weeklyTarget: _parseInt(json['weekly_target'], 4),
       activeDates: activeDates,
@@ -276,11 +385,14 @@ class SpeakCoachLocalState {
     String? budgetId,
     String? scheduleId,
     String? reminderWindow,
+    String? preferredPracticeMode,
     bool? onboardingCompleted,
     String? onboardingLevelId,
     String? challengeStartDate,
     String? referralCode,
     List<int>? favoriteInstructorIds,
+    List<String>? savedPhrases,
+    List<SpeakCoachCompareSession>? compareSessions,
     List<SpeakCoachActivityEntry>? activityLog,
     int? weeklyTarget,
     List<String>? activeDates,
@@ -292,12 +404,16 @@ class SpeakCoachLocalState {
       budgetId: budgetId ?? this.budgetId,
       scheduleId: scheduleId ?? this.scheduleId,
       reminderWindow: reminderWindow ?? this.reminderWindow,
+      preferredPracticeMode:
+          preferredPracticeMode ?? this.preferredPracticeMode,
       onboardingCompleted: onboardingCompleted ?? this.onboardingCompleted,
       onboardingLevelId: onboardingLevelId ?? this.onboardingLevelId,
       challengeStartDate: challengeStartDate ?? this.challengeStartDate,
       referralCode: referralCode ?? this.referralCode,
       favoriteInstructorIds:
           favoriteInstructorIds ?? this.favoriteInstructorIds,
+      savedPhrases: savedPhrases ?? this.savedPhrases,
+      compareSessions: compareSessions ?? this.compareSessions,
       activityLog: activityLog ?? this.activityLog,
       weeklyTarget: weeklyTarget ?? this.weeklyTarget,
       activeDates: activeDates ?? this.activeDates,
@@ -313,11 +429,14 @@ class SpeakCoachLocalState {
       'budget_id': budgetId,
       'schedule_id': scheduleId,
       'reminder_window': reminderWindow,
+      'preferred_practice_mode': preferredPracticeMode,
       'onboarding_completed': onboardingCompleted,
       'onboarding_level_id': onboardingLevelId,
       'challenge_start_date': challengeStartDate,
       'referral_code': referralCode,
       'favorite_instructor_ids': favoriteInstructorIds,
+      'saved_phrases': savedPhrases,
+      'compare_sessions': compareSessions.map((item) => item.toJson()).toList(),
       'activity_log': activityLog.map((item) => item.toJson()).toList(),
       'weekly_target': weeklyTarget,
       'active_dates': activeDates,
@@ -359,6 +478,99 @@ class SpeakCoachActivityEntry {
   }
 }
 
+class SpeakCoachCompareSession {
+  const SpeakCoachCompareSession({
+    required this.id,
+    required this.goalId,
+    required this.practiceModeId,
+    required this.focusLine,
+    required this.audioPath,
+    required this.durationSeconds,
+    required this.clarityScore,
+    required this.rhythmScore,
+    required this.confidenceScore,
+    required this.transcript,
+    required this.rewrittenTranscript,
+    required this.errorTags,
+    required this.errorTagScores,
+    required this.createdAtIso,
+  });
+
+  final String id;
+  final String goalId;
+  final String practiceModeId;
+  final String focusLine;
+  final String audioPath;
+  final int durationSeconds;
+  final int clarityScore;
+  final int rhythmScore;
+  final int confidenceScore;
+  final String transcript;
+  final String rewrittenTranscript;
+  final List<String> errorTags;
+  final Map<String, int> errorTagScores;
+  final String createdAtIso;
+
+  factory SpeakCoachCompareSession.fromJson(Map<String, dynamic> json) {
+    return SpeakCoachCompareSession(
+      id: (json['id'] ?? '').toString(),
+      goalId: (json['goal_id'] ?? '').toString(),
+      practiceModeId: (json['practice_mode_id'] ?? '').toString(),
+      focusLine: (json['focus_line'] ?? '').toString(),
+      audioPath: (json['audio_path'] ?? '').toString(),
+      durationSeconds: _parseInt(json['duration_seconds'], 0),
+      clarityScore: _parseInt(json['clarity_score'], 0),
+      rhythmScore: _parseInt(json['rhythm_score'], 0),
+      confidenceScore: _parseInt(json['confidence_score'], 0),
+      transcript: (json['transcript'] ?? '').toString(),
+      rewrittenTranscript: (json['rewritten_transcript'] ?? '').toString(),
+      errorTags: (json['error_tags'] as List<dynamic>? ?? const [])
+          .map((item) => item.toString())
+          .where((item) => item.trim().isNotEmpty)
+          .toList(growable: false),
+      errorTagScores: _parseTagScores(json['error_tag_scores']),
+      createdAtIso: (json['created_at_iso'] ?? '').toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'goal_id': goalId,
+      'practice_mode_id': practiceModeId,
+      'focus_line': focusLine,
+      'audio_path': audioPath,
+      'duration_seconds': durationSeconds,
+      'clarity_score': clarityScore,
+      'rhythm_score': rhythmScore,
+      'confidence_score': confidenceScore,
+      'transcript': transcript,
+      'rewritten_transcript': rewrittenTranscript,
+      'error_tags': errorTags,
+      'error_tag_scores': errorTagScores,
+      'created_at_iso': createdAtIso,
+    };
+  }
+
+  static int _parseInt(dynamic raw, int fallback) {
+    if (raw is int) return raw;
+    return int.tryParse('${raw ?? ''}') ?? fallback;
+  }
+
+  static Map<String, int> _parseTagScores(dynamic raw) {
+    final parsed = <String, int>{};
+    if (raw is Map<String, dynamic>) {
+      raw.forEach((key, value) {
+        final numeric = _parseInt(value, 0).clamp(0, 100);
+        if (key.trim().isNotEmpty && numeric > 0) {
+          parsed[key] = numeric;
+        }
+      });
+    }
+    return parsed;
+  }
+}
+
 String generateSpeakCoachReferralCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   final random = Random();
@@ -375,4 +587,30 @@ class InstructorAvailabilitySnapshot {
   final int todayAvailableCount;
   final String? nextAvailableDate;
   final String? nextAvailableSlotLabel;
+
+  factory InstructorAvailabilitySnapshot.fromJson(Map<String, dynamic> json) {
+    return InstructorAvailabilitySnapshot(
+      todayAvailableCount: int.tryParse('${json['today_available_count'] ?? 0}') ?? 0,
+      nextAvailableDate: (json['next_available_date'] as String?)?.trim(),
+      nextAvailableSlotLabel: (json['next_available_slot_label'] as String?)?.trim(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'today_available_count': todayAvailableCount,
+      'next_available_date': nextAvailableDate,
+      'next_available_slot_label': nextAvailableSlotLabel,
+    };
+  }
+}
+
+class AvailabilityFetchResult {
+  const AvailabilityFetchResult({
+    required this.snapshot,
+    required this.fromCache,
+  });
+
+  final InstructorAvailabilitySnapshot? snapshot;
+  final bool fromCache;
 }

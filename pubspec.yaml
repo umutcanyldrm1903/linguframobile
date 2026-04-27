@@ -1,4 +1,4 @@
-﻿name: lingufranca_mobile
+name: lingufranca_mobile
 description: "A new Flutter project."
 publish_to: 'none'
 
@@ -28,6 +28,11 @@ dependencies:
   flutter_local_notifications: ^17.2.3
   flutter_timezone: ^4.1.1
   timezone: ^0.9.4
+  record: ^6.1.1
+  just_audio: ^0.10.4
+  path_provider: ^2.1.5
+  speech_to_text: ^7.3.0
+  flutter_tts: ^4.2.5
 
 dev_dependencies:
   flutter_test:

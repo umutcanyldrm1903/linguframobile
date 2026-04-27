@@ -19,6 +19,8 @@ class StudentShell extends StatefulWidget {
 }
 
 class _StudentShellState extends State<StudentShell> {
+  static const _trialBookingIntentKey = 'trial_booking_intent_v1';
+
   int _index = 0;
 
   final List<Widget> _pages = const [
@@ -28,6 +30,26 @@ class _StudentShellState extends State<StudentShell> {
     StudentMessagesScreen(),
     StudentProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _continueTrialBookingIfNeeded());
+  }
+
+  Future<void> _continueTrialBookingIfNeeded() async {
+    final raw = await SecureStorage.getValue(_trialBookingIntentKey);
+    if (!mounted || (raw ?? '').trim().isEmpty) return;
+    setState(() => _index = 1);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppStrings.t('Continue your trial lesson reservation.'),
+        ),
+      ),
+    );
+  }
 
   List<AppShellDestination> get _destinations => [
         AppShellDestination(

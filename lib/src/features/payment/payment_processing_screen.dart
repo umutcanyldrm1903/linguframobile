@@ -86,15 +86,21 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen>
     if (uri.scheme != 'lingufranca') return;
     if (uri.host != 'payment') return;
 
+    // Validate invoice_id parameter - must match current invoice
     final invoice = (uri.queryParameters['invoice_id'] ?? '').trim();
-    if (invoice.isEmpty || invoice != widget.invoiceId) return;
+    if (invoice.isEmpty || invoice != widget.invoiceId) {
+      // Prevent injection attacks - don't process mismatched invoice IDs
+      return;
+    }
 
+    // Only process 'failed' result - other results are handled by page redirects
     final result = (uri.queryParameters['result'] ?? '').toLowerCase();
     if (result == 'failed' && mounted) {
       Navigator.pop(context, false);
       return;
     }
 
+    // For any other deep link from payment domain, check status
     _checkStatus(showToast: false);
   }
 
@@ -182,7 +188,12 @@ class _PaymentProcessingScreenState extends State<PaymentProcessingScreen>
         mode: kIsWeb ? LaunchMode.externalApplication : LaunchMode.inAppBrowserView,
       );
       if (!opened) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        final fallbackOpened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!fallbackOpened && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppStrings.t('Could not open payment URL'))),
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _opening = false);

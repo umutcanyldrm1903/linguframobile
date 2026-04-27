@@ -9,6 +9,14 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final authTokenProvider = StateProvider<String?>((ref) => null);
 
+// Initialize token from secure storage on app startup
+final authTokenInitializationProvider = FutureProvider<void>((ref) async {
+  final token = await SecureStorage.getToken();
+  if (token != null && token.isNotEmpty) {
+    ref.read(authTokenProvider.notifier).state = token;
+  }
+});
+
 class AuthFailure implements Exception {
   const AuthFailure(this.message);
 
@@ -62,6 +70,16 @@ class AuthNotifier extends StateNotifier<bool> {
       return _persistSession(loginData, repo: repo);
     } catch (error) {
       throw AuthFailure(_extractMessage(error));
+    } finally {
+      state = false;
+    }
+  }
+
+  Future<void> logout() async {
+    state = true;
+    try {
+      await SecureStorage.clearAll();
+      _read.read(authTokenProvider.notifier).state = null;
     } finally {
       state = false;
     }

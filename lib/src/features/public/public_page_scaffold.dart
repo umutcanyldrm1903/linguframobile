@@ -14,15 +14,41 @@ Widget publicAppViewport(
 }) {
   return LayoutBuilder(
     builder: (context, constraints) {
-      if (constraints.maxWidth <= 520) {
-        return child;
-      }
-
+      final viewportHeight = MediaQuery.sizeOf(context).height;
+      final targetPhoneWidth =
+          constraints.maxWidth <= 520 ? constraints.maxWidth : 430.0;
+      final targetPhoneHeight = expandHeight
+          ? (targetPhoneWidth <= 0 ? viewportHeight : targetPhoneWidth * 2.05)
+          : viewportHeight;
       final viewportChild = SizedBox(
-        width: 430,
-        height: expandHeight ? MediaQuery.sizeOf(context).height : null,
+        width: targetPhoneWidth,
+        height: targetPhoneHeight,
         child: child,
       );
+
+      if (constraints.maxWidth <= 520) {
+        if (!expandHeight) {
+          return child;
+        }
+        return ColoredBox(
+          color: Colors.white,
+          child: Center(
+            child: FittedBox(
+              fit: BoxFit.contain,
+              alignment: Alignment.topCenter,
+              child: viewportChild,
+            ),
+          ),
+        );
+      }
+
+      final framedViewport = expandHeight
+          ? FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.topCenter,
+              child: viewportChild,
+            )
+          : viewportChild;
 
       return DecoratedBox(
         decoration: const BoxDecoration(
@@ -57,7 +83,7 @@ Widget publicAppViewport(
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(34),
-                child: viewportChild,
+                child: framedViewport,
               ),
             ),
           ),

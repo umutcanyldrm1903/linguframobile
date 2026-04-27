@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/localization/app_strings.dart';
+import '../../core/storage/secure_storage.dart';
 import '../../core/theme/app_colors.dart';
 import 'auth_page_scaffold.dart';
 import 'auth_provider.dart';
@@ -14,6 +15,8 @@ class RegisterScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+  static const _trialBookingIntentKey = 'trial_booking_intent_v1';
+
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -62,6 +65,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (role == 'instructor') {
         Navigator.pushReplacementNamed(context, '/instructor');
       } else {
+        final trialIntent =
+            await SecureStorage.getValue(_trialBookingIntentKey);
+        if (!mounted) return;
+        if ((trialIntent ?? '').trim().isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                AppStrings.t(
+                  'Your trial lesson choice was saved. Continue booking from your student panel.',
+                ),
+              ),
+            ),
+          );
+        }
         Navigator.pushReplacementNamed(context, '/student');
       }
     } on AuthFailure catch (error) {
@@ -103,7 +120,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 }
                 final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
                 if (!emailRegex.hasMatch(email)) {
-                  return AppStrings.t('The email must be a valid email address');
+                  return AppStrings.t(
+                      'The email must be a valid email address');
                 }
                 return null;
               },
@@ -118,8 +136,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               validator: (value) {
                 final phone = value?.trim() ?? '';
                 if (phone.isEmpty) return null;
-                final digitCount =
-                    phone.replaceAll(RegExp(r'\D'), '').length;
+                final digitCount = phone.replaceAll(RegExp(r'\D'), '').length;
                 if (digitCount < 7) {
                   return AppStrings.t('Phone number is too short');
                 }

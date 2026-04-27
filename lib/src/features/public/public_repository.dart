@@ -267,6 +267,18 @@ class PublicRepository {
     return const TrialLessonRequestResult(message: '', whatsappUrl: '');
   }
 
+  Future<SpeakingCoachFunnelReport?> fetchSpeakingCoachFunnel({
+    int days = 7,
+  }) async {
+    final response = await ApiClient.dio.get(
+      '/analytics/speaking-coach-funnel',
+      queryParameters: {'days': days},
+    );
+    final map = _extractMap(response.data);
+    if (map == null) return null;
+    return SpeakingCoachFunnelReport.fromJson(map);
+  }
+
   Map<String, dynamic>? _extractMap(dynamic data) {
     if (data is Map<String, dynamic>) {
       final inner = data['data'];
@@ -292,13 +304,22 @@ class PublicRepository {
 }
 
 class PublicSettings {
-  const PublicSettings({required this.whatsappLeadPhone});
+  const PublicSettings({
+    required this.whatsappLeadPhone,
+    required this.growthConfig,
+  });
 
   final String whatsappLeadPhone;
+  final Map<String, dynamic> growthConfig;
 
   factory PublicSettings.fromJson(Map<String, dynamic> json) {
+    final rawGrowth = json['growth_config'] ?? json['growth'] ?? json['experiments'];
+    final growthConfig = rawGrowth is Map<String, dynamic>
+        ? rawGrowth
+        : const <String, dynamic>{};
     return PublicSettings(
       whatsappLeadPhone: (json['whatsapp_lead_phone'] ?? '').toString(),
+      growthConfig: growthConfig,
     );
   }
 }
@@ -614,6 +635,40 @@ class TrialLessonRequestResult {
 
   final String message;
   final String whatsappUrl;
+}
+
+class SpeakingCoachFunnelReport {
+  const SpeakingCoachFunnelReport({
+    required this.days,
+    required this.counts,
+    required this.rates,
+  });
+
+  final int days;
+  final Map<String, int> counts;
+  final Map<String, double> rates;
+
+  factory SpeakingCoachFunnelReport.fromJson(Map<String, dynamic> json) {
+    final rawCounts = json['counts'];
+    final rawRates = json['rates'];
+    final counts = <String, int>{};
+    final rates = <String, double>{};
+    if (rawCounts is Map<String, dynamic>) {
+      rawCounts.forEach((key, value) {
+        counts[key] = int.tryParse('${value ?? 0}') ?? 0;
+      });
+    }
+    if (rawRates is Map<String, dynamic>) {
+      rawRates.forEach((key, value) {
+        rates[key] = double.tryParse('${value ?? 0}') ?? 0;
+      });
+    }
+    return SpeakingCoachFunnelReport(
+      days: int.tryParse('${json['days'] ?? 7}') ?? 7,
+      counts: counts,
+      rates: rates,
+    );
+  }
 }
 
 class ContactInfo {

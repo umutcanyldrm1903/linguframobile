@@ -119,160 +119,163 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(AppStrings.t('2-Minute English Level Test'))),
-      body: FutureBuilder<List<PlacementQuestion>>(
-        future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Text(
-                  _placementError(snapshot.error!),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          }
-
-          final questions = snapshot.data ?? const <PlacementQuestion>[];
-          if (questions.isEmpty) {
-            return Center(child: Text(AppStrings.t('No Data Found')));
-          }
-
-          if (_result != null) {
-            return FutureBuilder<List<dynamic>>(
-              future: Future.wait<dynamic>([_plansFuture, _instructorsFuture]),
-              builder: (context, conversionSnapshot) {
-                final planPayload = conversionSnapshot.data != null &&
-                        conversionSnapshot.data!.isNotEmpty
-                    ? conversionSnapshot.data![0] as PlanPayload?
-                    : null;
-                final instructors = conversionSnapshot.data != null &&
-                        conversionSnapshot.data!.length > 1
-                    ? conversionSnapshot.data![1] as List<InstructorSummary>
-                    : const <InstructorSummary>[];
-                return _PlacementResultView(
-                  result: _result!,
-                  planPayload: planPayload,
-                  instructors: instructors,
-                  loadingConversion: conversionSnapshot.connectionState ==
-                      ConnectionState.waiting,
-                  onRetry: () {
-                    setState(() {
-                      _result = null;
-                      _answers.clear();
-                      _step = 0;
-                      _submitError = null;
-                    });
-                  },
-                  onOpenSchedule: _requestTrialLesson,
-                  requestingTrial: _requestingTrial,
-                );
-              },
-            );
-          }
-
-          final totalSteps = questions.length + 1;
-          final isContactStep = _step == questions.length;
-          final progress = (_step + 1) / totalSteps;
-
-          return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  '${_step + 1} / $totalSteps',
-                  style: const TextStyle(
-                    color: AppColors.muted,
-                    fontWeight: FontWeight.w700,
+      body: SafeArea(
+        child: FutureBuilder<List<PlacementQuestion>>(
+          future: _future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    _placementError(snapshot.error!),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(999),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 8,
-                    backgroundColor: const Color(0xFFE3EBF7),
-                    color: AppColors.brand,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Expanded(
-                  child: isContactStep
-                      ? _ContactStep(
-                          nameCtrl: _nameCtrl,
-                          emailCtrl: _emailCtrl,
-                          phoneCtrl: _phoneCtrl,
-                        )
-                      : _QuestionStep(
-                          question: questions[_step],
-                          selected: _answers[questions[_step].id],
-                          onSelect: (option) {
-                            setState(() {
-                              _answers[questions[_step].id] = option;
-                            });
-                          },
-                        ),
-                ),
-                if (_submitError != null) ...[
-                  const SizedBox(height: 8),
+              );
+            }
+
+            final questions = snapshot.data ?? const <PlacementQuestion>[];
+            if (questions.isEmpty) {
+              return Center(child: Text(AppStrings.t('No Data Found')));
+            }
+
+            if (_result != null) {
+              return FutureBuilder<List<dynamic>>(
+                future:
+                    Future.wait<dynamic>([_plansFuture, _instructorsFuture]),
+                builder: (context, conversionSnapshot) {
+                  final planPayload = conversionSnapshot.data != null &&
+                          conversionSnapshot.data!.isNotEmpty
+                      ? conversionSnapshot.data![0] as PlanPayload?
+                      : null;
+                  final instructors = conversionSnapshot.data != null &&
+                          conversionSnapshot.data!.length > 1
+                      ? conversionSnapshot.data![1] as List<InstructorSummary>
+                      : const <InstructorSummary>[];
+                  return _PlacementResultView(
+                    result: _result!,
+                    planPayload: planPayload,
+                    instructors: instructors,
+                    loadingConversion: conversionSnapshot.connectionState ==
+                        ConnectionState.waiting,
+                    onRetry: () {
+                      setState(() {
+                        _result = null;
+                        _answers.clear();
+                        _step = 0;
+                        _submitError = null;
+                      });
+                    },
+                    onOpenSchedule: _requestTrialLesson,
+                    requestingTrial: _requestingTrial,
+                  );
+                },
+              );
+            }
+
+            final totalSteps = questions.length + 1;
+            final isContactStep = _step == questions.length;
+            final progress = (_step + 1) / totalSteps;
+
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                   Text(
-                    _submitError!,
+                    '${_step + 1} / $totalSteps',
                     style: const TextStyle(
-                      color: Colors.red,
-                      fontWeight: FontWeight.w600,
+                      color: AppColors.muted,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ],
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    if (_step > 0)
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: _submitting
-                              ? null
-                              : () => setState(() => _step = _step - 1),
-                          child: Text(AppStrings.t('Back')),
-                        ),
-                      ),
-                    if (_step > 0) const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: _submitting
-                            ? null
-                            : isContactStep
-                                ? _submit
-                                : _answers[questions[_step].id] == null
-                                    ? null
-                                    : () => setState(() => _step = _step + 1),
-                        child: _submitting
-                            ? const SizedBox(
-                                height: 18,
-                                width: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Text(
-                                isContactStep
-                                    ? AppStrings.t('Get My Result')
-                                    : AppStrings.t('Next'),
-                              ),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: progress,
+                      minHeight: 8,
+                      backgroundColor: const Color(0xFFE3EBF7),
+                      color: AppColors.brand,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Expanded(
+                    child: isContactStep
+                        ? _ContactStep(
+                            nameCtrl: _nameCtrl,
+                            emailCtrl: _emailCtrl,
+                            phoneCtrl: _phoneCtrl,
+                          )
+                        : _QuestionStep(
+                            question: questions[_step],
+                            selected: _answers[questions[_step].id],
+                            onSelect: (option) {
+                              setState(() {
+                                _answers[questions[_step].id] = option;
+                              });
+                            },
+                          ),
+                  ),
+                  if (_submitError != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      _submitError!,
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
-                ),
-              ],
-            ),
-          );
-        },
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      if (_step > 0)
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _submitting
+                                ? null
+                                : () => setState(() => _step = _step - 1),
+                            child: Text(AppStrings.t('Back')),
+                          ),
+                        ),
+                      if (_step > 0) const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _submitting
+                              ? null
+                              : isContactStep
+                                  ? _submit
+                                  : _answers[questions[_step].id] == null
+                                      ? null
+                                      : () => setState(() => _step = _step + 1),
+                          child: _submitting
+                              ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  isContactStep
+                                      ? AppStrings.t('Get My Result')
+                                      : AppStrings.t('Next'),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

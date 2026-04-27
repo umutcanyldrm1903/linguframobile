@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../storage/secure_storage.dart';
@@ -22,9 +24,13 @@ class AppCurrency {
   static Future<void> set(WidgetRef ref, String code) async {
     final next = code.trim().toUpperCase();
     if (next.isEmpty) return;
+
+    // Update state first (synchronous, reactive)
+    ref.read(appCurrencyProvider.notifier).state = next;
     _code = next;
-    await SecureStorage.setCurrencyCode(next);
-    ref.read(appCurrencyProvider.notifier).state = _code;
+
+    // Then persist to storage (don't wait for this)
+    unawaited(SecureStorage.setCurrencyCode(next));
   }
 }
 

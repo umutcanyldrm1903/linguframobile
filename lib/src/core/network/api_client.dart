@@ -21,6 +21,9 @@ class ApiClient {
           if (token != null && token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
+          if (AppConfig.mobileAnalyticsKey.trim().isNotEmpty) {
+            options.headers['X-Analytics-Key'] = AppConfig.mobileAnalyticsKey;
+          }
           return handler.next(options);
         },
       ),

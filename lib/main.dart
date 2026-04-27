@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_currency_provider.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_locale_provider.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_strings.dart';
+import 'package:lingufranca_mobile/src/core/analytics/app_telemetry_service.dart';
 import 'package:lingufranca_mobile/src/core/notifications/app_notification_service.dart';
 import 'package:lingufranca_mobile/src/core/storage/secure_storage.dart';
 import 'package:lingufranca_mobile/src/core/theme/app_theme.dart';
@@ -12,6 +13,7 @@ import 'package:lingufranca_mobile/src/features/auth/register_screen.dart';
 import 'package:lingufranca_mobile/src/features/auth/forgot_password_screen.dart';
 import 'package:lingufranca_mobile/src/features/auth/reset_password_screen.dart';
 import 'package:lingufranca_mobile/src/features/home/home_screen.dart';
+import 'package:lingufranca_mobile/src/features/public/after_test_screen.dart';
 import 'package:lingufranca_mobile/src/features/public/about_screen.dart';
 import 'package:lingufranca_mobile/src/features/public/blog_screen.dart';
 import 'package:lingufranca_mobile/src/features/public/contact_screen.dart';
@@ -23,10 +25,12 @@ import 'package:lingufranca_mobile/src/features/public/speak_coach_screen.dart';
 import 'package:lingufranca_mobile/src/features/public/terms_screen.dart';
 import 'package:lingufranca_mobile/src/features/shell/instructor_shell.dart';
 import 'package:lingufranca_mobile/src/features/shell/student_shell.dart';
+import 'package:lingufranca_mobile/src/features/auth/auth_provider.dart';
 import 'package:lingufranca_mobile/src/features/payment/payment_native_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  AppTelemetryService.instance.initialize();
   // DateFormat(...) calls across student/instructor screens require intl locale data.
   await initializeDateFormatting();
   // Initialize the platform channel early so deep-links aren't missed.
@@ -34,6 +38,7 @@ Future<void> main() async {
   await AppNotificationService.instance.initialize();
   await AppStrings.load();
   await AppCurrency.load();
+  await AppTelemetryService.instance.markAppReady();
   runApp(const ProviderScope(child: LingufrancaApp()));
 }
 
@@ -44,6 +49,8 @@ class LingufrancaApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(appLocaleProvider);
     ref.watch(appCurrencyProvider);
+    // Initialize auth token from secure storage
+    ref.watch(authTokenInitializationProvider);
     return MaterialApp(
       title: 'Lingufranca',
       theme: AppTheme.light(),
@@ -58,6 +65,7 @@ class LingufrancaApp extends ConsumerWidget {
         '/forgot-password': (_) => const ForgotPasswordScreen(),
         '/reset-password': (_) => const ResetPasswordScreen(),
         '/about': (_) => const PublicTheme(child: AboutScreen()),
+        '/after-test': (_) => const PublicTheme(child: AfterTestScreen()),
         '/blog': (_) => const PublicTheme(child: BlogScreen()),
         '/contact': (_) => const PublicTheme(child: ContactScreen()),
         '/corporate': (_) => const PublicTheme(child: CorporateScreen()),
@@ -81,6 +89,15 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  static const Set<String> _allowedNotificationRoutes = {
+    '/home',
+    '/start-speaking',
+    '/student',
+    '/instructor',
+    '/placement-test',
+    '/login',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -88,9 +105,33 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _redirect() async {
+    // Give auth initialization a moment to complete
+    await Future.delayed(const Duration(milliseconds: 500));
+
     final token = await SecureStorage.getToken();
     final role = await SecureStorage.getRole();
+    final pendingRoute =
+        await AppNotificationService.instance.consumePendingRoute();
     if (!mounted) return;
+    if (pendingRoute != null &&
+        _allowedNotificationRoutes.contains(pendingRoute)) {
+      if (pendingRoute == '/student' && role == 'instructor') {
+        Navigator.pushReplacementNamed(context, '/instructor');
+        return;
+      }
+      if (pendingRoute == '/instructor' && role != 'instructor') {
+        Navigator.pushReplacementNamed(
+            context, token == null || token.isEmpty ? '/login' : '/student');
+        return;
+      }
+      if ((pendingRoute == '/student' || pendingRoute == '/instructor') &&
+          (token == null || token.isEmpty)) {
+        Navigator.pushReplacementNamed(context, '/login');
+        return;
+      }
+      Navigator.pushReplacementNamed(context, pendingRoute);
+      return;
+    }
     if (token != null && token.isNotEmpty) {
       if (role == 'instructor') {
         Navigator.pushReplacementNamed(context, '/instructor');
