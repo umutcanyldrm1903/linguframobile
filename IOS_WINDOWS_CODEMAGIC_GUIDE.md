@@ -4,6 +4,10 @@ Bu proje icin Windows kullanarak iOS build + TestFlight gonderimi Codemagic ile 
 
 ## 1) Apple tarafi (bir kez)
 
+0. `Agreements, Tax, and Banking` / Apple Developer sozlesmeleri:
+   - App Store Connect veya Apple Developer hesabinda bekleyen yeni sozlesme varsa imzala.
+   - `A required agreement is missing or has expired` hatasi koddan degil, Apple hesabinda eksik/expired sozlesmeden gelir.
+   - Bu islemi genelde Account Holder/Admin yetkili kisi yapabilir.
 1. `Certificates, Identifiers & Profiles`:
    - App ID / Bundle ID: `com.lingufranca.app`
 2. `App Store Connect > Apps`:
@@ -29,9 +33,11 @@ Codemagic'te `app_store_credentials` adinda bir group olustur ve sunlari ekle:
 - `APP_STORE_CONNECT_ISSUER_ID`
 - `APP_STORE_CONNECT_KEY_IDENTIFIER`  (Apple Key ID)
 - `APP_STORE_CONNECT_PRIVATE_KEY` (p8 dosya icerigi, `-----BEGIN PRIVATE KEY-----` dahil)
+- `CERTIFICATE_PRIVATE_KEY` (RSA 2048 private key, `-----BEGIN RSA PRIVATE KEY-----` dahil)
 
 Not:
 - `APP_STORE_CONNECT_PRIVATE_KEY` multi-line olarak kaydedilmeli.
+- `CERTIFICATE_PRIVATE_KEY`, Apple `.p8` key degildir. Sertifika olusturmak icin ayri RSA private key olmalidir.
 - Secret/Encrypted olarak isaretle.
 
 ## 3) Build calistirma
@@ -57,7 +63,10 @@ Basarili build sonunda:
 ## Troubleshooting
 
 - Signing/provisioning hatasi:
+  - `A required agreement is missing or has expired`: App Store Connect / Apple Developer sozlesmesini imzala, sonra build'i tekrar calistir.
   - Bundle ID'nin `com.lingufranca.app` oldugunu kontrol et.
   - API key degiskenlerinin adini birebir kontrol et.
+  - `CERTIFICATE_PRIVATE_KEY is empty`: Codemagic environment group icine RSA private key ekle.
+  - `Did not find any certificates`: Tek basina hata degildir; asil hata genelde bir sonraki satirda yazar.
 - Build yukleniyor ama TestFlight'ta yok:
   - App Store Connect processing suresini bekle (genelde 10-30 dk).
