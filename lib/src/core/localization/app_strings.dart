@@ -51,6 +51,8 @@ class AppStrings {
         'Bu kullanici sizden mesaj kabul etmiyor.',
     'Messaging is disabled for this conversation.':
         'Bu konusma icin mesajlasma kapali.',
+    'Your one-time free trial lesson has been created.':
+        'Tek seferlik ucretsiz deneme dersin olusturuldu.',
   };
 
   static String get code => _code;

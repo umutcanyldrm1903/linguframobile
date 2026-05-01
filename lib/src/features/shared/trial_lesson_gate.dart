@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../../core/localization/app_strings.dart';
 import '../../core/storage/secure_storage.dart';
-import 'content_preview_launcher.dart';
-import 'whatsapp_launcher.dart';
 
 class TrialLessonActionResult {
   const TrialLessonActionResult({
@@ -84,11 +82,6 @@ Future<void> requestTrialLessonWithLoginGate(
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
-
-    final supportUrl = result.supportUrl.trim();
-    if (supportUrl.isNotEmpty) {
-      await _openSupportLink(context, supportUrl);
-    }
   } catch (error) {
     if (!context.mounted) return;
 
@@ -103,20 +96,6 @@ Future<void> requestTrialLessonWithLoginGate(
   } finally {
     onLoadingChanged?.call(false);
   }
-}
-
-Future<void> _openSupportLink(BuildContext context, String rawUrl) async {
-  if (rawUrl.contains('wa.me') || rawUrl.contains('whatsapp')) {
-    await openWhatsAppUrl(context, rawUrl: rawUrl);
-    return;
-  }
-
-  await openContentPreview(
-    context,
-    title: AppStrings.t('Support'),
-    rawUrl: rawUrl,
-    browserActionLabel: AppStrings.t('Open Externally'),
-  );
 }
 
 String _extractTrialError(Object error) {

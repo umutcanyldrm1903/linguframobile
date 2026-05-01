@@ -1,11 +1,14 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/localization/app_strings.dart';
 import '../../core/storage/secure_storage.dart';
 import '../../core/theme/app_colors.dart';
+import '../public/public_repository.dart';
 import 'auth_page_scaffold.dart';
 import 'auth_provider.dart';
+import 'social_auth_buttons.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -62,29 +65,57 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         SnackBar(content: Text(AppStrings.t('Account created successfully.'))),
       );
 
-      if (role == 'instructor') {
-        Navigator.pushReplacementNamed(context, '/instructor');
-      } else {
-        final trialIntent =
-            await SecureStorage.getValue(_trialBookingIntentKey);
-        if (!mounted) return;
-        if ((trialIntent ?? '').trim().isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                AppStrings.t(
-                  'Your trial lesson choice was saved. Continue booking from your student panel.',
-                ),
-              ),
-            ),
-          );
-        }
-        Navigator.pushReplacementNamed(context, '/student');
-      }
+      await _completeAuth(role);
     } on AuthFailure catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.t(error.message))),
+      );
+    }
+  }
+
+  Future<void> _completeAuth(String role) async {
+    if (role == 'instructor') {
+      Navigator.pushReplacementNamed(context, '/instructor');
+      return;
+    }
+
+    final trialIntent = await SecureStorage.getValue(_trialBookingIntentKey);
+    if (!mounted) return;
+    if ((trialIntent ?? '').trim().isNotEmpty) {
+      final trialMessage = await _claimTrialLessonAfterAuth();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            trialMessage,
+          ),
+        ),
+      );
+    }
+    Navigator.pushReplacementNamed(context, '/student');
+  }
+
+  Future<String> _claimTrialLessonAfterAuth() async {
+    try {
+      final result = await PublicRepository().requestTrialLesson();
+      await SecureStorage.deleteValue(_trialBookingIntentKey);
+      return result.message.trim().isNotEmpty
+          ? result.message.trim()
+          : AppStrings.t('Your one-time free trial lesson has been created.');
+    } catch (error) {
+      if (error is DioException && error.response?.statusCode == 409) {
+        await SecureStorage.deleteValue(_trialBookingIntentKey);
+        final data = error.response?.data;
+        if (data is Map<String, dynamic>) {
+          final message = data['message'];
+          if (message is String && message.trim().isNotEmpty) {
+            return message.trim();
+          }
+        }
+      }
+      return AppStrings.t(
+        'Your trial lesson choice was saved. Continue booking from your student panel.',
       );
     }
   }
@@ -208,6 +239,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       : AppStrings.t('Sign Up'),
                 ),
               ),
+            ),
+            const SizedBox(height: 18),
+            SocialAuthButtons(
+              loading: isSubmitting,
+              onAuthenticated: (role) => _completeAuth(role),
             ),
             const SizedBox(height: 10),
             TextButton(

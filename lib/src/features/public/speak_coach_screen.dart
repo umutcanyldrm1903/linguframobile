@@ -5092,8 +5092,6 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
         final compact =
             constraints.maxHeight < 520 || constraints.maxWidth < 420;
         final dense = constraints.maxHeight < 430 || constraints.maxWidth < 380;
-        final useGrid = step.options.length <= 4;
-
         return _LessonAutoFit(
           constraints: constraints,
           child: Column(
@@ -5136,73 +5134,34 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                 onTap: () => _speakMissionPrompt(step.promptText ?? ''),
               ),
               SizedBox(height: dense ? 8 : (compact ? 12 : 20)),
-              if ((compact || dense) && useGrid)
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: step.options.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: dense ? 8 : 10,
-                    crossAxisSpacing: dense ? 8 : 10,
-                    childAspectRatio: dense ? 3.1 : 2.6,
+              ...step.options.map((option) {
+                final optionLabel = option.label(isTr);
+                return Padding(
+                  padding: EdgeInsets.only(bottom: compact ? 10 : 14),
+                  child: _MissionOptionTile(
+                    label: optionLabel,
+                    compact: compact,
+                    selected: _selectedMissionChoice == option.id,
+                    feedbackKind: _missionFeedbackKind,
+                    onTap: () {
+                      if (option.id == step.correctOptionId) {
+                        _completeMission(
+                          title: step.successTitle(isTr),
+                          detail: step.successDetail(isTr),
+                          selectedChoice: option.id,
+                        );
+                        return;
+                      }
+                      _handleWrongMissionChoice(
+                        selectedChoice: option.id,
+                        snackMessage: isTr
+                            ? 'Bu secim dogru degil. Sesi bir kez daha dinle.'
+                            : 'That choice is not correct. Listen once more.',
+                      );
+                    },
                   ),
-                  itemBuilder: (context, index) {
-                    final option = step.options[index];
-                    final optionLabel = option.label(isTr);
-                    return _MissionOptionTile(
-                      label: optionLabel,
-                      compact: true,
-                      selected: _selectedMissionChoice == option.id,
-                      feedbackKind: _missionFeedbackKind,
-                      onTap: () {
-                        if (option.id == step.correctOptionId) {
-                          _completeMission(
-                            title: step.successTitle(isTr),
-                            detail: step.successDetail(isTr),
-                            selectedChoice: option.id,
-                          );
-                          return;
-                        }
-                        _handleWrongMissionChoice(
-                          selectedChoice: option.id,
-                          snackMessage: isTr
-                              ? 'Bu secim dogru degil. Sesi bir kez daha dinle.'
-                              : 'That choice is not correct. Listen once more.',
-                        );
-                      },
-                    );
-                  },
-                )
-              else
-                ...step.options.map((option) {
-                  final optionLabel = option.label(isTr);
-                  return Padding(
-                    padding: EdgeInsets.only(bottom: compact ? 10 : 14),
-                    child: _MissionOptionTile(
-                      label: optionLabel,
-                      compact: compact,
-                      selected: _selectedMissionChoice == option.id,
-                      feedbackKind: _missionFeedbackKind,
-                      onTap: () {
-                        if (option.id == step.correctOptionId) {
-                          _completeMission(
-                            title: step.successTitle(isTr),
-                            detail: step.successDetail(isTr),
-                            selectedChoice: option.id,
-                          );
-                          return;
-                        }
-                        _handleWrongMissionChoice(
-                          selectedChoice: option.id,
-                          snackMessage: isTr
-                              ? 'Bu secim dogru degil. Sesi bir kez daha dinle.'
-                              : 'That choice is not correct. Listen once more.',
-                        );
-                      },
-                    ),
-                  );
-                }),
+                );
+              }),
             ],
           ),
         );

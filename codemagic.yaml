@@ -10,6 +10,8 @@ workflows:
       cocoapods: default
       vars:
         BUNDLE_ID: com.lingufranca.app
+        GOOGLE_IOS_CLIENT_ID: 284981345033-uhh8ltpjg2cldtg6iu7n1segitdho9j2.apps.googleusercontent.com
+        GOOGLE_WEB_CLIENT_ID: 284981345033-ssp855uprkfrpetnn25ni3074m0ud7f3.apps.googleusercontent.com
       groups:
         - app_store_credentials
 
@@ -55,6 +57,8 @@ workflows:
           flutter build ios \
             --release \
             --no-codesign \
+            --dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID" \
+            --dart-define=GOOGLE_IOS_CLIENT_ID="$GOOGLE_IOS_CLIENT_ID" \
             --build-number="$BUILD_NO"
           xcode-project use-profiles
           xcode-project build-ipa \

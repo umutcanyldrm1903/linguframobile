@@ -14,7 +14,8 @@ class InstructorLessonsRepository {
 
   Future<InstructorLessonStartResult?> startLesson(int lessonId) async {
     if (lessonId <= 0) return null;
-    final response = await ApiClient.dio.post('/instructor/lessons/$lessonId/start');
+    final response =
+        await ApiClient.dio.post('/instructor/lessons/$lessonId/start');
     return InstructorLessonStartResult.fromJson(
       ApiResponseParser.requireMap(
         response.data,
@@ -43,8 +44,9 @@ class InstructorLessonsPayload {
   static List<InstructorLessonItem> _parseList(dynamic raw) {
     if (raw is! List) return const [];
     return raw
-        .whereType<Map<String, dynamic>>()
-        .map(InstructorLessonItem.fromJson)
+        .whereType<Map>()
+        .map((item) =>
+            InstructorLessonItem.fromJson(Map<String, dynamic>.from(item)))
         .toList(growable: false);
   }
 }
@@ -94,7 +96,9 @@ class InstructorLessonItem {
       parsedEnd = DateTime.tryParse(rawEnd);
     }
     return InstructorLessonItem(
-      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse('${json['id']}') ?? 0,
       title: (json['title'] ?? '').toString(),
       studentName: (json['student_name'] ?? '').toString(),
       startTime: DateTime.tryParse(start),
@@ -125,7 +129,9 @@ class InstructorLessonStartResult {
 
   factory InstructorLessonStartResult.fromJson(Map<String, dynamic> json) {
     return InstructorLessonStartResult(
-      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse('${json['id']}') ?? 0,
       status: (json['status'] ?? '').toString(),
       joinUrl: (json['join_url'] ?? '').toString(),
       meetingId: (json['meeting_id'] ?? '').toString(),

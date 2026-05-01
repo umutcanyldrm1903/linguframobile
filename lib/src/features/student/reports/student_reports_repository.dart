@@ -1,22 +1,12 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class StudentReportsRepository {
   Future<StudentReportSummary?> fetchReports() async {
     final response = await ApiClient.dio.get('/reports');
-    final data = _extractMap(response.data);
+    final data = ApiResponseParser.tryMap(response.data);
     if (data == null) return null;
     return StudentReportSummary.fromJson(data);
-  }
-
-  Map<String, dynamic>? _extractMap(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      final inner = data['data'];
-      if (inner is Map) {
-        return Map<String, dynamic>.from(inner);
-      }
-      return Map<String, dynamic>.from(data);
-    }
-    return null;
   }
 }
 

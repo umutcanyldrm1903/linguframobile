@@ -90,8 +90,9 @@ class InstructorHomeworksPayload {
   static List<InstructorHomeworkItem> _parseList(dynamic raw) {
     if (raw is! List) return const [];
     return raw
-        .whereType<Map<String, dynamic>>()
-        .map(InstructorHomeworkItem.fromJson)
+        .whereType<Map>()
+        .map((item) =>
+            InstructorHomeworkItem.fromJson(Map<String, dynamic>.from(item)))
         .toList(growable: false);
   }
 }
@@ -136,8 +137,10 @@ class InstructorHomeworkItem {
       dueAt: DateTime.tryParse(dueAtRaw),
       attachmentName: (json['attachment_name'] ?? '').toString(),
       attachmentPath: (json['attachment_path'] ?? '').toString(),
-      submission: submissionRaw is Map<String, dynamic>
-          ? InstructorHomeworkSubmission.fromJson(submissionRaw)
+      submission: submissionRaw is Map
+          ? InstructorHomeworkSubmission.fromJson(
+              Map<String, dynamic>.from(submissionRaw),
+            )
           : null,
     );
   }

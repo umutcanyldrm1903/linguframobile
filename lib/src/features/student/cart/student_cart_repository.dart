@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class StudentCartRepository {
   Future<CartPayload> fetchCart({String? currency}) async {
@@ -9,8 +10,7 @@ class StudentCartRepository {
           'currency': currency,
       },
     );
-    final payload = response.data as Map<String, dynamic>;
-    final data = payload['data'] as Map<String, dynamic>? ?? {};
+    final data = ApiResponseParser.tryMap(response.data) ?? const {};
 
     final coursesRaw = data['cart_courses'];
     final coursesList = _extractCourseList(coursesRaw);
@@ -20,10 +20,7 @@ class StudentCartRepository {
           ? data['total_qty'] as int
           : int.tryParse('${data['total_qty'] ?? 0}') ?? 0,
       totalAmount: (data['total_amount'] ?? '').toString(),
-      courses: coursesList
-          .whereType<Map<String, dynamic>>()
-          .map(CartCourseItem.fromJson)
-          .toList(growable: false),
+      courses: coursesList.map(CartCourseItem.fromJson).toList(growable: false),
     );
   }
 
@@ -35,15 +32,12 @@ class StudentCartRepository {
   Future<List<CartPaymentGateway>> fetchPaymentGateways() async {
     final response = await ApiClient.dio.get('/payment-gateway-list');
     final payload = response.data;
-    if (payload is! Map<String, dynamic>) {
-      return const [];
-    }
-
-    final data = payload['data'];
+    final data = payload is Map ? payload['data'] : null;
     if (data is List) {
       return data
-          .whereType<Map<String, dynamic>>()
-          .map((item) => CartPaymentGateway.fromJson('', item))
+          .whereType<Map>()
+          .map((item) =>
+              CartPaymentGateway.fromJson('', Map<String, dynamic>.from(item)))
           .where((item) => item.key.trim().isNotEmpty)
           .toList(growable: false);
     }
@@ -51,8 +45,9 @@ class StudentCartRepository {
     if (data is Map) {
       final out = <CartPaymentGateway>[];
       data.forEach((key, value) {
-        if (value is Map<String, dynamic>) {
-          out.add(CartPaymentGateway.fromJson(key.toString(), value));
+        if (value is Map) {
+          out.add(CartPaymentGateway.fromJson(
+              key.toString(), Map<String, dynamic>.from(value)));
         }
       });
       return out;
@@ -89,9 +84,14 @@ class StudentCartRepository {
     return CartCheckoutInit(invoiceId: invoiceId, paymentUrl: rawUrl);
   }
 
-  List<dynamic> _extractCourseList(dynamic data) {
-    if (data is List) return data;
-    if (data is Map && data['data'] is List) return data['data'] as List;
+  List<Map<String, dynamic>> _extractCourseList(dynamic data) {
+    final raw = data is Map ? data['data'] : data;
+    if (raw is List) {
+      return raw
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(growable: false);
+    }
     return const [];
   }
 }
@@ -135,9 +135,8 @@ class CartCourseItem {
       thumbnail: (json['thumbnail'] ?? '').toString(),
       priceLabel: (json['price'] ?? '').toString(),
       discountLabel: (json['discount'] ?? '').toString(),
-      instructorName: instructor is Map
-          ? (instructor['name'] ?? '').toString()
-          : '',
+      instructorName:
+          instructor is Map ? (instructor['name'] ?? '').toString() : '',
       rating: json['average_rating'] is num
           ? (json['average_rating'] as num).toDouble()
           : double.tryParse('${json['average_rating'] ?? 0}') ?? 0,

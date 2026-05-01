@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/config/app_config.dart';
 import '../../core/localization/app_strings.dart';
+import '../../core/storage/secure_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../shared/native_video_player_screen.dart';
 import 'public_page_scaffold.dart';
@@ -10,6 +11,8 @@ import 'speak_coach_screen.dart';
 
 class AfterTestScreen extends StatelessWidget {
   const AfterTestScreen({super.key});
+
+  static const _trialBookingIntentKey = 'trial_booking_intent_v1';
 
   static const _videos = [
     _AfterTestVideo(
@@ -51,7 +54,7 @@ class AfterTestScreen extends StatelessWidget {
                 IconButton(
                   onPressed: () => Navigator.pushNamedAndRemoveUntil(
                     context,
-                    '/home',
+                    '/app-home',
                     (_) => false,
                   ),
                   icon: const Icon(Icons.close_rounded),
@@ -123,7 +126,14 @@ class AfterTestScreen extends StatelessWidget {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.pushNamed(context, '/register'),
+                    onPressed: () async {
+                      await SecureStorage.setValue(
+                        _trialBookingIntentKey,
+                        DateTime.now().toIso8601String(),
+                      );
+                      if (!context.mounted) return;
+                      Navigator.pushNamed(context, '/register');
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1D7CFF),
                       foregroundColor: Colors.white,
@@ -168,11 +178,11 @@ class AfterTestScreen extends StatelessWidget {
                   child: TextButton(
                     onPressed: () => Navigator.pushNamedAndRemoveUntil(
                       context,
-                      '/home',
+                      '/app-home',
                       (_) => false,
                     ),
                     child: Text(
-                      isTr ? 'Basa don' : 'Back to start',
+                      isTr ? 'Ana sayfaya don' : 'Back to home',
                       style: const TextStyle(fontWeight: FontWeight.w800),
                     ),
                   ),

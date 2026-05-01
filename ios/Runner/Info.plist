@@ -28,6 +28,16 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
+			<string>google-signin</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.284981345033-uhh8ltpjg2cldtg6iu7n1segitdho9j2</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
 			<string>com.lingufranca.app</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
@@ -43,6 +53,8 @@
 	<string>Canli derslere katilmak ve profil islemleri icin kameraya erisim gerekir.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Canli derslerde ses iletimi icin mikrofon erisimi gerekir.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Speaking testinde telaffuzunu analiz etmek ve konusma skorunu gostermek icin konusma tanima erisimi gerekir.</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>Canli ders tarihlerini takviminize ekleyebilmeniz icin takvim erisimi gerekir.</string>
 	<key>NSContactsUsageDescription</key>

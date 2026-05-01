@@ -36,6 +36,19 @@ class AuthRepository {
     return response.data as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> socialLogin({
+    required String provider,
+    required String idToken,
+    String? name,
+  }) async {
+    final response = await ApiClient.dio.post('/social-login', data: {
+      'provider': provider,
+      'id_token': idToken,
+      if ((name ?? '').trim().isNotEmpty) 'name': name!.trim(),
+    });
+    return response.data as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> register({
     required String name,
     required String email,

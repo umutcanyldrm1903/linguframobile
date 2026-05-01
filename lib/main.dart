@@ -5,6 +5,7 @@ import 'package:lingufranca_mobile/src/core/localization/app_currency_provider.d
 import 'package:lingufranca_mobile/src/core/localization/app_locale_provider.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_strings.dart';
 import 'package:lingufranca_mobile/src/core/analytics/app_telemetry_service.dart';
+import 'package:lingufranca_mobile/src/core/motion/app_motion.dart';
 import 'package:lingufranca_mobile/src/core/notifications/app_notification_service.dart';
 import 'package:lingufranca_mobile/src/core/storage/secure_storage.dart';
 import 'package:lingufranca_mobile/src/core/theme/app_theme.dart';
@@ -12,6 +13,7 @@ import 'package:lingufranca_mobile/src/features/auth/login_screen.dart';
 import 'package:lingufranca_mobile/src/features/auth/register_screen.dart';
 import 'package:lingufranca_mobile/src/features/auth/forgot_password_screen.dart';
 import 'package:lingufranca_mobile/src/features/auth/reset_password_screen.dart';
+import 'package:lingufranca_mobile/src/features/home/app_home_screen.dart';
 import 'package:lingufranca_mobile/src/features/home/home_screen.dart';
 import 'package:lingufranca_mobile/src/features/public/after_test_screen.dart';
 import 'package:lingufranca_mobile/src/features/public/about_screen.dart';
@@ -59,6 +61,7 @@ class LingufrancaApp extends ConsumerWidget {
       routes: {
         '/': (_) => const PublicTheme(child: HomeScreen()),
         '/home': (_) => const PublicTheme(child: HomeScreen()),
+        '/app-home': (_) => const AppHomeScreen(),
         '/splash': (_) => const SplashScreen(),
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
@@ -89,8 +92,11 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  static const _hasSeenAppHomeKey = 'has_seen_app_home';
+
   static const Set<String> _allowedNotificationRoutes = {
     '/home',
+    '/app-home',
     '/start-speaking',
     '/student',
     '/instructor',
@@ -139,7 +145,13 @@ class _SplashScreenState extends State<SplashScreen> {
         Navigator.pushReplacementNamed(context, '/student');
       }
     } else {
-      Navigator.pushReplacementNamed(context, '/home');
+      final hasSeenAppHome =
+          await SecureStorage.getValue(_hasSeenAppHomeKey) == 'true';
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(
+        context,
+        hasSeenAppHome ? '/app-home' : '/home',
+      );
     }
   }
 
@@ -148,30 +160,9 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: const Center(
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(
-                color: Color(0x14000000),
-                blurRadius: 20,
-                offset: Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(14),
-            child: ClipOval(
-              child: Image(
-                image: AssetImage('assets/icon/app_icon_source.png'),
-                width: 72,
-                height: 72,
-                fit: BoxFit.cover,
-                filterQuality: FilterQuality.high,
-              ),
-            ),
-          ),
+        child: MascotLoading(
+          message: 'LinguFranca hazirlaniyor...',
+          size: 78,
         ),
       ),
     );

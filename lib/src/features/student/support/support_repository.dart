@@ -1,19 +1,15 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class SupportRepository {
   Future<List<SupportTicketItem>> fetchTickets() async {
     final response = await ApiClient.dio.get('/support-requests');
-    final payload = response.data;
-
-    final list = _extractList(payload);
+    final list = ApiResponseParser.tryList(response.data) ?? const [];
     if (list.isEmpty) {
       return const [];
     }
 
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map(SupportTicketItem.fromJson)
-        .toList(growable: false);
+    return list.map(SupportTicketItem.fromJson).toList(growable: false);
   }
 
   Future<void> createRequest({
@@ -29,14 +25,6 @@ class SupportRepository {
         if (phone != null && phone.trim().isNotEmpty) 'phone': phone.trim(),
       },
     );
-  }
-
-  List<dynamic> _extractList(dynamic payload) {
-    if (payload is Map<String, dynamic>) {
-      final data = payload['data'];
-      return data is List ? data : const [];
-    }
-    return payload is List ? payload : const [];
   }
 }
 
@@ -60,7 +48,9 @@ class SupportTicketItem {
   factory SupportTicketItem.fromJson(Map<String, dynamic> json) {
     final raw = (json['created_at'] ?? '').toString();
     return SupportTicketItem(
-      id: json['id'] is int ? json['id'] as int : 0,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse('${json['id'] ?? 0}') ?? 0,
       category: (json['category'] ?? '').toString(),
       subject: (json['subject'] ?? '').toString(),
       message: (json['message'] ?? '').toString(),

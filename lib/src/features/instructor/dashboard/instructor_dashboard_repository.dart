@@ -28,8 +28,8 @@ class InstructorDashboardPayload {
     return InstructorDashboardPayload(
       name: (json['name'] ?? '').toString(),
       stats: InstructorStats.fromJson(
-        json['stats'] is Map<String, dynamic>
-            ? json['stats'] as Map<String, dynamic>
+        json['stats'] is Map
+            ? Map<String, dynamic>.from(json['stats'] as Map)
             : const {},
       ),
       upcoming: _parseUpcoming(json['upcoming']),
@@ -39,8 +39,9 @@ class InstructorDashboardPayload {
   static List<InstructorUpcomingLesson> _parseUpcoming(dynamic raw) {
     if (raw is! List) return const [];
     return raw
-        .whereType<Map<String, dynamic>>()
-        .map(InstructorUpcomingLesson.fromJson)
+        .whereType<Map>()
+        .map((item) =>
+            InstructorUpcomingLesson.fromJson(Map<String, dynamic>.from(item)))
         .toList(growable: false);
   }
 }
@@ -121,7 +122,9 @@ class InstructorUpcomingLesson {
       parsedEnd = DateTime.tryParse(rawEnd);
     }
     return InstructorUpcomingLesson(
-      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse('${json['id']}') ?? 0,
       title: (json['title'] ?? '').toString(),
       studentName: (json['student_name'] ?? '').toString(),
       startTime: DateTime.tryParse(start),

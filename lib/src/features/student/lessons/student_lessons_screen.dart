@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../../core/motion/app_motion.dart';
 import '../../../core/theme/app_colors.dart';
 import 'student_live_lesson_screen.dart';
 import 'student_lessons_repository.dart';
@@ -84,7 +85,9 @@ class _StudentLessonsScreenState extends State<StudentLessonsScreen> {
 
   Widget _buildBody(AsyncSnapshot<LiveLessonsResponse> snapshot) {
     if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: MascotLoading(message: 'Dersler hazirlaniyor...'),
+      );
     }
 
     if (snapshot.hasError) {
@@ -172,11 +175,14 @@ class _LessonList extends StatelessWidget {
         itemBuilder: (context, index) {
           final lesson = items[index];
           final joinable = _canJoinNow(lesson);
-          return _LessonCard(
-            item: lesson,
-            isUpcoming: isUpcoming,
-            onTap: () => onOpenDetail(context, lesson),
-            onJoin: joinable ? () => onOpenLive(context, lesson) : null,
+          return AnimatedPageEntrance(
+            delay: Duration(milliseconds: 45 * index),
+            child: _LessonCard(
+              item: lesson,
+              isUpcoming: isUpcoming,
+              onTap: () => onOpenDetail(context, lesson),
+              onJoin: joinable ? () => onOpenLive(context, lesson) : null,
+            ),
           );
         },
       ),
@@ -208,9 +214,8 @@ class _LessonCard extends StatelessWidget {
 
     final joinLabel = _joinButtonLabel(item, onJoin != null);
 
-    return InkWell(
+    return PressableScale(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -303,7 +308,7 @@ class _LessonCard extends StatelessWidget {
       if (dateLabel.isNotEmpty) dateLabel,
       if (timeLabel.isNotEmpty) timeLabel,
     ];
-    return parts.join(' • ');
+    return parts.join(' - ');
   }
 
   String _formatDate(DateTime? value) {

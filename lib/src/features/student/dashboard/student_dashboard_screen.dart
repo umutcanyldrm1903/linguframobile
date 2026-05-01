@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_strings.dart';
+import 'package:lingufranca_mobile/src/core/motion/app_motion.dart';
 import 'package:lingufranca_mobile/src/core/theme/app_colors.dart';
 import 'package:lingufranca_mobile/src/features/student/dashboard/student_dashboard_repository.dart';
 import 'package:lingufranca_mobile/src/features/student/lessons/student_lessons_repository.dart';
@@ -224,7 +225,9 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: MascotLoading(message: 'Panel hazirlaniyor...'),
+          );
         }
 
         if (snapshot.hasError) {
@@ -261,47 +264,57 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
         return ListView(
           padding: EdgeInsets.all(compact ? 14 : 20),
           children: [
-            _WelcomeCard(name: name, compact: compact),
-            SizedBox(height: compact ? 12 : 16),
-            _PlanBar(plan: plan),
+            StaggeredReveal(
+              children: [
+                _WelcomeCard(name: name, compact: compact),
+                SizedBox(height: compact ? 12 : 16),
+                _PlanBar(plan: plan),
+              ],
+            ),
             if (showTrialCta) ...[
               SizedBox(height: compact ? 12 : 16),
-              _TrialLessonCard(
-                requesting: _requestingTrial,
-                onSchedule: () => _handleTrialRequest(payload),
-                onChooseInstructor: () => _open(
-                  context,
-                  const StudentInstructorsScreen(standalone: true),
+              AnimatedPageEntrance(
+                delay: const Duration(milliseconds: 180),
+                child: _TrialLessonCard(
+                  requesting: _requestingTrial,
+                  onSchedule: () => _handleTrialRequest(payload),
+                  onChooseInstructor: () => _open(
+                    context,
+                    const StudentInstructorsScreen(standalone: true),
+                  ),
+                  compact: compact,
                 ),
-                compact: compact,
               ),
             ],
             SizedBox(height: compact ? 14 : 18),
-            _QuickActionRow(
-              compact: compact,
-              actions: [
-                _QuickAction(
-                  label: AppStrings.t('Packages'),
-                  icon: Icons.card_membership,
-                  onTap: () => _open(context, const StudentPackagesScreen()),
-                ),
-                _QuickAction(
-                  label: AppStrings.t('Reports'),
-                  icon: Icons.bar_chart,
-                  onTap: () => _open(context, const StudentReportsScreen()),
-                ),
-                _QuickAction(
-                  label: AppStrings.t('Notifications'),
-                  icon: Icons.notifications,
-                  onTap: () =>
-                      _open(context, const StudentNotificationsScreen()),
-                ),
-                _QuickAction(
-                  label: AppStrings.t('Homeworks'),
-                  icon: Icons.assignment,
-                  onTap: () => _open(context, const StudentHomeworksScreen()),
-                ),
-              ],
+            AnimatedPageEntrance(
+              delay: const Duration(milliseconds: 240),
+              child: _QuickActionRow(
+                compact: compact,
+                actions: [
+                  _QuickAction(
+                    label: AppStrings.t('Packages'),
+                    icon: Icons.card_membership,
+                    onTap: () => _open(context, const StudentPackagesScreen()),
+                  ),
+                  _QuickAction(
+                    label: AppStrings.t('Reports'),
+                    icon: Icons.bar_chart,
+                    onTap: () => _open(context, const StudentReportsScreen()),
+                  ),
+                  _QuickAction(
+                    label: AppStrings.t('Notifications'),
+                    icon: Icons.notifications,
+                    onTap: () =>
+                        _open(context, const StudentNotificationsScreen()),
+                  ),
+                  _QuickAction(
+                    label: AppStrings.t('Homeworks'),
+                    icon: Icons.assignment,
+                    onTap: () => _open(context, const StudentHomeworksScreen()),
+                  ),
+                ],
+              ),
             ),
             SizedBox(height: compact ? 14 : 18),
             _SectionCard(
@@ -367,7 +380,12 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
                       ConnectionState.waiting) {
                     return const Padding(
                       padding: EdgeInsets.symmetric(vertical: 8),
-                      child: Center(child: CircularProgressIndicator()),
+                      child: Center(
+                        child: MascotLoading(
+                          message: 'Odevler hazirlaniyor...',
+                          size: 54,
+                        ),
+                      ),
                     );
                   }
 
@@ -453,7 +471,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     final locale = AppStrings.code;
     final day = DateFormat('d MMM', locale).format(startTime);
     final time = DateFormat('HH:mm', locale).format(startTime);
-    return '$day · $time';
+    return '$day - $time';
   }
 }
 
@@ -582,7 +600,7 @@ class _TrialLessonCard extends StatelessWidget {
                   ? const SizedBox(
                       height: 18,
                       width: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child: MascotLoading(size: 18, message: ''),
                     )
                   : Text(AppStrings.t('Schedule Trial Lesson')),
             ),
@@ -652,9 +670,8 @@ class _QuickAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return PressableScale(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
       child: Container(
         width: width,
         padding: EdgeInsets.all(compact ? 12 : 14),
@@ -759,9 +776,8 @@ class _LessonTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return PressableScale(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -781,7 +797,7 @@ class _LessonTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(title, style: Theme.of(context).textTheme.titleLarge),
-                  Text('Eğitmen: $instructor'),
+                  Text('Egitmen: $instructor'),
                   Text(time, style: Theme.of(context).textTheme.bodyMedium),
                 ],
               ),

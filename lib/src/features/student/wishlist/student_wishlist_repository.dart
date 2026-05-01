@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class StudentWishlistRepository {
   Future<List<CourseListItem>> fetchWishlist({int limit = 30}) async {
@@ -6,26 +7,13 @@ class StudentWishlistRepository {
       '/wishlist-courses',
       queryParameters: {'limit': limit},
     );
-    final list = _extractList(response.data);
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map(CourseListItem.fromJson)
-        .toList(growable: false);
+    final list = ApiResponseParser.tryList(response.data) ?? const [];
+    return list.map(CourseListItem.fromJson).toList(growable: false);
   }
 
   Future<void> toggleWishlist(String slug) async {
     if (slug.trim().isEmpty) return;
     await ApiClient.dio.get('/add-remove-wishlist/$slug');
-  }
-
-  List<dynamic> _extractList(dynamic data) {
-    if (data is Map) {
-      final inner = data['data'];
-      if (inner is List) return inner;
-      if (inner is Map && inner['data'] is List) return inner['data'] as List;
-    }
-    if (data is List) return data;
-    return const [];
   }
 }
 
@@ -73,4 +61,3 @@ class CourseListItem {
     );
   }
 }
-

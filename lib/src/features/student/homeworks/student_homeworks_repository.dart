@@ -1,26 +1,16 @@
 import 'package:dio/dio.dart';
 
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class StudentHomeworksRepository {
   Future<StudentHomeworksPayload?> fetchHomeworks() async {
     final response = await ApiClient.dio.get('/homeworks');
-    final data = _extractMap(response.data);
+    final data = ApiResponseParser.tryMap(response.data);
     if (data == null) {
       return null;
     }
     return StudentHomeworksPayload.fromJson(data);
-  }
-
-  Map<String, dynamic>? _extractMap(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      final inner = data['data'];
-      if (inner is Map) {
-        return Map<String, dynamic>.from(inner);
-      }
-      return Map<String, dynamic>.from(data);
-    }
-    return null;
   }
 
   Future<HomeworkSubmission?> submitHomework({
@@ -46,7 +36,7 @@ class StudentHomeworksRepository {
       ),
     );
 
-    final data = _extractMap(response.data);
+    final data = ApiResponseParser.tryMap(response.data);
     if (data == null) {
       return null;
     }
@@ -73,8 +63,9 @@ class StudentHomeworksPayload {
   static List<StudentHomeworkItem> _parseList(dynamic raw) {
     if (raw is! List) return const [];
     return raw
-        .whereType<Map<String, dynamic>>()
-        .map(StudentHomeworkItem.fromJson)
+        .whereType<Map>()
+        .map((item) =>
+            StudentHomeworkItem.fromJson(Map<String, dynamic>.from(item)))
         .toList(growable: false);
   }
 }
@@ -110,7 +101,9 @@ class StudentHomeworkItem {
     final due = (json['due_at'] ?? '').toString();
     final submissionRaw = json['submission'];
     return StudentHomeworkItem(
-      id: json['id'] is int ? json['id'] as int : 0,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse('${json['id'] ?? 0}') ?? 0,
       title: (json['title'] ?? '').toString(),
       description: (json['description'] ?? '').toString(),
       status: (json['status'] ?? 'pending').toString(),
@@ -119,8 +112,9 @@ class StudentHomeworkItem {
       attachmentPath: (json['attachment_path'] ?? '').toString(),
       instructorName: (json['instructor_name'] ?? '').toString(),
       instructorImage: (json['instructor_image'] ?? '').toString(),
-      submission: submissionRaw is Map<String, dynamic>
-          ? HomeworkSubmission.fromJson(submissionRaw)
+      submission: submissionRaw is Map
+          ? HomeworkSubmission.fromJson(
+              Map<String, dynamic>.from(submissionRaw))
           : null,
     );
   }

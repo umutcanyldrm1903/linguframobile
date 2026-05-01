@@ -1,29 +1,20 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class StudentLibraryRepository {
   Future<StudentLibraryPayload?> fetchLibrary({String? category}) async {
     final response = await ApiClient.dio.get(
       '/library',
       queryParameters: {
-        if (category != null && category.trim().isNotEmpty) 'category': category,
+        if (category != null && category.trim().isNotEmpty)
+          'category': category,
       },
     );
-    final data = _extractMap(response.data);
+    final data = ApiResponseParser.tryMap(response.data);
     if (data == null) {
       return null;
     }
     return StudentLibraryPayload.fromJson(data);
-  }
-
-  Map<String, dynamic>? _extractMap(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      final inner = data['data'];
-      if (inner is Map) {
-        return Map<String, dynamic>.from(inner);
-      }
-      return Map<String, dynamic>.from(data);
-    }
-    return null;
   }
 }
 
@@ -49,16 +40,18 @@ class StudentLibraryPayload {
   static List<StudentLibraryCategory> _parseCategories(dynamic raw) {
     if (raw is! List) return const [];
     return raw
-        .whereType<Map<String, dynamic>>()
-        .map(StudentLibraryCategory.fromJson)
+        .whereType<Map>()
+        .map((item) =>
+            StudentLibraryCategory.fromJson(Map<String, dynamic>.from(item)))
         .toList(growable: false);
   }
 
   static List<StudentLibraryItem> _parseItems(dynamic raw) {
     if (raw is! List) return const [];
     return raw
-        .whereType<Map<String, dynamic>>()
-        .map(StudentLibraryItem.fromJson)
+        .whereType<Map>()
+        .map((item) =>
+            StudentLibraryItem.fromJson(Map<String, dynamic>.from(item)))
         .toList(growable: false);
   }
 }

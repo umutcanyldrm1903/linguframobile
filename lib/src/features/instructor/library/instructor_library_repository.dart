@@ -100,8 +100,9 @@ class InstructorLibraryPayload {
   static List<InstructorLibraryItem> _parseItems(dynamic raw) {
     if (raw is! List) return const [];
     return raw
-        .whereType<Map<String, dynamic>>()
-        .map(InstructorLibraryItem.fromJson)
+        .whereType<Map>()
+        .map((item) =>
+            InstructorLibraryItem.fromJson(Map<String, dynamic>.from(item)))
         .toList(growable: false);
   }
 }

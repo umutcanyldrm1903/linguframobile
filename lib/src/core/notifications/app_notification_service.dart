@@ -1,12 +1,21 @@
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../network/api_client.dart';
 import '../storage/secure_storage.dart';
+
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await AppNotificationService.instance.initialize();
+}
 
 class AppNotificationService {
   AppNotificationService._();
@@ -16,14 +25,18 @@ class AppNotificationService {
   static const int _dailyReminderId = 4101;
   static const int _behavioralBaseId = 5200;
   static const String _dailyChannelId = 'daily-speaking-reminders';
+  static const String _serverPushTokenKey = 'server_push_fcm_token_v1';
   static const String _behavioralCooldownsKey = 'behavioral_push_cooldowns_v1';
-  static const String _behavioralDailyCountKey = 'behavioral_push_daily_count_v1';
+  static const String _behavioralDailyCountKey =
+      'behavioral_push_daily_count_v1';
   static const String _pendingRouteKey = 'pending_notification_route_v1';
 
   final FlutterLocalNotificationsPlugin _notifications =
       FlutterLocalNotificationsPlugin();
 
   bool _initialized = false;
+  bool _firebaseReady = false;
+  bool _tokenRefreshBound = false;
 
   Future<void> initialize() async {
     if (_initialized || kIsWeb) return;
@@ -48,7 +61,8 @@ class AppNotificationService {
       onDidReceiveNotificationResponse: _handleNotificationTap,
       onDidReceiveBackgroundNotificationResponse: _handleBackgroundTap,
     );
-    final launchDetails = await _notifications.getNotificationAppLaunchDetails();
+    final launchDetails =
+        await _notifications.getNotificationAppLaunchDetails();
     final launchPayload = launchDetails?.notificationResponse?.payload;
     if (launchPayload != null && launchPayload.trim().isNotEmpty) {
       await _storeRouteFromPayload(launchPayload);
@@ -65,7 +79,48 @@ class AppNotificationService {
       ),
     );
 
+    await _initializeFirebaseMessaging();
     _initialized = true;
+  }
+
+  Future<void> _initializeFirebaseMessaging() async {
+    if (_firebaseReady || kIsWeb) return;
+
+    try {
+      if (Firebase.apps.isEmpty) {
+        final options = _firebaseOptionsForCurrentPlatform();
+        if (options != null) {
+          await Firebase.initializeApp(options: options);
+        } else {
+          await Firebase.initializeApp();
+        }
+      }
+
+      FirebaseMessaging.onBackgroundMessage(
+        _firebaseMessagingBackgroundHandler,
+      );
+      FirebaseMessaging.onMessage.listen(_showForegroundRemoteMessage);
+      FirebaseMessaging.onMessageOpenedApp.listen(_storeRouteFromRemoteMessage);
+
+      final initialMessage =
+          await FirebaseMessaging.instance.getInitialMessage();
+      if (initialMessage != null) {
+        await _storeRouteFromRemoteMessage(initialMessage);
+      }
+
+      if (!_tokenRefreshBound) {
+        FirebaseMessaging.instance.onTokenRefresh.listen((token) async {
+          await _registerTokenWithServer(token);
+        });
+        _tokenRefreshBound = true;
+      }
+
+      _firebaseReady = true;
+    } catch (_) {
+      // Firebase config is optional for local/web smoke tests. Real push becomes
+      // active after Firebase app credentials are supplied in release builds.
+      _firebaseReady = false;
+    }
   }
 
   Future<bool> requestPermissions() async {
@@ -93,6 +148,41 @@ class AppNotificationService {
     }
 
     return granted;
+  }
+
+  Future<void> syncServerPushToken({
+    String reminderWindow = 'evening',
+    bool remindersEnabled = true,
+  }) async {
+    if (kIsWeb) return;
+    await initialize();
+    if (!_firebaseReady) return;
+
+    final granted = await requestPermissions();
+    if (!granted) return;
+
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null || token.trim().isEmpty) return;
+      await _registerTokenWithServer(
+        token,
+        reminderWindow: reminderWindow,
+        remindersEnabled: remindersEnabled,
+      );
+    } catch (_) {}
+  }
+
+  Future<void> unregisterServerPushToken() async {
+    if (kIsWeb) return;
+    final token = await SecureStorage.getValue(_serverPushTokenKey);
+    if (token == null || token.trim().isEmpty) return;
+
+    try {
+      await ApiClient.dio.delete('/push/devices', data: {'token': token});
+      await SecureStorage.deleteValue(_serverPushTokenKey);
+    } on DioException {
+      // Logout must not fail because a token cleanup request failed.
+    } catch (_) {}
   }
 
   Future<void> scheduleDailyReminder({
@@ -185,7 +275,8 @@ class AppNotificationService {
       if (nextTime != null && now.isBefore(nextTime)) return;
     }
     cooldowns[triggerId] = now.add(cooldown).toIso8601String();
-    await SecureStorage.setValue(_behavioralCooldownsKey, jsonEncode(cooldowns));
+    await SecureStorage.setValue(
+        _behavioralCooldownsKey, jsonEncode(cooldowns));
     final id = _behavioralBaseId + (triggerId.hashCode.abs() % 500);
     await _notifications.show(
       id,
@@ -267,6 +358,99 @@ class AppNotificationService {
         }
       }
     } catch (_) {}
+  }
+
+  Future<void> _registerTokenWithServer(
+    String token, {
+    String reminderWindow = 'evening',
+    bool remindersEnabled = true,
+  }) async {
+    final bearer = await SecureStorage.getToken();
+    if (bearer == null || bearer.trim().isEmpty) return;
+
+    try {
+      await ApiClient.dio.post('/push/devices/register', data: {
+        'token': token,
+        'platform': _platformName(),
+        'timezone': tz.local.name,
+        'locale': await SecureStorage.getLanguageCode() ?? 'tr',
+        'reminder_window': reminderWindow,
+        'reminders_enabled': remindersEnabled,
+      });
+      await SecureStorage.setValue(_serverPushTokenKey, token);
+    } catch (_) {}
+  }
+
+  Future<void> _showForegroundRemoteMessage(RemoteMessage message) async {
+    final notification = message.notification;
+    final title = notification?.title ?? message.data['title']?.toString();
+    final body = notification?.body ?? message.data['body']?.toString();
+    if ((title ?? '').trim().isEmpty && (body ?? '').trim().isEmpty) return;
+
+    await _notifications.show(
+      DateTime.now().millisecondsSinceEpoch.remainder(100000),
+      title ?? 'LinguFranca',
+      body ?? '',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _dailyChannelId,
+          'Daily Speaking Reminders',
+          channelDescription:
+              'Daily reminders for speaking tasks and routines.',
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: DarwinNotificationDetails(),
+      ),
+      payload: jsonEncode(message.data),
+    );
+  }
+
+  Future<void> _storeRouteFromRemoteMessage(RemoteMessage message) async {
+    final route = (message.data['route'] ?? '').toString().trim();
+    if (route.isNotEmpty) {
+      await SecureStorage.setValue(_pendingRouteKey, route);
+    }
+  }
+
+  String _platformName() {
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android => 'android',
+      TargetPlatform.iOS => 'ios',
+      TargetPlatform.macOS => 'macos',
+      TargetPlatform.windows => 'windows',
+      TargetPlatform.linux => 'linux',
+      _ => 'unknown',
+    };
+  }
+
+  FirebaseOptions? _firebaseOptionsForCurrentPlatform() {
+    const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
+    const projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
+    const senderId = String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID');
+    const androidAppId = String.fromEnvironment('FIREBASE_ANDROID_APP_ID');
+    const iosAppId = String.fromEnvironment('FIREBASE_IOS_APP_ID');
+    const iosBundleId = String.fromEnvironment(
+      'FIREBASE_IOS_BUNDLE_ID',
+      defaultValue: 'com.lingufranca.app',
+    );
+
+    if (apiKey.isEmpty || projectId.isEmpty || senderId.isEmpty) {
+      return null;
+    }
+
+    final appId =
+        defaultTargetPlatform == TargetPlatform.iOS ? iosAppId : androidAppId;
+    if (appId.isEmpty) return null;
+
+    return FirebaseOptions(
+      apiKey: apiKey,
+      appId: appId,
+      messagingSenderId: senderId,
+      projectId: projectId,
+      iosBundleId:
+          defaultTargetPlatform == TargetPlatform.iOS ? iosBundleId : null,
+    );
   }
 
   Future<void> _handleNotificationTap(NotificationResponse response) async {

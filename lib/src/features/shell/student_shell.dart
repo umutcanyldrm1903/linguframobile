@@ -41,6 +41,8 @@ class _StudentShellState extends State<StudentShell> {
   Future<void> _continueTrialBookingIfNeeded() async {
     final raw = await SecureStorage.getValue(_trialBookingIntentKey);
     if (!mounted || (raw ?? '').trim().isEmpty) return;
+    await SecureStorage.deleteValue(_trialBookingIntentKey);
+    if (!mounted) return;
     setState(() => _index = 1);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -104,6 +106,7 @@ class _StudentShellState extends State<StudentShell> {
         roleLabel: AppStrings.t('Student'),
         accentColor: AppColors.brand,
         onDestinationSelected: (value) => setState(() => _index = value),
+        onOpenAppHome: () => Navigator.pushNamed(context, '/app-home'),
         onLogout: _logout,
       ),
     );

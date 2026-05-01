@@ -1,111 +1,272 @@
 import 'package:flutter/material.dart';
-import '../../core/config/app_config.dart';
+
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
-import 'public_repository.dart';
 import 'public_page_scaffold.dart';
 
-class AboutScreen extends StatefulWidget {
+class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
   @override
-  State<AboutScreen> createState() => _AboutScreenState();
-}
-
-class _AboutScreenState extends State<AboutScreen> {
-  late final Future<AboutPayload?> _future =
-      PublicRepository().fetchAboutPage();
-
-  @override
   Widget build(BuildContext context) {
+    final isTr = AppStrings.code == 'tr';
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: FutureBuilder<AboutPayload?>(
-        future: _future,
-        builder: (context, snapshot) {
-          final payload = snapshot.data;
-          return PublicPageShell(
-            title: AppStrings.t('About Us'),
-            breadcrumb:
-                '${AppStrings.t('Home')}  >  ${AppStrings.t('About Us')}',
-            description: _tOr(
-              'Meet the LinguFranca model, teaching quality and support structure in one place.',
-              'LinguFranca egitim modelini, kalite standardini ve destek yapisini tek ekranda inceleyin.',
-            ),
-            icon: Icons.info_outline_rounded,
-            children: [
-              _AboutSection(payload: payload),
-              _WhySection(payload: payload),
-              _SupportSection(),
-              _BrandStrip(payload: payload),
-              _FaqSection(payload: payload),
-            ],
-          );
-        },
+      body: PublicPageShell(
+        title: isTr ? 'Hakkimizda' : 'About us',
+        breadcrumb: isTr ? 'Ana Sayfa  >  Hakkimizda' : 'Home  >  About us',
+        description: isTr
+            ? 'LinguFranca, online dil egitimini speaking odakli, olculebilir ve ogretmen destekli hale getiren bir platformdur.'
+            : 'LinguFranca is a speaking-first online language learning platform with measurable progress and teacher support.',
+        icon: Icons.info_outline_rounded,
+        children: const [
+          _MissionSection(),
+          _ValueSection(),
+          _TeacherSection(),
+          _FlowSection(),
+          _FaqSection(),
+          _AboutHomeCta(),
+        ],
       ),
     );
   }
 }
 
-class _AboutSection extends StatelessWidget {
-  const _AboutSection({required this.payload});
-
-  final AboutPayload? payload;
+class _MissionSection extends StatelessWidget {
+  const _MissionSection();
 
   @override
   Widget build(BuildContext context) {
-    final compact = isCompactPublicLayout(context);
-    final about = payload?.about;
-    final title = _firstNonEmpty([
-      about?.content['title']?.toString(),
-      AppStrings.t('About Us'),
-    ]);
-    final description = _firstNonEmpty([
-      about?.content['description']?.toString(),
-      AppStrings.t(
-          'We offer transparent pricing tailored to local conditions. By processing in Turkish Lira, we reduce high foreign currency costs.'),
-    ]);
-    final image = _resolveImage(
-      about?.global['image']?.toString(),
-      fallback: 'assets/web/h2_banner_img.png',
+    final isTr = AppStrings.code == 'tr';
+    return _SectionCard(
+      dark: true,
+      icon: Icons.record_voice_over_rounded,
+      title: isTr
+          ? 'Amacimiz: konusabilen ogrenci yetistirmek'
+          : 'Our goal: learners who can speak',
+      description: isTr
+          ? 'LinguFranca sadece video izleten bir kurs deneyimi degil. Kullanici dinler, cevap verir, konusur ve test sonucuna gore kendisine uygun ogretmenle deneme dersine yonlenir.'
+          : 'LinguFranca is not just a video course experience. Learners listen, answer, speak, and continue to a matched teacher based on their test result.',
     );
+  }
+}
+
+class _ValueSection extends StatelessWidget {
+  const _ValueSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final isTr = AppStrings.code == 'tr';
+    final items = [
+      (
+        Icons.mic_rounded,
+        isTr ? 'Speaking odakli akış' : 'Speaking-first flow',
+        isTr
+            ? 'Kullanici ilk dakikadan itibaren dinleme, anlama ve konusma gorevlerine girer.'
+            : 'Users start with listening, meaning, and speaking tasks from the first minute.',
+      ),
+      (
+        Icons.insights_rounded,
+        isTr ? 'Seviye ve zayif alan analizi' : 'Level and weak-area insight',
+        isTr
+            ? 'Test sonucu sadece skor degil; seviye, zayif alan ve uygun hedefe baglanir.'
+            : 'The result is not only a score; it connects level, weak area, and next goal.',
+      ),
+      (
+        Icons.groups_rounded,
+        isTr ? 'Ogretmen eslesmesi' : 'Teacher matching',
+        isTr
+            ? 'Kullanici hedeflerine gore speaking, is Ingilizcesi veya sinav odakli ogretmen onerisi alir.'
+            : 'Users see teacher suggestions for speaking, business English, or exam goals.',
+      ),
+    ];
 
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionTitle(isTr ? 'Neden LinguFranca?' : 'Why LinguFranca?'),
+          const SizedBox(height: 10),
+          for (final item in items)
+            _InfoTile(icon: item.$1, title: item.$2, detail: item.$3),
+        ],
+      ),
+    );
+  }
+}
+
+class _TeacherSection extends StatelessWidget {
+  const _TeacherSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final isTr = AppStrings.code == 'tr';
+    return _SectionCard(
+      icon: Icons.school_rounded,
+      title: isTr ? 'Egitmen modeli' : 'Teacher model',
+      description: isTr
+          ? 'Egitmenler ogrencinin hedefini ve seviyesini dikkate alarak canli derste pratik yaptirir. Amac ezber degil, gercek konusma refleksi kazandirmaktir.'
+          : 'Teachers use the learner goal and level to guide live speaking practice. The aim is real speaking reflex, not memorization.',
+      actionLabel: isTr ? 'Ogretmenleri gor' : 'See teachers',
+      onAction: () => Navigator.pushReplacementNamed(context, '/app-home'),
+    );
+  }
+}
+
+class _FlowSection extends StatelessWidget {
+  const _FlowSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final isTr = AppStrings.code == 'tr';
+    final steps = [
+      isTr ? 'Ucretsiz speaking testi' : 'Free speaking test',
+      isTr ? 'Seviye ve zayif alan sonucu' : 'Level and weak-area result',
+      isTr ? 'Ogretmen onerisi' : 'Teacher recommendation',
+      isTr ? 'Deneme dersine yonlendirme' : 'Trial lesson direction',
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Container(
-        padding: EdgeInsets.all(compact ? 16 : 18),
-        decoration: BoxDecoration(
-          color: AppColors.brandDeep,
-          borderRadius: BorderRadius.circular(compact ? 24 : 20),
-          boxShadow: compact
-              ? [
-                  BoxShadow(
-                    color: AppColors.brandDeep.withValues(alpha: 0.18),
-                    blurRadius: 24,
-                    offset: const Offset(0, 10),
-                  ),
-                ]
-              : null,
-        ),
+        padding: const EdgeInsets.all(18),
+        decoration: _cardDecoration(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
+            _SectionTitle(isTr ? 'Kullanici akisi' : 'User flow'),
+            const SizedBox(height: 14),
+            for (var i = 0; i < steps.length; i++)
+              Padding(
+                padding:
+                    EdgeInsets.only(bottom: i == steps.length - 1 ? 0 : 10),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 15,
+                      backgroundColor: const Color(0xFFEAF4FF),
+                      child: Text(
+                        '${i + 1}',
+                        style: const TextStyle(
+                          color: Color(0xFF1D7CFF),
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        steps[i],
+                        style: const TextStyle(
+                          color: AppColors.brandNight,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FaqSection extends StatelessWidget {
+  const _FaqSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final isTr = AppStrings.code == 'tr';
+    final items = [
+      (
+        isTr ? 'Dersler kimler icin?' : 'Who are the lessons for?',
+        isTr
+            ? 'Konusma pratigine ihtiyaci olan baslangic, orta ve ileri seviyedeki ogrenciler icin.'
+            : 'For beginner, intermediate, and advanced learners who need speaking practice.',
+      ),
+      (
+        isTr ? 'Ucretsiz test ne ise yarar?' : 'What is the free test for?',
+        isTr
+            ? 'Kullanici seviyesini, zayif alanini ve uygun ogretmen tipini anlamak icin.'
+            : 'To understand the learner level, weak area, and matching teacher type.',
+      ),
+      (
+        isTr ? 'Deneme dersi zorunlu mu?' : 'Is the trial lesson required?',
+        isTr
+            ? 'Hayir. Kullanici isterse once gorevleri dener, sonra kayit olur.'
+            : 'No. Users can try free tasks first and register when ready.',
+      ),
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionTitle(isTr ? 'Sikca sorulan sorular' : 'FAQ'),
+          const SizedBox(height: 10),
+          for (final item in items)
+            _InfoTile(
+              icon: Icons.check_rounded,
+              title: item.$1,
+              detail: item.$2,
             ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AboutHomeCta extends StatelessWidget {
+  const _AboutHomeCta();
+
+  @override
+  Widget build(BuildContext context) {
+    final isTr = AppStrings.code == 'tr';
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: _cardDecoration(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _SectionTitle(isTr ? 'Hazirsan baslayalim' : 'Ready to start'),
             const SizedBox(height: 8),
             Text(
-              description,
-              style: const TextStyle(color: Colors.white70, height: 1.5),
+              isTr
+                  ? 'Ana sayfada ucretsiz gorevleri, ogretmenleri ve profil girisini tek yerden gorebilirsin.'
+                  : 'The app home brings free tasks, teachers, and profile access into one place.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.muted,
+                    height: 1.35,
+                  ),
             ),
-            SizedBox(height: compact ? 12 : 14),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(compact ? 20 : 16),
-              child: _ImageView(path: image, height: compact ? 168 : 190),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () => Navigator.pushReplacementNamed(
+                  context,
+                  '/app-home',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1D7CFF),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Text(
+                  isTr ? 'Ana sayfaya gec' : 'Go to app home',
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                ),
+              ),
             ),
           ],
         ),
@@ -114,340 +275,170 @@ class _AboutSection extends StatelessWidget {
   }
 }
 
-class _WhySection extends StatelessWidget {
-  const _WhySection({required this.payload});
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    this.dark = false,
+    this.actionLabel,
+    this.onAction,
+  });
 
-  final AboutPayload? payload;
+  final IconData icon;
+  final String title;
+  final String description;
+  final bool dark;
+  final String? actionLabel;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
-    final compact = isCompactPublicLayout(context);
-    final features = payload?.features;
-    final title = _firstNonEmpty([
-      features?.content['title']?.toString(),
-      AppStrings.t('Why Choose Us'),
-    ]);
-
-    final items = _extractFeatureItems(features);
-    final fallbackItems = [
-      _FeatureItem(
-        title: _tOr('Selected Instructor List', 'Seçkin Eğitmen Listesi'),
-        description: _tOr(
-          'Instructors are carefully selected, and their profiles are reviewed to ensure quality.',
-          'Eğitmenlerimizi titizlikle seçiyor, profillerini detaylıca inceliyoruz.',
-        ),
-      ),
-      _FeatureItem(
-        title: _tOr('Secure Infrastructure', 'Güvenilir Altyapı'),
-        description: _tOr(
-          'Secure payment solutions and strong infrastructure keep your lessons safe.',
-          'Güvenli ödeme çözümleri ve güçlü teknik altyapı ile derslerini güvenle al.',
-        ),
-      ),
-      _FeatureItem(
-        title: _tOr('Flexible Scheduling', 'Esnek Planlama'),
-        description: _tOr(
-          'Plan lessons around your schedule and manage time freely.',
-          'Kendi programına uygun şekilde ders planla, zamanını özgürce yönet.',
-        ),
-      ),
-    ];
-
-    final displayItems = items.isNotEmpty ? items : fallbackItems;
-
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.ink,
-                ),
-          ),
-          SizedBox(height: compact ? 10 : 12),
-          ...displayItems.map(
-            (item) => Padding(
-              padding: EdgeInsets.only(bottom: compact ? 10 : 12),
-              child:
-                  _InfoTile(title: item.title, description: item.description),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SupportSection extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final compact = isCompactPublicLayout(context);
-    final content = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _tOr('Turkish Support', 'Türkçe Desteği'),
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: AppColors.ink,
-              ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          _tOr(
-            'We offer Turkish speaking instructors so you can ask questions comfortably.',
-            'Türkçe konuşan eğitmenlerle sorularını rahatça sor, hızlı ilerle.',
-          ),
-          style: const TextStyle(color: AppColors.muted, height: 1.5),
-        ),
-        const SizedBox(height: 12),
-        ElevatedButton(
-          onPressed: () => Navigator.pushNamed(context, '/student'),
-          child: Text(AppStrings.t('Instructors')),
-        ),
-      ],
-    );
-
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       child: Container(
-        padding: EdgeInsets.all(compact ? 16 : 18),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(compact ? 24 : 20),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: compact
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  content,
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(18),
-                    child: Image.asset(
-                      'assets/web/h4_cta_bg.jpg',
-                      width: double.infinity,
-                      height: 150,
-                      fit: BoxFit.cover,
-                    ),
+        padding: const EdgeInsets.all(18),
+        decoration: dark
+            ? BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF1D7CFF), Color(0xFF2635D9)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF1D7CFF).withValues(alpha: 0.22),
+                    blurRadius: 24,
+                    offset: const Offset(0, 12),
                   ),
                 ],
               )
-            : Row(
-                children: [
-                  Expanded(child: content),
-                  const SizedBox(width: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
-                    child: Image.asset(
-                      'assets/web/h4_cta_bg.jpg',
-                      width: 140,
-                      height: 140,
-                      fit: BoxFit.cover,
-                    ),
+            : _cardDecoration(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              backgroundColor: dark
+                  ? Colors.white.withValues(alpha: 0.16)
+                  : const Color(0xFFEAF4FF),
+              child: Icon(icon,
+                  color: dark ? Colors.white : const Color(0xFF1D7CFF)),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: dark ? Colors.white : AppColors.brandNight,
+                    fontWeight: FontWeight.w900,
                   ),
-                ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              description,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: dark
+                        ? Colors.white.withValues(alpha: 0.84)
+                        : AppColors.muted,
+                    height: 1.45,
+                  ),
+            ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 14),
+              ElevatedButton(
+                onPressed: onAction,
+                child: Text(actionLabel!),
               ),
-      ),
-    );
-  }
-}
-
-class _BrandStrip extends StatelessWidget {
-  const _BrandStrip({required this.payload});
-
-  final AboutPayload? payload;
-
-  @override
-  Widget build(BuildContext context) {
-    final compact = isCompactPublicLayout(context);
-    final brands = payload?.brands ?? [];
-    if (brands.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AppStrings.t('Brands we work with'),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-          SizedBox(height: compact ? 8 : 10),
-          SizedBox(
-            height: 72,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemBuilder: (_, index) {
-                final brand = brands[index];
-                return Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child:
-                      _ImageView(path: brand.imageUrl, width: 90, height: 40),
-                );
-              },
-              separatorBuilder: (_, __) => const SizedBox(width: 12),
-              itemCount: brands.length,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FaqSection extends StatelessWidget {
-  const _FaqSection({required this.payload});
-
-  final AboutPayload? payload;
-
-  @override
-  Widget build(BuildContext context) {
-    final compact = isCompactPublicLayout(context);
-    final faqs = payload?.faqs ?? [];
-    if (faqs.isEmpty) {
-      return const SizedBox.shrink();
-    }
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 14 : 18),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            AppStrings.t('FAQs'),
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-          SizedBox(height: compact ? 8 : 10),
-          ...faqs.map(
-            (faq) => Padding(
-              padding: EdgeInsets.only(bottom: compact ? 10 : 12),
-              child: _InfoTile(title: faq.question, description: faq.answer),
-            ),
-          ),
-        ],
+            ],
+          ],
+        ),
       ),
     );
   }
 }
 
 class _InfoTile extends StatelessWidget {
-  const _InfoTile({required this.title, required this.description});
+  const _InfoTile({
+    required this.icon,
+    required this.title,
+    required this.detail,
+  });
 
+  final IconData icon;
   final String title;
-  final String description;
+  final String detail;
 
   @override
   Widget build(BuildContext context) {
-    final compact = isCompactPublicLayout(context);
-    return Container(
-      padding: EdgeInsets.all(compact ? 14 : 16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(compact ? 20 : 16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.brand.withValues(alpha: 0.15),
-            child: const Icon(Icons.check, color: AppColors.brand),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 4),
-                Text(description,
-                    style: const TextStyle(color: AppColors.muted)),
-              ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        padding: const EdgeInsets.all(15),
+        decoration: _cardDecoration(),
+        child: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: const Color(0xFFEAF4FF),
+              child: Icon(icon, color: const Color(0xFF1D7CFF)),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: AppColors.brandNight,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    detail,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.muted,
+                          height: 1.35,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ImageView extends StatelessWidget {
-  const _ImageView({required this.path, this.width, this.height});
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.text);
 
-  final String path;
-  final double? width;
-  final double? height;
+  final String text;
 
   @override
   Widget build(BuildContext context) {
-    if (path.startsWith('http')) {
-      return Image.network(
-        path,
-        width: width,
-        height: height,
-        fit: BoxFit.cover,
-        webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-      );
-    }
-    return Image.asset(path, width: width, height: height, fit: BoxFit.cover);
+    return Text(
+      text,
+      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: AppColors.brandNight,
+            fontWeight: FontWeight.w900,
+          ),
+    );
   }
 }
 
-String _resolveImage(String? raw, {required String fallback}) {
-  if (raw == null || raw.isEmpty) return fallback;
-  if (raw.startsWith('http')) return raw;
-  return '${AppConfig.webBaseUrl}/$raw';
-}
-
-String _firstNonEmpty(List<String?> values) {
-  for (final value in values) {
-    if (value != null && value.trim().isNotEmpty) {
-      return value;
-    }
-  }
-  return '';
-}
-
-String _tOr(String key, String fallback) {
-  final value = AppStrings.t(key);
-  return value == key ? fallback : value;
-}
-
-List<_FeatureItem> _extractFeatureItems(SectionData? features) {
-  if (features == null) return [];
-  final raw = features.content['items'] ??
-      features.content['features'] ??
-      features.content['feature_items'];
-  if (raw is! List) return [];
-  return raw
-      .whereType<Map>()
-      .map((item) => _FeatureItem(
-            title: (item['title'] ?? '').toString(),
-            description: (item['description'] ?? '').toString(),
-          ))
-      .where((item) => item.title.isNotEmpty || item.description.isNotEmpty)
-      .toList();
-}
-
-class _FeatureItem {
-  const _FeatureItem({required this.title, required this.description});
-
-  final String title;
-  final String description;
+BoxDecoration _cardDecoration() {
+  return BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(22),
+    border: Border.all(color: const Color(0xFFE3ECF7)),
+    boxShadow: [
+      BoxShadow(
+        color: AppColors.brandNight.withValues(alpha: 0.05),
+        blurRadius: 20,
+        offset: const Offset(0, 10),
+      ),
+    ],
+  );
 }

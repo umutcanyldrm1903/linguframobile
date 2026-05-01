@@ -1,10 +1,10 @@
-﻿import '../../../core/network/api_client.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class StudentLessonsRepository {
   Future<LiveLessonsResponse> fetchLiveLessons() async {
     final response = await ApiClient.dio.get('/live-lessons');
-    final payload = response.data as Map<String, dynamic>;
-    final data = payload['data'] as Map<String, dynamic>? ?? {};
+    final data = ApiResponseParser.tryMap(response.data) ?? const {};
     return LiveLessonsResponse.fromJson(data);
   }
 }
@@ -16,17 +16,21 @@ class LiveLessonsResponse {
   final List<LiveLessonItem> past;
 
   factory LiveLessonsResponse.fromJson(Map<String, dynamic> json) {
-    final upcomingList = json['upcoming'] as List<dynamic>? ?? [];
-    final pastList = json['past'] as List<dynamic>? ?? [];
+    final upcomingList = _safeList(json['upcoming']);
+    final pastList = _safeList(json['past']);
 
     return LiveLessonsResponse(
-      upcoming: upcomingList
-          .map((item) => LiveLessonItem.fromJson(item as Map<String, dynamic>))
-          .toList(),
-      past: pastList
-          .map((item) => LiveLessonItem.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      upcoming: upcomingList.map(LiveLessonItem.fromJson).toList(),
+      past: pastList.map(LiveLessonItem.fromJson).toList(),
     );
+  }
+
+  static List<Map<String, dynamic>> _safeList(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(growable: false);
   }
 }
 
@@ -76,9 +80,8 @@ class LiveLessonItem {
 
   factory LiveLessonItem.fromJson(Map<String, dynamic> json) {
     final rawId = json['id'];
-    final parsedId = rawId is int
-        ? rawId
-        : int.tryParse(rawId?.toString() ?? '') ?? 0;
+    final parsedId =
+        rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '') ?? 0;
     final rawStart = json['start_time']?.toString();
     DateTime? parsedStart;
     if (rawStart != null && rawStart.isNotEmpty) {
@@ -105,7 +108,7 @@ class LiveLessonItem {
       durationMinutes: parsedDuration,
       status: (json['status'] ?? '').toString(),
       courseSlug: json['course_slug']?.toString(),
-      kind: (json['kind'] ?? '').toString(),
+      kind: (json['kind'] ?? 'course').toString(),
       thumbnail: json['thumbnail']?.toString(),
       meetingId: json['meeting_id']?.toString(),
       password: json['password']?.toString(),

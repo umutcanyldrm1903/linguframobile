@@ -1,17 +1,18 @@
-﻿import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class StudentCourseRepository {
   Future<CourseLearning> fetchCourse(String slug) async {
     final response = await ApiClient.dio.get('/learning/$slug');
-    final payload = response.data as Map<String, dynamic>;
-    final data = payload['data'] as Map<String, dynamic>;
+    final data =
+        ApiResponseParser.requireMap(response.data, context: '/learning/$slug');
     return CourseLearning.fromJson(data, slug);
   }
 
   Future<double> fetchProgress(String slug) async {
     final response = await ApiClient.dio.get('/learning/$slug/progress');
-    final payload = response.data as Map<String, dynamic>;
+    final payload = ApiResponseParser.tryMap(response.data) ?? const {};
     final raw = payload['data'];
     if (raw is num) {
       return (raw.toDouble() / 100).clamp(0, 1);
@@ -24,12 +25,7 @@ class StudentCourseRepository {
   Future<List<CourseReviewItem>> fetchReviews(String slug) async {
     try {
       final response = await ApiClient.dio.get('/course/reviews/$slug');
-      final payload = response.data as Map<String, dynamic>;
-      final list = payload['data'] as List<dynamic>? ?? [];
-      return list
-          .map((item) =>
-              CourseReviewItem.fromJson(item as Map<String, dynamic>))
-          .toList();
+      return _safeList(response.data).map(CourseReviewItem.fromJson).toList();
     } on DioException catch (error) {
       if (error.response?.statusCode == 404) {
         return [];
@@ -43,13 +39,8 @@ class StudentCourseRepository {
     required int lessonId,
   }) async {
     try {
-      final response =
-          await ApiClient.dio.get('/questions/$slug/$lessonId');
-      final payload = response.data as Map<String, dynamic>;
-      final list = payload['data'] as List<dynamic>? ?? [];
-      return list
-          .map((item) => QnaQuestion.fromJson(item as Map<String, dynamic>))
-          .toList();
+      final response = await ApiClient.dio.get('/questions/$slug/$lessonId');
+      return _safeList(response.data).map(QnaQuestion.fromJson).toList();
     } on DioException catch (error) {
       if (error.response?.statusCode == 404) {
         return [];
@@ -71,7 +62,7 @@ class StudentCourseRepository {
         'description': description,
       },
     );
-    final payload = response.data as Map<String, dynamic>;
+    final payload = ApiResponseParser.tryMap(response.data) ?? const {};
     if (payload['status'] != 'success') {
       throw Exception(payload['message']?.toString() ?? 'Bir hata oluştu');
     }
@@ -84,8 +75,10 @@ class StudentCourseRepository {
   }) async {
     final response = await ApiClient.dio
         .get('/learning/$slug/get-file-info/$type/$lessonId');
-    final payload = response.data as Map<String, dynamic>;
-    final data = payload['data'] as Map<String, dynamic>;
+    final data = ApiResponseParser.requireMap(
+      response.data,
+      context: '/learning/$slug/get-file-info/$type/$lessonId',
+    );
     return LessonInfo.fromJson(type, data);
   }
 
@@ -98,10 +91,12 @@ class StudentCourseRepository {
     required int quizId,
   }) async {
     final response = await ApiClient.dio.get('/learning/$slug/quiz/$quizId');
-    final payload = response.data as Map<String, dynamic>;
-    final data = payload['data'] as Map<String, dynamic>;
-    final quiz = data['quiz'] as Map<String, dynamic>;
-    final attempt = data['attempt'] as int? ?? 0;
+    final data = ApiResponseParser.requireMap(
+      response.data,
+      context: '/learning/$slug/quiz/$quizId',
+    );
+    final quiz = _safeMap(data['quiz']);
+    final attempt = _intValue(data['attempt']);
     return QuizDetail.fromJson(quiz, attempt);
   }
 
@@ -128,11 +123,37 @@ class StudentCourseRepository {
   }) async {
     final response =
         await ApiClient.dio.get('/learning/$slug/quiz-results/$quizId');
-    final payload = response.data as Map<String, dynamic>;
-    final data = payload['data'] as Map<String, dynamic>;
+    final data = ApiResponseParser.requireMap(
+      response.data,
+      context: '/learning/$slug/quiz-results/$quizId',
+    );
     return QuizResultDetail.fromJson(data);
   }
 }
+
+Map<String, dynamic> _safeMap(dynamic raw) {
+  if (raw is Map<String, dynamic>) return raw;
+  if (raw is Map) return Map<String, dynamic>.from(raw);
+  return const {};
+}
+
+List<Map<String, dynamic>> _safeList(dynamic raw) {
+  final parsed = ApiResponseParser.tryList(raw);
+  if (parsed != null) return parsed;
+  if (raw is List) {
+    return raw
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList(growable: false);
+  }
+  return const [];
+}
+
+int _intValue(dynamic raw) =>
+    raw is int ? raw : int.tryParse(raw?.toString() ?? '') ?? 0;
+
+bool _boolValue(dynamic raw) =>
+    raw == true || (raw is String && raw.toLowerCase() == 'true');
 
 class CourseLearning {
   CourseLearning({
@@ -165,8 +186,8 @@ class CourseLearning {
   }
 
   factory CourseLearning.fromJson(Map<String, dynamic> json, String slug) {
-    final instructor = json['instructor'] as Map<String, dynamic>? ?? {};
-    final chaptersData = json['curriculums'] as List<dynamic>? ?? [];
+    final instructor = _safeMap(json['instructor']);
+    final chaptersData = _safeList(json['curriculums']);
 
     return CourseLearning(
       slug: slug,
@@ -175,9 +196,7 @@ class CourseLearning {
       thumbnail: json['thumbnail']?.toString(),
       instructorName: (instructor['name'] ?? '').toString(),
       instructorImage: instructor['image']?.toString(),
-      chapters: chaptersData
-          .map((item) => CourseChapter.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      chapters: chaptersData.map(CourseChapter.fromJson).toList(),
     );
   }
 }
@@ -189,12 +208,10 @@ class CourseChapter {
   final List<CourseItem> items;
 
   factory CourseChapter.fromJson(Map<String, dynamic> json) {
-    final itemsData = json['chapters'] as List<dynamic>? ?? [];
+    final itemsData = _safeList(json['chapters']);
     return CourseChapter(
       title: (json['title'] ?? '').toString(),
-      items: itemsData
-          .map((item) => CourseItem.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      items: itemsData.map(CourseItem.fromJson).toList(),
     );
   }
 }
@@ -214,11 +231,12 @@ class CourseItem {
 
   factory CourseItem.fromJson(Map<String, dynamic> json) {
     final type = (json['type'] ?? '').toString();
-    final item = json['item'] as Map<String, dynamic>? ?? {};
+    final item = _safeMap(json['item']);
     final title = (item['title'] ?? '').toString();
     final duration = item['duration']?.toString() ?? '';
     final rawId = item['id'];
-    final id = rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '') ?? 0;
+    final id =
+        rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '') ?? 0;
 
     return CourseItem(
       id: id,
@@ -276,18 +294,16 @@ class QnaQuestion {
   final List<QnaReply> replies;
 
   factory QnaQuestion.fromJson(Map<String, dynamic> json) {
-    final user = json['user'] as Map<String, dynamic>? ?? {};
-    final repliesData = json['replies'] as List<dynamic>? ?? [];
+    final user = _safeMap(json['user']);
+    final repliesData = _safeList(json['replies']);
     return QnaQuestion(
-      id: (json['id'] ?? 0) as int,
+      id: _intValue(json['id']),
       question: (json['question'] ?? '').toString(),
       description: (json['description'] ?? '').toString(),
       createdAt: (json['created_at'] ?? '').toString(),
       userName: (user['name'] ?? '').toString(),
       userAvatar: user['image']?.toString(),
-      replies: repliesData
-          .map((item) => QnaReply.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      replies: repliesData.map(QnaReply.fromJson).toList(),
     );
   }
 }
@@ -308,9 +324,9 @@ class QnaReply {
   final String? userAvatar;
 
   factory QnaReply.fromJson(Map<String, dynamic> json) {
-    final user = json['user'] as Map<String, dynamic>? ?? {};
+    final user = _safeMap(json['user']);
     return QnaReply(
-      id: (json['id'] ?? 0) as int,
+      id: _intValue(json['id']),
       reply: (json['reply'] ?? '').toString(),
       createdAt: (json['created_at'] ?? '').toString(),
       userName: (user['name'] ?? '').toString(),
@@ -385,19 +401,17 @@ class QuizDetail {
   final List<QuizQuestion> questions;
 
   factory QuizDetail.fromJson(Map<String, dynamic> json, int attemptUsed) {
-    final questionsData = json['questions'] as List<dynamic>? ?? [];
+    final questionsData = _safeList(json['questions']);
     return QuizDetail(
-      id: json['id'] as int? ?? 0,
+      id: _intValue(json['id']),
       title: (json['title'] ?? '').toString(),
-      time: json['time'] as int? ?? 0,
-      attempt: json['attempt'] as int? ?? 0,
-      passMark: json['pass_mark'] as int? ?? 0,
-      totalMark: json['total_mark'] as int? ?? 0,
-      totalQuestions: json['total_questions'] as int? ?? 0,
+      time: _intValue(json['time']),
+      attempt: _intValue(json['attempt']),
+      passMark: _intValue(json['pass_mark']),
+      totalMark: _intValue(json['total_mark']),
+      totalQuestions: _intValue(json['total_questions']),
       attemptUsed: attemptUsed,
-      questions: questionsData
-          .map((item) => QuizQuestion.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      questions: questionsData.map(QuizQuestion.fromJson).toList(),
     );
   }
 }
@@ -416,14 +430,12 @@ class QuizQuestion {
   final List<QuizAnswer> answers;
 
   factory QuizQuestion.fromJson(Map<String, dynamic> json) {
-    final answersData = json['answers'] as List<dynamic>? ?? [];
+    final answersData = _safeList(json['answers']);
     return QuizQuestion(
-      id: json['id'] as int? ?? 0,
+      id: _intValue(json['id']),
       title: (json['title'] ?? '').toString(),
       type: (json['type'] ?? '').toString(),
-      answers: answersData
-          .map((item) => QuizAnswer.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      answers: answersData.map(QuizAnswer.fromJson).toList(),
     );
   }
 }
@@ -439,7 +451,7 @@ class QuizAnswer {
 
   factory QuizAnswer.fromJson(Map<String, dynamic> json) {
     return QuizAnswer(
-      id: json['id'] as int? ?? 0,
+      id: _intValue(json['id']),
       title: (json['title'] ?? '').toString(),
     );
   }
@@ -461,15 +473,13 @@ class QuizResultDetail {
   final List<QuizAnswerResult> results;
 
   factory QuizResultDetail.fromJson(Map<String, dynamic> json) {
-    final resultsData = json['results'] as List<dynamic>? ?? [];
+    final resultsData = _safeList(json['results']);
     return QuizResultDetail(
-      totalMarks: json['total_marks'] as int? ?? 0,
-      passMarks: json['pass_marks'] as int? ?? 0,
-      yourMarks: json['your_marks'] as int? ?? 0,
+      totalMarks: _intValue(json['total_marks']),
+      passMarks: _intValue(json['pass_marks']),
+      yourMarks: _intValue(json['your_marks']),
       status: (json['status'] ?? '').toString(),
-      results: resultsData
-          .map((item) => QuizAnswerResult.fromJson(item as Map<String, dynamic>))
-          .toList(),
+      results: resultsData.map(QuizAnswerResult.fromJson).toList(),
     );
   }
 }
@@ -489,7 +499,7 @@ class QuizAnswerResult {
     return QuizAnswerResult(
       question: (json['question'] ?? '').toString(),
       answer: (json['answer'] ?? '').toString(),
-      correct: json['correct'] as bool? ?? false,
+      correct: _boolValue(json['correct']),
     );
   }
 }

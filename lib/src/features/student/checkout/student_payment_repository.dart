@@ -1,7 +1,9 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class StudentPaymentRepository {
-  Future<PaymentInit?> startPlanPayment(String planKey, {String? currency}) async {
+  Future<PaymentInit?> startPlanPayment(String planKey,
+      {String? currency}) async {
     final response = await ApiClient.dio.post(
       '/student-plans/purchase',
       data: {
@@ -9,11 +11,8 @@ class StudentPaymentRepository {
         if (currency != null && currency.isNotEmpty) 'currency': currency,
       },
     );
-    final data = response.data;
-    if (data is Map && data['data'] is Map) {
-      return PaymentInit.fromJson(Map<String, dynamic>.from(data['data'] as Map));
-    }
-    return null;
+    final data = ApiResponseParser.tryMap(response.data);
+    return data == null ? null : PaymentInit.fromJson(data);
   }
 
   Future<Iyzico3dsInit?> initIyzico3dsPlanPayment({
@@ -38,25 +37,15 @@ class StudentPaymentRepository {
       },
     );
 
-    final data = response.data;
-    if (data is Map && data['data'] is Map) {
-      return Iyzico3dsInit.fromJson(
-        Map<String, dynamic>.from(data['data'] as Map),
-      );
-    }
-    return null;
+    final data = ApiResponseParser.tryMap(response.data);
+    return data == null ? null : Iyzico3dsInit.fromJson(data);
   }
 
   Future<PaymentStatus?> fetchOrderStatus(String invoiceId) async {
     if (invoiceId.isEmpty) return null;
     final response = await ApiClient.dio.get('/orders/$invoiceId');
-    final data = response.data;
-    if (data is Map && data['data'] is Map) {
-      return PaymentStatus.fromJson(
-        Map<String, dynamic>.from(data['data'] as Map),
-      );
-    }
-    return null;
+    final data = ApiResponseParser.tryMap(response.data);
+    return data == null ? null : PaymentStatus.fromJson(data);
   }
 }
 
@@ -81,7 +70,8 @@ class PaymentStatus {
   final String status;
 
   bool get isSuccess =>
-      paymentStatus.toLowerCase() == 'paid' || status.toLowerCase() == 'completed';
+      paymentStatus.toLowerCase() == 'paid' ||
+      status.toLowerCase() == 'completed';
 
   bool get isFailed {
     final payment = paymentStatus.toLowerCase();

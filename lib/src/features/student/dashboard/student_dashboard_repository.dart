@@ -20,9 +20,8 @@ class StudentDashboardRepository {
 
     final name = (profileData['name'] ?? '').toString();
     final planRaw = profileData['plan'];
-    final plan = planRaw is Map<String, dynamic>
-        ? PlanSummary.fromJson(planRaw)
-        : null;
+    final plan =
+        planRaw is Map<String, dynamic> ? PlanSummary.fromJson(planRaw) : null;
     final phone = (profileData['phone'] ?? '').toString();
 
     final upcoming = _parseList(
@@ -43,8 +42,8 @@ class StudentDashboardRepository {
   List<T> _parseList<T>(dynamic raw, T Function(Map<String, dynamic>) mapper) {
     if (raw is! List) return const [];
     return raw
-        .whereType<Map<String, dynamic>>()
-        .map(mapper)
+        .whereType<Map>()
+        .map((item) => mapper(Map<String, dynamic>.from(item)))
         .toList(growable: false);
   }
 
@@ -57,7 +56,8 @@ class StudentDashboardRepository {
       var whatsappUrl = '';
       final data = payload['data'];
       if (data is Map<String, dynamic>) {
-        whatsappUrl = (data['whatsapp_url'] ?? '').toString();
+        whatsappUrl =
+            (data['whatsapp_url'] ?? data['support_url'] ?? '').toString();
       }
       return TrialLessonRequestResult(
         message: message,

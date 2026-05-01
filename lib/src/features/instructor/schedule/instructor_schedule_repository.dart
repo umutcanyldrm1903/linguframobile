@@ -28,7 +28,9 @@ class InstructorScheduleRepository {
       response.data,
       context: '/instructor/availabilities',
     );
-    return data['id'] is int ? data['id'] as int : int.tryParse('${data['id']}');
+    return data['id'] is int
+        ? data['id'] as int
+        : int.tryParse('${data['id']}');
   }
 
   Future<void> deleteAvailability(int id) async {
@@ -55,7 +57,9 @@ class InstructorAvailability {
 
   factory InstructorAvailability.fromJson(Map<String, dynamic> json) {
     return InstructorAvailability(
-      id: json['id'] is int ? json['id'] as int : int.tryParse('${json['id']}') ?? 0,
+      id: json['id'] is int
+          ? json['id'] as int
+          : int.tryParse('${json['id']}') ?? 0,
       dayOfWeek: json['day_of_week'] is int
           ? json['day_of_week'] as int
           : int.tryParse('${json['day_of_week']}') ?? 0,

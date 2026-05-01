@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/localization/app_strings.dart';
+import '../../core/motion/app_motion.dart';
 import '../../core/theme/app_colors.dart';
 
 class AppShellDestination {
@@ -27,6 +28,7 @@ class AppShellScaffold extends StatelessWidget {
     required this.onLogout,
     required this.roleLabel,
     required this.accentColor,
+    this.onOpenAppHome,
   }) : assert(destinations.length == pages.length);
 
   final int currentIndex;
@@ -36,6 +38,7 @@ class AppShellScaffold extends StatelessWidget {
   final Future<void> Function() onLogout;
   final String roleLabel;
   final Color accentColor;
+  final VoidCallback? onOpenAppHome;
 
   @override
   Widget build(BuildContext context) {
@@ -79,6 +82,7 @@ class AppShellScaffold extends StatelessWidget {
                       title: destination.title,
                       roleLabel: roleLabel,
                       accentColor: accentColor,
+                      onOpenAppHome: onOpenAppHome,
                       onLogout: onLogout,
                     ),
                   ),
@@ -110,9 +114,30 @@ class AppShellScaffold extends StatelessWidget {
                           ),
                           child: ColoredBox(
                             color: theme.scaffoldBackgroundColor,
-                            child: IndexedStack(
-                              index: currentIndex,
-                              children: pages,
+                            child: AnimatedSwitcher(
+                              duration: AppMotion.normal,
+                              switchInCurve: AppMotion.curve,
+                              switchOutCurve: Curves.easeInCubic,
+                              transitionBuilder: (child, animation) {
+                                final curved = CurvedAnimation(
+                                  parent: animation,
+                                  curve: AppMotion.curve,
+                                );
+                                return FadeTransition(
+                                  opacity: curved,
+                                  child: SlideTransition(
+                                    position: Tween<Offset>(
+                                      begin: const Offset(0.03, 0),
+                                      end: Offset.zero,
+                                    ).animate(curved),
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child: KeyedSubtree(
+                                key: ValueKey(currentIndex),
+                                child: pages[currentIndex],
+                              ),
                             ),
                           ),
                         ),
@@ -127,11 +152,11 @@ class AppShellScaffold extends StatelessWidget {
       ),
       bottomNavigationBar: SafeArea(
         top: false,
-        minimum: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+        minimum: const EdgeInsets.fromLTRB(10, 6, 10, 8),
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.96),
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Colors.white.withValues(alpha: 0.85)),
             boxShadow: [
               BoxShadow(
@@ -148,7 +173,7 @@ class AppShellScaffold extends StatelessWidget {
               indicatorColor: accentColor.withValues(alpha: 0.14),
               labelTextStyle: WidgetStateProperty.resolveWith((states) {
                 return TextStyle(
-                  fontSize: 11,
+                  fontSize: 10.5,
                   fontWeight: states.contains(WidgetState.selected)
                       ? FontWeight.w800
                       : FontWeight.w700,
@@ -159,7 +184,8 @@ class AppShellScaffold extends StatelessWidget {
               }),
             ),
             child: NavigationBar(
-              height: 76,
+              height: 64,
+              elevation: 0,
               selectedIndex: currentIndex,
               labelBehavior:
                   NavigationDestinationLabelBehavior.onlyShowSelected,
@@ -186,12 +212,14 @@ class _ShellHeader extends StatelessWidget {
     required this.roleLabel,
     required this.accentColor,
     required this.onLogout,
+    this.onOpenAppHome,
   });
 
   final String title;
   final String roleLabel;
   final Color accentColor;
   final Future<void> Function() onLogout;
+  final VoidCallback? onOpenAppHome;
 
   @override
   Widget build(BuildContext context) {
@@ -269,11 +297,26 @@ class _ShellHeader extends StatelessWidget {
               tooltip: AppStrings.t('Profile'),
               icon: const Icon(Icons.more_horiz_rounded),
               onSelected: (value) async {
+                if (value == 'app-home') {
+                  onOpenAppHome?.call();
+                  return;
+                }
                 if (value == 'logout') {
                   await onLogout();
                 }
               },
               itemBuilder: (context) => [
+                if (onOpenAppHome != null)
+                  PopupMenuItem<String>(
+                    value: 'app-home',
+                    child: Row(
+                      children: [
+                        const Icon(Icons.home_rounded, size: 18),
+                        const SizedBox(width: 10),
+                        Text(AppStrings.t('Ana sayfaya don')),
+                      ],
+                    ),
+                  ),
                 PopupMenuItem<String>(
                   value: 'logout',
                   child: Row(

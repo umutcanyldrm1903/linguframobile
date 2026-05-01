@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/notifications/app_notification_service.dart';
 import '../../core/storage/secure_storage.dart';
 import 'auth_repository.dart';
 
@@ -44,6 +45,27 @@ class AuthNotifier extends StateNotifier<bool> {
     }
   }
 
+  Future<String> socialLogin({
+    required String provider,
+    required String idToken,
+    String? name,
+  }) async {
+    state = true;
+    try {
+      final repo = _read.read(authRepositoryProvider);
+      final data = await repo.socialLogin(
+        provider: provider,
+        idToken: idToken,
+        name: name,
+      );
+      return _persistSession(data, repo: repo);
+    } catch (error) {
+      throw AuthFailure(_extractMessage(error));
+    } finally {
+      state = false;
+    }
+  }
+
   Future<String> register({
     required String name,
     required String email,
@@ -78,6 +100,7 @@ class AuthNotifier extends StateNotifier<bool> {
   Future<void> logout() async {
     state = true;
     try {
+      await AppNotificationService.instance.unregisterServerPushToken();
       await SecureStorage.clearAll();
       _read.read(authTokenProvider.notifier).state = null;
     } finally {
@@ -106,6 +129,7 @@ class AuthNotifier extends StateNotifier<bool> {
 
     await SecureStorage.setToken(token);
     _read.read(authTokenProvider.notifier).state = token;
+    await AppNotificationService.instance.syncServerPushToken();
 
     if (userId.isNotEmpty) {
       await SecureStorage.setUserId(userId);

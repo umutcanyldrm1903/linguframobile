@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/localization/app_strings.dart';
 import 'auth_page_scaffold.dart';
 import 'auth_provider.dart';
+import 'social_auth_buttons.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -35,16 +36,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             _passwordController.text,
           );
       if (!mounted) return;
-      if (role == 'instructor') {
-        Navigator.pushReplacementNamed(context, '/instructor');
-      } else {
-        Navigator.pushReplacementNamed(context, '/student');
-      }
+      _completeAuth(role);
     } on AuthFailure catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.t(error.message))),
       );
+    }
+  }
+
+  void _completeAuth(String role) {
+    if (role == 'instructor') {
+      Navigator.pushReplacementNamed(context, '/instructor');
+    } else {
+      Navigator.pushReplacementNamed(context, '/student');
     }
   }
 
@@ -70,7 +75,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 }
                 final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
                 if (!emailRegex.hasMatch(email)) {
-                  return AppStrings.t('The email must be a valid email address');
+                  return AppStrings.t(
+                      'The email must be a valid email address');
                 }
                 return null;
               },
@@ -96,6 +102,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   loading ? AppStrings.t('Submitting') : AppStrings.t('Login'),
                 ),
               ),
+            ),
+            const SizedBox(height: 18),
+            SocialAuthButtons(
+              loading: loading,
+              onAuthenticated: _completeAuth,
             ),
             const SizedBox(height: 8),
             TextButton(

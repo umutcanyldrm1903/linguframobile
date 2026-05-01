@@ -37,8 +37,8 @@ class InstructorReportsPayload {
       title: (json['title'] ?? '').toString(),
       subtitle: (json['subtitle'] ?? '').toString(),
       metrics: InstructorReportMetrics.fromJson(
-        json['metrics'] is Map<String, dynamic>
-            ? json['metrics'] as Map<String, dynamic>
+        json['metrics'] is Map
+            ? Map<String, dynamic>.from(json['metrics'] as Map)
             : const {},
       ),
       studentsCount: json['students_count'] is int
@@ -51,8 +51,9 @@ class InstructorReportsPayload {
   static List<InstructorMonthlyReport> _parseMonthly(dynamic raw) {
     if (raw is! List) return const [];
     return raw
-        .whereType<Map<String, dynamic>>()
-        .map(InstructorMonthlyReport.fromJson)
+        .whereType<Map>()
+        .map((item) =>
+            InstructorMonthlyReport.fromJson(Map<String, dynamic>.from(item)))
         .toList(growable: false);
   }
 }

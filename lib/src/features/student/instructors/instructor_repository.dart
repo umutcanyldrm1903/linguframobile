@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class InstructorRepository {
   Future<List<InstructorSummary>> fetchInstructors({
@@ -10,11 +11,8 @@ class InstructorRepository {
       if (tags != null && tags.isNotEmpty) 'tag': tags,
     });
 
-    final payload = response.data as Map<String, dynamic>;
-    final data = payload['data'] as List<dynamic>? ?? [];
-    return data
-        .map((item) => InstructorSummary.fromJson(item as Map<String, dynamic>))
-        .toList();
+    final data = ApiResponseParser.tryList(response.data) ?? const [];
+    return data.map(InstructorSummary.fromJson).toList();
   }
 
   Future<InstructorSchedule> fetchSchedule({
@@ -28,8 +26,7 @@ class InstructorRepository {
       },
     );
 
-    final payload = response.data as Map<String, dynamic>;
-    final data = payload['data'] as Map<String, dynamic>;
+    final data = ApiResponseParser.tryMap(response.data) ?? const {};
     return InstructorSchedule.fromJson(data);
   }
 
@@ -41,7 +38,7 @@ class InstructorRepository {
       '/instructors/$instructorId/schedule',
       data: {'slot': slot},
     );
-    return response.data as Map<String, dynamic>;
+    return ApiResponseParser.tryMap(response.data) ?? const {};
   }
 }
 
@@ -74,9 +71,8 @@ class InstructorSummary {
         ? rawRating.toDouble()
         : double.tryParse(rawRating?.toString() ?? '') ?? 0;
     final rawId = json['id'];
-    final parsedId = rawId is int
-        ? rawId
-        : int.tryParse(rawId?.toString() ?? '') ?? 0;
+    final parsedId =
+        rawId is int ? rawId : int.tryParse(rawId?.toString() ?? '') ?? 0;
     final rawCourseCount = json['course_count'];
     final parsedCourseCount = rawCourseCount is int
         ? rawCourseCount
@@ -90,11 +86,11 @@ class InstructorSummary {
       imageUrl: json['image']?.toString(),
       avgRating: parsedRating,
       courseCount: parsedCourseCount,
-      tags: (json['tags'] as List<dynamic>? ?? [])
-          .map((tag) => tag.toString())
-          .toList(),
+      tags: _safeList(json['tags']).map((tag) => tag.toString()).toList(),
     );
   }
+
+  static List<dynamic> _safeList(dynamic raw) => raw is List ? raw : const [];
 }
 
 class InstructorSchedule {
@@ -121,15 +117,16 @@ class InstructorSchedule {
   final InstructorSummary instructor;
 
   factory InstructorSchedule.fromJson(Map<String, dynamic> json) {
-    final daysData = json['days'] as List<dynamic>? ?? [];
-    final slotsData = json['slots'] as Map<String, dynamic>? ?? {};
+    final daysData = json['days'] is List ? json['days'] as List : const [];
+    final slotsData = json['slots'] is Map ? json['slots'] as Map : const {};
     final slots = <String, List<ScheduleSlot>>{};
 
     slotsData.forEach((key, value) {
-      final list = (value as List<dynamic>? ?? [])
-          .map((item) => ScheduleSlot.fromJson(item as Map<String, dynamic>))
+      final list = (value is List ? value : const [])
+          .whereType<Map>()
+          .map((item) => ScheduleSlot.fromJson(Map<String, dynamic>.from(item)))
           .toList();
-      slots[key] = list;
+      slots[key.toString()] = list;
     });
 
     return InstructorSchedule(
@@ -137,16 +134,23 @@ class InstructorSchedule {
       weekEnd: (json['week_end'] ?? '').toString(),
       prevStart: (json['prev_start'] ?? '').toString(),
       nextStart: (json['next_start'] ?? '').toString(),
-      lessonDuration: (json['lesson_duration'] ?? 0) as int,
+      lessonDuration: _intValue(json['lesson_duration']),
       timezone: (json['timezone'] ?? '').toString(),
       days: daysData
-          .map((item) => ScheduleDay.fromJson(item as Map<String, dynamic>))
+          .whereType<Map>()
+          .map((item) => ScheduleDay.fromJson(Map<String, dynamic>.from(item)))
           .toList(),
       slotsByDate: slots,
-      instructor:
-          InstructorSummary.fromJson(json['instructor'] as Map<String, dynamic>),
+      instructor: InstructorSummary.fromJson(
+        json['instructor'] is Map
+            ? Map<String, dynamic>.from(json['instructor'] as Map)
+            : const {},
+      ),
     );
   }
+
+  static int _intValue(dynamic raw) =>
+      raw is int ? raw : int.tryParse(raw?.toString() ?? '') ?? 0;
 }
 
 class ScheduleDay {
@@ -158,7 +162,9 @@ class ScheduleDay {
   factory ScheduleDay.fromJson(Map<String, dynamic> json) {
     return ScheduleDay(
       date: (json['date'] ?? '').toString(),
-      dayOfWeek: (json['day_of_week'] ?? 0) as int,
+      dayOfWeek: json['day_of_week'] is int
+          ? json['day_of_week'] as int
+          : int.tryParse(json['day_of_week']?.toString() ?? '') ?? 0,
     );
   }
 }
@@ -183,7 +189,9 @@ class ScheduleSlot {
       startTime: (json['start_time'] ?? '').toString(),
       endTime: (json['end_time'] ?? '').toString(),
       label: (json['label'] ?? '').toString(),
-      available: (json['available'] ?? false) as bool,
+      available: json['available'] == true ||
+          (json['available'] is String &&
+              (json['available'] as String).toLowerCase() == 'true'),
       value: (json['value'] ?? '').toString(),
     );
   }

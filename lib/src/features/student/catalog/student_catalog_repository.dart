@@ -1,5 +1,6 @@
 import '../../../core/localization/app_strings.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_response.dart';
 
 class StudentCatalogRepository {
   Future<List<CatalogCourseItem>> searchCourses({
@@ -24,11 +25,8 @@ class StudentCatalogRepository {
       },
     );
 
-    final list = _extractList(response.data);
-    return list
-        .whereType<Map<String, dynamic>>()
-        .map(CatalogCourseItem.fromJson)
-        .toList(growable: false);
+    final list = ApiResponseParser.tryList(response.data) ?? const [];
+    return list.map(CatalogCourseItem.fromJson).toList(growable: false);
   }
 
   Future<void> toggleWishlist(String slug) async {
@@ -56,24 +54,8 @@ class StudentCatalogRepository {
       },
     );
 
-    final payload = response.data;
-    if (payload is Map<String, dynamic>) {
-      final data = payload['data'];
-      if (data is Map<String, dynamic>) {
-        return CatalogCourseDetail.fromJson(data);
-      }
-    }
-    return null;
-  }
-
-  List<dynamic> _extractList(dynamic data) {
-    if (data is Map) {
-      final inner = data['data'];
-      if (inner is List) return inner;
-      if (inner is Map && inner['data'] is List) return inner['data'] as List;
-    }
-    if (data is List) return data;
-    return const [];
+    final data = ApiResponseParser.tryMap(response.data);
+    return data == null ? null : CatalogCourseDetail.fromJson(data);
   }
 }
 
@@ -106,9 +88,8 @@ class CatalogCourseItem {
       thumbnail: (json['thumbnail'] ?? '').toString(),
       priceLabel: (json['price'] ?? '').toString(),
       discountLabel: (json['discount'] ?? '').toString(),
-      instructorName: instructor is Map
-          ? (instructor['name'] ?? '').toString()
-          : '',
+      instructorName:
+          instructor is Map ? (instructor['name'] ?? '').toString() : '',
       rating: json['average_rating'] is num
           ? (json['average_rating'] as num).toDouble()
           : double.tryParse('${json['average_rating'] ?? 0}') ?? 0,
@@ -156,9 +137,8 @@ class CatalogCourseDetail {
       thumbnail: (json['thumbnail'] ?? '').toString(),
       priceLabel: (json['price'] ?? '').toString(),
       discountLabel: (json['discount'] ?? '').toString(),
-      instructorName: instructor is Map
-          ? (instructor['name'] ?? '').toString()
-          : '',
+      instructorName:
+          instructor is Map ? (instructor['name'] ?? '').toString() : '',
       rating: json['average_rating'] is num
           ? (json['average_rating'] as num).toDouble()
           : double.tryParse('${json['average_rating'] ?? 0}') ?? 0,
@@ -169,13 +149,17 @@ class CatalogCourseDetail {
           ? json['students'] as int
           : int.tryParse('${json['students'] ?? 0}') ?? 0,
       description: (json['description'] ?? '').toString(),
-      curriculums: curriculumsRaw is List
-          ? curriculumsRaw
-                .whereType<Map<String, dynamic>>()
-                .map(CatalogCurriculum.fromJson)
-                .toList(growable: false)
-          : const [],
+      curriculums: _parseCurriculums(curriculumsRaw),
     );
+  }
+
+  static List<CatalogCurriculum> _parseCurriculums(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((item) =>
+            CatalogCurriculum.fromJson(Map<String, dynamic>.from(item)))
+        .toList(growable: false);
   }
 }
 
@@ -189,13 +173,17 @@ class CatalogCurriculum {
     final chapters = json['chapters'];
     return CatalogCurriculum(
       title: (json['title'] ?? '').toString(),
-      items: chapters is List
-          ? chapters
-                .whereType<Map<String, dynamic>>()
-                .map(CatalogCurriculumItem.fromJson)
-                .toList(growable: false)
-          : const [],
+      items: _parseItems(chapters),
     );
+  }
+
+  static List<CatalogCurriculumItem> _parseItems(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((item) =>
+            CatalogCurriculumItem.fromJson(Map<String, dynamic>.from(item)))
+        .toList(growable: false);
   }
 }
 
@@ -214,8 +202,8 @@ class CatalogCurriculumItem {
 
   factory CatalogCurriculumItem.fromJson(Map<String, dynamic> json) {
     final item = json['item'];
-    final itemMap = item is Map<String, dynamic>
-        ? item
+    final itemMap = item is Map
+        ? Map<String, dynamic>.from(item)
         : const <String, dynamic>{};
     return CatalogCurriculumItem(
       type: (json['type'] ?? '').toString(),

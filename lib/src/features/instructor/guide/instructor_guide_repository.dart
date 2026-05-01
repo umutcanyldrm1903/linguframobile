@@ -39,8 +39,9 @@ class InstructorGuidePayload {
   static List<InstructorGuideSection> _parseSections(dynamic raw) {
     if (raw is! List) return const [];
     return raw
-        .whereType<Map<String, dynamic>>()
-        .map(InstructorGuideSection.fromJson)
+        .whereType<Map>()
+        .map((item) =>
+            InstructorGuideSection.fromJson(Map<String, dynamic>.from(item)))
         .toList(growable: false);
   }
 }

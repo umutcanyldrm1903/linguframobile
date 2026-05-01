@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../../core/motion/app_motion.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/auth_repository.dart';
@@ -119,7 +120,9 @@ class _StudentInstructorsScreenState extends State<StudentInstructorsScreen> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(child: CircularProgressIndicator()),
+                  child: Center(
+                    child: MascotLoading(message: 'Ogretmenler yukleniyor...'),
+                  ),
                 );
               }
 
@@ -137,7 +140,7 @@ class _StudentInstructorsScreenState extends State<StudentInstructorsScreen> {
                 );
               }
 
-              return Column(
+              return StaggeredReveal(
                 children: instructors
                     .map(
                       (instructor) => Padding(
@@ -407,7 +410,9 @@ class _StudentInstructorDetailScreenState
           future: _scheduleFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: MascotLoading(message: 'Takvim hazirlaniyor...'),
+              );
             }
             if (snapshot.hasError) {
               return _EmptyState(
@@ -660,7 +665,7 @@ class _SlotButton extends StatelessWidget {
             ? const Color(0xFFE2E8F0)
             : const Color(0xFFD1D5DB);
 
-    return GestureDetector(
+    return PressableScale(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -765,9 +770,8 @@ class _InstructorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return PressableScale(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
