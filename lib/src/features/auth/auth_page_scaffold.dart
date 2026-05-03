@@ -42,7 +42,7 @@ class AuthPageScaffold extends StatelessWidget {
                     if (Navigator.of(context).canPop()) {
                       Navigator.of(context).pop();
                     } else {
-                      Navigator.pushReplacementNamed(context, '/home');
+                      Navigator.pushReplacementNamed(context, '/app-home');
                     }
                   },
                   icon: const Icon(Icons.arrow_back_rounded),

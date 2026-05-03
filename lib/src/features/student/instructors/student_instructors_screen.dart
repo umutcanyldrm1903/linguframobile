@@ -197,6 +197,7 @@ class _StudentInstructorDetailScreenState
   final _repo = InstructorRepository();
   String? _selectedSlot;
   bool _booking = false;
+  bool _trialLessonAvailable = false;
   late Future<InstructorSchedule> _scheduleFuture;
 
   @override
@@ -276,6 +277,27 @@ class _StudentInstructorDetailScreenState
     );
   }
 
+  Future<void> _showTrialLessonInfo() async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(AppStrings.t('Free trial lesson')),
+        content: Text(
+          AppStrings.t(
+            'You can book one free trial lesson before purchasing a package.',
+          ),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(AppStrings.t('Continue')),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<bool> _ensureStudentHasCredits() async {
     try {
       final profile = await AuthRepository().profile();
@@ -286,6 +308,12 @@ class _StudentInstructorDetailScreenState
 
       final plan = data['plan'];
       if (plan is! Map) {
+        final trialAvailable = data['trial_lesson_available'] == true;
+        if (trialAvailable) {
+          _trialLessonAvailable = true;
+          await _showTrialLessonInfo();
+          return true;
+        }
         await _promptPackageRequired();
         return false;
       }
@@ -296,6 +324,14 @@ class _StudentInstructorDetailScreenState
           : int.tryParse('${lessonsRemainingRaw ?? ''}') ?? 0;
 
       if (lessonsRemaining > 0) {
+        _trialLessonAvailable = false;
+        return true;
+      }
+
+      final trialAvailable = data['trial_lesson_available'] == true;
+      if (trialAvailable) {
+        _trialLessonAvailable = true;
+        await _showTrialLessonInfo();
         return true;
       }
 
@@ -377,9 +413,23 @@ class _StudentInstructorDetailScreenState
       );
       final message = response['message']?.toString() ??
           AppStrings.t('Reservation received.');
+      final data = response['data'];
+      final isTrial = data is Map && data['is_trial'] == true;
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(message)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isTrial
+                  ? AppStrings.t(
+                      'Your free trial lesson reservation has been created.',
+                    )
+                  : message,
+            ),
+          ),
+        );
+        if (isTrial) {
+          setState(() => _trialLessonAvailable = false);
+        }
       }
       _loadSchedule(start: schedule.weekStart);
     } catch (error) {
@@ -497,7 +547,9 @@ class _StudentInstructorDetailScreenState
                           ? AppStrings.t('Select Time')
                           : _booking
                               ? '${AppStrings.t('Submitting')}...'
-                              : AppStrings.t('Book Reservation'),
+                              : _trialLessonAvailable
+                                  ? AppStrings.t('Book free trial lesson')
+                                  : AppStrings.t('Book Reservation'),
                     ),
                   ),
                 ),

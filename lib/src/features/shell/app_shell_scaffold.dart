@@ -152,7 +152,7 @@ class AppShellScaffold extends StatelessWidget {
       ),
       bottomNavigationBar: SafeArea(
         top: false,
-        minimum: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+        minimum: const EdgeInsets.fromLTRB(10, 6, 10, 2),
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.96),

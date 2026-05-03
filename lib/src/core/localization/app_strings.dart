@@ -53,6 +53,17 @@ class AppStrings {
         'Bu konusma icin mesajlasma kapali.',
     'Your one-time free trial lesson has been created.':
         'Tek seferlik ucretsiz deneme dersin olusturuldu.',
+    'One moment': 'Bir saniye',
+    'Preparing your lesson...': 'Dersin hazirlaniyor...',
+    'Preparing your flow...': 'Akisin hazirlaniyor...',
+    'Preparing Google sign in...': 'Google girisi hazirlaniyor...',
+    'Free trial lesson': 'Ucretsiz deneme dersi',
+    'You can book one free trial lesson before purchasing a package.':
+        'Paket satin almadan once bir kez ucretsiz deneme dersi rezerve edebilirsin.',
+    'Book free trial lesson': 'Ucretsiz deneme dersini ayirt',
+    'Your free trial lesson reservation has been created.':
+        'Ucretsiz deneme dersi rezervasyonun olusturuldu.',
+    'Continue': 'Devam et',
   };
 
   static String get code => _code;

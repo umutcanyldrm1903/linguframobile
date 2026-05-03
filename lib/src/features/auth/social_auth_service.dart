@@ -35,6 +35,14 @@ class SocialAuthService {
     defaultValue:
         '284981345033-uhh8ltpjg2cldtg6iu7n1segitdho9j2.apps.googleusercontent.com',
   );
+  static const _appleServiceId = String.fromEnvironment(
+    'APPLE_SERVICE_ID',
+    defaultValue: 'com.lingufranca.app',
+  );
+  static const _appleRedirectUri = String.fromEnvironment(
+    'APPLE_REDIRECT_URI',
+    defaultValue: 'https://www.lingufranca.com',
+  );
 
   Future<SocialAuthResult?> signInWithGoogle() async {
     final googleSignIn = GoogleSignIn(
@@ -86,20 +94,29 @@ class SocialAuthService {
       );
     }
 
-    final credential = await SignInWithApple.getAppleIDCredential(
-      scopes: const [
-        AppleIDAuthorizationScopes.email,
-        AppleIDAuthorizationScopes.fullName,
-      ],
-      webAuthenticationOptions: kIsWeb
-          ? WebAuthenticationOptions(
-              clientId: 'com.lingufranca.app',
-              redirectUri: Uri.parse(
-                'https://www.lingufranca.com',
-              ),
-            )
-          : null,
-    );
+    late final AuthorizationCredentialAppleID credential;
+    try {
+      credential = await SignInWithApple.getAppleIDCredential(
+        scopes: const [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        webAuthenticationOptions: kIsWeb
+            ? WebAuthenticationOptions(
+                clientId: _appleServiceId,
+                redirectUri: Uri.parse(_appleRedirectUri),
+              )
+            : null,
+      );
+    } on SignInWithAppleAuthorizationException catch (error) {
+      throw SocialAuthException(
+        'Apple ile giriş tamamlanamadı. Apple Developer hesabında Sign in with Apple capability, Bundle ID ve provisioning profile ayarlarını kontrol edin. Kod: ${error.code.name}',
+      );
+    } on SignInWithAppleCredentialsException {
+      throw SocialAuthException(
+        'Apple kimlik bilgisi alınamadı. Apple Services ID, redirect URL ve domain ayarlarını kontrol edin.',
+      );
+    }
 
     final idToken = credential.identityToken?.trim() ?? '';
     if (idToken.isEmpty) {

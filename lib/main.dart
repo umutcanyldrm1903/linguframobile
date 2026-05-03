@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -33,15 +35,22 @@ import 'package:lingufranca_mobile/src/features/payment/payment_native_service.d
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   AppTelemetryService.instance.initialize();
-  // DateFormat(...) calls across student/instructor screens require intl locale data.
-  await initializeDateFormatting();
   // Initialize the platform channel early so deep-links aren't missed.
   PaymentNativeService.deepLinkStream.listen((_) {});
-  await AppNotificationService.instance.initialize();
-  await AppStrings.load();
-  await AppCurrency.load();
-  await AppTelemetryService.instance.markAppReady();
+
   runApp(const ProviderScope(child: LingufrancaApp()));
+  unawaited(_warmUpAppServices());
+}
+
+Future<void> _warmUpAppServices() async {
+  await Future.wait([
+    initializeDateFormatting(),
+    AppStrings.load(),
+    AppCurrency.load(),
+  ]);
+
+  await AppTelemetryService.instance.markAppReady();
+  unawaited(AppNotificationService.instance.initialize());
 }
 
 class LingufrancaApp extends ConsumerWidget {
@@ -111,9 +120,6 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _redirect() async {
-    // Give auth initialization a moment to complete
-    await Future.delayed(const Duration(milliseconds: 500));
-
     final token = await SecureStorage.getToken();
     final role = await SecureStorage.getRole();
     final pendingRoute =

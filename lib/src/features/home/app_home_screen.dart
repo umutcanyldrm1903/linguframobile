@@ -86,7 +86,7 @@ class _AppHomeScreenState extends State<AppHomeScreen> {
       bottomNavigationBar: SafeArea(
         top: false,
         child: Container(
-          margin: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+          margin: const EdgeInsets.fromLTRB(14, 0, 14, 4),
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -153,7 +153,7 @@ class _NativeHomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final isTr = AppStrings.code == 'tr';
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 34),
       children: [
         _PageHeader(
           title: isTr ? 'LinguFranca ana sayfa' : 'LinguFranca home',
@@ -1048,11 +1048,17 @@ class _ProfileEntryPage extends StatelessWidget {
                           ? 'Ogrenci paneline don'
                           : 'Back to student panel'))
                   : (isTr ? 'Giris yap' : 'Sign in'),
-              onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                context,
-                session.signedIn ? panelRoute : '/login',
-                (_) => false,
-              ),
+              onPressed: () {
+                if (session.signedIn) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    panelRoute,
+                    (_) => false,
+                  );
+                  return;
+                }
+                Navigator.pushNamed(context, '/login');
+              },
             ),
             if (!session.signedIn) ...[
               const SizedBox(height: 12),
