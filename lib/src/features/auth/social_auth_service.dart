@@ -109,12 +109,15 @@ class SocialAuthService {
             : null,
       );
     } on SignInWithAppleAuthorizationException catch (error) {
+      final detail = error.message.trim();
+      final suffix = detail.isNotEmpty ? ' Detay: $detail' : '';
       throw SocialAuthException(
-        'Apple ile giriş tamamlanamadı. Apple Developer hesabında Sign in with Apple capability, Bundle ID ve provisioning profile ayarlarını kontrol edin. Kod: ${error.code.name}',
+        'Apple ile giris tamamlanamadi. Kod: ${error.code.name}.$suffix',
       );
-    } on SignInWithAppleCredentialsException {
+    } on SignInWithAppleCredentialsException catch (error) {
+      final detail = error.message.trim();
       throw SocialAuthException(
-        'Apple kimlik bilgisi alınamadı. Apple Services ID, redirect URL ve domain ayarlarını kontrol edin.',
+        'Apple kimlik bilgisi alinamadi.${detail.isNotEmpty ? ' Detay: $detail' : ''}',
       );
     }
 

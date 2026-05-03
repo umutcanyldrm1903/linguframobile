@@ -65,6 +65,34 @@ workflows:
             --workspace "ios/Runner.xcworkspace" \
             --scheme "Runner"
 
+      - name: Verify Apple Sign In entitlement
+        script: |
+          IPA_PATH="$(ls build/ios/ipa/*.ipa | head -n 1)"
+          if [ -z "$IPA_PATH" ]; then
+            echo "ERROR: IPA not found."
+            exit 1
+          fi
+
+          rm -rf /tmp/lingufranca_ipa_check
+          mkdir -p /tmp/lingufranca_ipa_check
+          unzip -q "$IPA_PATH" -d /tmp/lingufranca_ipa_check
+          APP_PATH="$(find /tmp/lingufranca_ipa_check/Payload -maxdepth 1 -name '*.app' | head -n 1)"
+          if [ -z "$APP_PATH" ]; then
+            echo "ERROR: Runner.app not found inside IPA."
+            exit 1
+          fi
+
+          echo "Signed app entitlements:"
+          codesign -d --entitlements :- "$APP_PATH" || true
+
+          if ! codesign -d --entitlements :- "$APP_PATH" 2>/dev/null | grep -q "com.apple.developer.applesignin"; then
+            echo "ERROR: Signed IPA is missing com.apple.developer.applesignin entitlement."
+            echo "Regenerate the App Store provisioning profile for $BUNDLE_ID after enabling Sign in with Apple."
+            exit 1
+          fi
+
+          echo "Apple Sign In entitlement is present in signed IPA."
+
     artifacts:
       - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
