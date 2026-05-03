@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/localization/app_strings.dart';
 import '../../core/motion/app_motion.dart';
+import '../../core/storage/app_preferences.dart';
 import '../../core/storage/secure_storage.dart';
 import '../../core/theme/app_colors.dart';
 import '../public/public_theme.dart';
@@ -15,14 +16,12 @@ class AppHomeScreen extends StatefulWidget {
 }
 
 class _AppHomeScreenState extends State<AppHomeScreen> {
-  static const _hasSeenAppHomeKey = 'has_seen_app_home';
-
   int _index = 0;
 
   @override
   void initState() {
     super.initState();
-    SecureStorage.setValue(_hasSeenAppHomeKey, 'true');
+    AppPreferences.markAppHomeSeen();
   }
 
   void _openSpeakingTask(int step) {

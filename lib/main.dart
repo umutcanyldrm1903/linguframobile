@@ -9,6 +9,7 @@ import 'package:lingufranca_mobile/src/core/localization/app_strings.dart';
 import 'package:lingufranca_mobile/src/core/analytics/app_telemetry_service.dart';
 import 'package:lingufranca_mobile/src/core/motion/app_motion.dart';
 import 'package:lingufranca_mobile/src/core/notifications/app_notification_service.dart';
+import 'package:lingufranca_mobile/src/core/storage/app_preferences.dart';
 import 'package:lingufranca_mobile/src/core/storage/secure_storage.dart';
 import 'package:lingufranca_mobile/src/core/theme/app_theme.dart';
 import 'package:lingufranca_mobile/src/features/auth/login_screen.dart';
@@ -101,8 +102,6 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  static const _hasSeenAppHomeKey = 'has_seen_app_home';
-
   static const Set<String> _allowedNotificationRoutes = {
     '/home',
     '/app-home',
@@ -151,8 +150,7 @@ class _SplashScreenState extends State<SplashScreen> {
         Navigator.pushReplacementNamed(context, '/student');
       }
     } else {
-      final hasSeenAppHome =
-          await SecureStorage.getValue(_hasSeenAppHomeKey) == 'true';
+      final hasSeenAppHome = await AppPreferences.hasSeenAppHome();
       if (!mounted) return;
       Navigator.pushReplacementNamed(
         context,
