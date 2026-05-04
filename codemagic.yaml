@@ -12,6 +12,11 @@ workflows:
         BUNDLE_ID: com.lingufranca.app
         GOOGLE_IOS_CLIENT_ID: 284981345033-uhh8ltpjg2cldtg6iu7n1segitdho9j2.apps.googleusercontent.com
         GOOGLE_WEB_CLIENT_ID: 284981345033-ssp855uprkfrpetnn25ni3074m0ud7f3.apps.googleusercontent.com
+        FIREBASE_API_KEY: AIzaSyCEhzRX4ksRPqHL2-xQpRQ2Fk_LR2y6BHI
+        FIREBASE_PROJECT_ID: lingufranca-fe189
+        FIREBASE_MESSAGING_SENDER_ID: 184373731212
+        FIREBASE_IOS_APP_ID: 1:184373731212:ios:41d12ce9cceca7ff9c40a9
+        FIREBASE_IOS_BUNDLE_ID: com.lingufranca.app
       groups:
         - app_store_credentials
 
@@ -59,6 +64,11 @@ workflows:
             --no-codesign \
             --dart-define=GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID" \
             --dart-define=GOOGLE_IOS_CLIENT_ID="$GOOGLE_IOS_CLIENT_ID" \
+            --dart-define=FIREBASE_API_KEY="$FIREBASE_API_KEY" \
+            --dart-define=FIREBASE_PROJECT_ID="$FIREBASE_PROJECT_ID" \
+            --dart-define=FIREBASE_MESSAGING_SENDER_ID="$FIREBASE_MESSAGING_SENDER_ID" \
+            --dart-define=FIREBASE_IOS_APP_ID="$FIREBASE_IOS_APP_ID" \
+            --dart-define=FIREBASE_IOS_BUNDLE_ID="$FIREBASE_IOS_BUNDLE_ID" \
             --build-number="$BUILD_NO"
           xcode-project use-profiles
           xcode-project build-ipa \

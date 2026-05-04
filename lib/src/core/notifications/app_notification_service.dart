@@ -116,9 +116,11 @@ class AppNotificationService {
       }
 
       _firebaseReady = true;
-    } catch (_) {
+    } catch (error, stackTrace) {
       // Firebase config is optional for local/web smoke tests. Real push becomes
       // active after Firebase app credentials are supplied in release builds.
+      debugPrint('Firebase messaging init failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
       _firebaseReady = false;
     }
   }
@@ -169,7 +171,10 @@ class AppNotificationService {
         reminderWindow: reminderWindow,
         remindersEnabled: remindersEnabled,
       );
-    } catch (_) {}
+    } catch (error, stackTrace) {
+      debugPrint('FCM token sync failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
   }
 
   Future<void> unregisterServerPushToken() async {
@@ -182,7 +187,10 @@ class AppNotificationService {
       await SecureStorage.deleteValue(_serverPushTokenKey);
     } on DioException {
       // Logout must not fail because a token cleanup request failed.
-    } catch (_) {}
+    } catch (error, stackTrace) {
+      debugPrint('FCM token registration failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
   }
 
   Future<void> scheduleDailyReminder({
