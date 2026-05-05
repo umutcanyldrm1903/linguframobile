@@ -100,8 +100,13 @@ workflows:
             echo "Regenerate the App Store provisioning profile for $BUNDLE_ID after enabling Sign in with Apple."
             exit 1
           fi
+          if ! codesign -d --entitlements :- "$APP_PATH" 2>/dev/null | grep -q "aps-environment"; then
+            echo "ERROR: Signed IPA is missing aps-environment entitlement."
+            echo "Enable Push Notifications for $BUNDLE_ID and regenerate the App Store provisioning profile."
+            exit 1
+          fi
 
-          echo "Apple Sign In entitlement is present in signed IPA."
+          echo "Apple Sign In and Push Notification entitlements are present in signed IPA."
 
     artifacts:
       - build/ios/ipa/*.ipa
