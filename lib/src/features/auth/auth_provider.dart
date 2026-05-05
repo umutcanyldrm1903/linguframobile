@@ -15,6 +15,7 @@ final authTokenInitializationProvider = FutureProvider<void>((ref) async {
   final token = await SecureStorage.getToken();
   if (token != null && token.isNotEmpty) {
     ref.read(authTokenProvider.notifier).state = token;
+    await AppNotificationService.instance.syncServerPushToken();
   }
 });
 

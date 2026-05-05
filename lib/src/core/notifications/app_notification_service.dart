@@ -164,7 +164,7 @@ class AppNotificationService {
     if (!granted) return;
 
     try {
-      final token = await FirebaseMessaging.instance.getToken();
+      final token = await _resolveMessagingToken();
       if (token == null || token.trim().isEmpty) return;
       await _registerTokenWithServer(
         token,
@@ -175,6 +175,22 @@ class AppNotificationService {
       debugPrint('FCM token sync failed: $error');
       debugPrintStack(stackTrace: stackTrace);
     }
+  }
+
+  Future<String?> _resolveMessagingToken() async {
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        final token = await FirebaseMessaging.instance.getToken();
+        if (token != null && token.trim().isNotEmpty) {
+          return token;
+        }
+      } catch (error) {
+        debugPrint('FCM getToken attempt ${attempt + 1} failed: $error');
+      }
+      await Future<void>.delayed(Duration(milliseconds: 700 * (attempt + 1)));
+    }
+
+    return null;
   }
 
   Future<void> unregisterServerPushToken() async {
