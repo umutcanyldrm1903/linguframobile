@@ -144,11 +144,9 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
     if (token != null && token.isNotEmpty) {
-      if (role == 'instructor') {
-        Navigator.pushReplacementNamed(context, '/instructor');
-      } else {
-        Navigator.pushReplacementNamed(context, '/student');
-      }
+      await AppPreferences.markAppHomeSeen();
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/app-home');
     } else {
       final hasSeenAppHome = await AppPreferences.hasSeenAppHome();
       if (!mounted) return;
