@@ -18,7 +18,7 @@ class ReviewDeckCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: const Color(0xFFF8FAFF),
           borderRadius: BorderRadius.circular(16),
@@ -27,18 +27,25 @@ class ReviewDeckCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.layers_rounded, color: Color(0xFF3656FF)),
-            const SizedBox(height: 10),
-            Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            )),
+            const Icon(Icons.layers_rounded, color: Color(0xFF3656FF), size: 22),
             const SizedBox(height: 8),
+            Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    height: 1.15,
+                  ),
+            ),
+            const SizedBox(height: 6),
             Text(
               phrase,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontStyle: FontStyle.italic,
+                height: 1.25,
               ),
             ),
           ],

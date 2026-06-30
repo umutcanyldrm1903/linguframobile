@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../shared/content_preview_launcher.dart';
 import '../students/instructor_students_repository.dart';
 import 'instructor_homeworks_repository.dart';
@@ -471,152 +472,206 @@ class _InstructorHomeworksScreenState extends State<InstructorHomeworksScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(AppStrings.t('Homeworks')),
         actions: [
           IconButton(
             onPressed: _saving ? null : _createHomework,
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add_rounded),
             tooltip: AppStrings.t('Create'),
           ),
         ],
       ),
-      body: FutureBuilder<InstructorHomeworksPayload?>(
-        future: _homeworksFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: AppGlowBackground(
+        child: FutureBuilder<InstructorHomeworksPayload?>(
+          future: _homeworksFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return AppLoader(message: AppStrings.t('Homeworks'));
+            }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            if (snapshot.hasError) {
+              return AppErrorState(
+                message: AppStrings.t('Something went wrong'),
+                onRetry: _reload,
+                retryLabel: AppStrings.t('Try Again'),
+              );
+            }
+
+            final payload = snapshot.data;
+            if (payload == null) {
+              return AppEmptyState(
+                title: AppStrings.t('No Data Found'),
+                icon: Icons.assignment_outlined,
+              );
+            }
+
+            return AnimatedPageEntrance(
+              child: ListView(
+                padding: const EdgeInsets.all(AppSpace.xl),
                 children: [
-                  Text(AppStrings.t('Something went wrong')),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: _reload,
-                    child: Text(AppStrings.t('Try Again')),
+                  GradientHero(
+                    glowColor: AppColors.accent,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Icons.assignment_rounded,
+                                color: Colors.white, size: 26),
+                            const SizedBox(width: AppSpace.sm),
+                            Expanded(
+                              child: Text(
+                                AppStrings.t('Homeworks'),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          AppStrings.t(
+                              'Assign homework to your students and track submissions.'),
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white.withValues(alpha: 0.92),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                        const SizedBox(height: AppSpace.lg),
+                        Wrap(
+                          spacing: AppSpace.sm,
+                          runSpacing: AppSpace.sm,
+                          children: [
+                            AppStatPill(
+                              icon: Icons.pending_actions_rounded,
+                              label:
+                                  '${AppStrings.t('Homeworks')}: ${payload.active.length}',
+                            ),
+                            AppStatPill(
+                              icon: Icons.inventory_2_rounded,
+                              label:
+                                  '${AppStrings.t('Archived')}: ${payload.archived.length}',
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(height: AppSpace.xl),
+                  SectionHeader(
+                    title:
+                        '${AppStrings.t('Homeworks')} (${payload.active.length})',
+                    icon: Icons.pending_actions_rounded,
+                  ),
+                  if (payload.active.isEmpty)
+                    AppEmptyState(
+                      title: AppStrings.t('No homeworks found!'),
+                      icon: Icons.assignment_outlined,
+                    )
+                  else
+                    StaggeredReveal(
+                      children: payload.active
+                          .map(
+                            (hw) => Padding(
+                              padding:
+                                  const EdgeInsets.only(bottom: AppSpace.md),
+                              child: _HomeworkTile(
+                                homework: hw,
+                                onEdit:
+                                    _saving ? null : () => _editHomework(hw),
+                                onArchive: _saving
+                                    ? null
+                                    : () => _archiveHomework(hw),
+                                onReview:
+                                    _saving ? null : () => _reviewHomework(hw),
+                                onOpenAttachment: hw.attachmentPath.isEmpty
+                                    ? null
+                                    : () => _openContent(
+                                          title: hw.attachmentName.isNotEmpty
+                                              ? hw.attachmentName
+                                              : AppStrings.t('Homework File'),
+                                          rawUrl: hw.attachmentPath,
+                                        ),
+                                onOpenSubmission: hw.submission?.submissionPath
+                                            .isNotEmpty ==
+                                        true
+                                    ? () => _openContent(
+                                          title: hw.submission!.submissionName
+                                                  .isNotEmpty
+                                              ? hw.submission!.submissionName
+                                              : AppStrings.t('Submission'),
+                                          rawUrl:
+                                              hw.submission!.submissionPath,
+                                        )
+                                    : null,
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
+                  const SizedBox(height: AppSpace.lg),
+                  SectionHeader(
+                    title:
+                        '${AppStrings.t('Archived')} (${payload.archived.length})',
+                    icon: Icons.inventory_2_rounded,
+                  ),
+                  if (payload.archived.isEmpty)
+                    AppEmptyState(
+                      title: AppStrings.t('No archived homeworks found!'),
+                      icon: Icons.inventory_2_outlined,
+                    )
+                  else
+                    StaggeredReveal(
+                      children: payload.archived
+                          .map(
+                            (hw) => Padding(
+                              padding:
+                                  const EdgeInsets.only(bottom: AppSpace.md),
+                              child: _HomeworkTile(
+                                homework: hw,
+                                onEdit:
+                                    _saving ? null : () => _editHomework(hw),
+                                onReview:
+                                    _saving ? null : () => _reviewHomework(hw),
+                                onOpenAttachment: hw.attachmentPath.isEmpty
+                                    ? null
+                                    : () => _openContent(
+                                          title: hw.attachmentName.isNotEmpty
+                                              ? hw.attachmentName
+                                              : AppStrings.t('Homework File'),
+                                          rawUrl: hw.attachmentPath,
+                                        ),
+                                onOpenSubmission: hw.submission?.submissionPath
+                                            .isNotEmpty ==
+                                        true
+                                    ? () => _openContent(
+                                          title: hw.submission!.submissionName
+                                                  .isNotEmpty
+                                              ? hw.submission!.submissionName
+                                              : AppStrings.t('Submission'),
+                                          rawUrl:
+                                              hw.submission!.submissionPath,
+                                        )
+                                    : null,
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
                 ],
               ),
             );
-          }
-
-          final payload = snapshot.data;
-          if (payload == null) {
-            return Center(child: Text(AppStrings.t('No Data Found')));
-          }
-
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Text(
-                AppStrings.t('Homeworks'),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                AppStrings.t(
-                    'Assign homework to your students and track submissions.'),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              _SectionTitle(
-                title:
-                    '${AppStrings.t('Homeworks')} (${payload.active.length})',
-              ),
-              const SizedBox(height: 8),
-              if (payload.active.isEmpty)
-                _EmptyCard(text: AppStrings.t('No homeworks found!'))
-              else
-                ...payload.active.map(
-                  (hw) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _HomeworkTile(
-                      homework: hw,
-                      onEdit: _saving ? null : () => _editHomework(hw),
-                      onArchive: _saving ? null : () => _archiveHomework(hw),
-                      onReview: _saving ? null : () => _reviewHomework(hw),
-                      onOpenAttachment: hw.attachmentPath.isEmpty
-                          ? null
-                          : () => _openContent(
-                                title: hw.attachmentName.isNotEmpty
-                                    ? hw.attachmentName
-                                    : AppStrings.t('Homework File'),
-                                rawUrl: hw.attachmentPath,
-                              ),
-                      onOpenSubmission:
-                          hw.submission?.submissionPath.isNotEmpty == true
-                              ? () => _openContent(
-                                    title:
-                                        hw.submission!.submissionName.isNotEmpty
-                                            ? hw.submission!.submissionName
-                                            : AppStrings.t('Submission'),
-                                    rawUrl: hw.submission!.submissionPath,
-                                  )
-                              : null,
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 10),
-              _SectionTitle(
-                title:
-                    '${AppStrings.t('Archived')} (${payload.archived.length})',
-              ),
-              const SizedBox(height: 8),
-              if (payload.archived.isEmpty)
-                _EmptyCard(text: AppStrings.t('No archived homeworks found!'))
-              else
-                ...payload.archived.map(
-                  (hw) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: _HomeworkTile(
-                      homework: hw,
-                      onEdit: _saving ? null : () => _editHomework(hw),
-                      onReview: _saving ? null : () => _reviewHomework(hw),
-                      onOpenAttachment: hw.attachmentPath.isEmpty
-                          ? null
-                          : () => _openContent(
-                                title: hw.attachmentName.isNotEmpty
-                                    ? hw.attachmentName
-                                    : AppStrings.t('Homework File'),
-                                rawUrl: hw.attachmentPath,
-                              ),
-                      onOpenSubmission:
-                          hw.submission?.submissionPath.isNotEmpty == true
-                              ? () => _openContent(
-                                    title:
-                                        hw.submission!.submissionName.isNotEmpty
-                                            ? hw.submission!.submissionName
-                                            : AppStrings.t('Submission'),
-                                    rawUrl: hw.submission!.submissionPath,
-                                  )
-                              : null,
-                    ),
-                  ),
-                ),
-            ],
-          );
-        },
+          },
+        ),
       ),
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w800,
-          ),
     );
   }
 }
@@ -642,50 +697,76 @@ class _HomeworkTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final status = homework.status.toLowerCase();
     final statusColor = switch (status) {
-      'reviewed' => Colors.green,
-      'needs_revision' => Colors.deepOrange,
+      'reviewed' => AppPalette.success,
+      'needs_revision' => AppPalette.streak,
       'submitted' => AppColors.brand,
-      'archived' => Colors.blueGrey,
+      'archived' => AppColors.muted,
       _ => AppColors.brandDeep,
+    };
+    final statusIcon = switch (status) {
+      'reviewed' => Icons.verified_rounded,
+      'needs_revision' => Icons.error_outline_rounded,
+      'submitted' => Icons.assignment_turned_in_rounded,
+      'archived' => Icons.inventory_2_rounded,
+      _ => Icons.assignment_rounded,
     };
 
     final dueLabel = homework.dueAt == null
         ? '-'
         : DateFormat('dd.MM.yyyy HH:mm').format(homework.dueAt!.toLocal());
+    final theme = Theme.of(context);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: statusColor.withValues(alpha: 0.15),
-                child: Icon(Icons.assignment, color: statusColor),
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.14),
+                  borderRadius: AppRadius.all(AppRadius.sm),
+                ),
+                child: Icon(statusIcon, color: statusColor, size: 22),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(homework.title,
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 4),
-                    Text('${AppStrings.t('Student')}: ${homework.studentName}'),
-                    const SizedBox(height: 2),
-                    Text('${AppStrings.t('End Date')}: $dueLabel'),
+                    Text(
+                      homework.title,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpace.sm),
+                    Wrap(
+                      spacing: AppSpace.sm,
+                      runSpacing: 6,
+                      children: [
+                        AppStatPill(
+                          icon: Icons.person_rounded,
+                          label: homework.studentName,
+                          color: AppColors.brand,
+                          onLight: true,
+                        ),
+                        AppStatPill(
+                          icon: Icons.event_rounded,
+                          label: dueLabel,
+                          color: AppPalette.violet,
+                          onLight: true,
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpace.sm),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -722,59 +803,83 @@ class _HomeworkTile extends StatelessWidget {
                       ];
                     },
                   ),
-                  Text(
-                    homework.statusLabel.isEmpty
-                        ? homework.status
-                        : homework.statusLabel,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.12),
+                      borderRadius: AppRadius.pill,
+                    ),
+                    child: Text(
+                      homework.statusLabel.isEmpty
+                          ? homework.status
+                          : homework.statusLabel,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 ],
               ),
             ],
           ),
           if (homework.submission != null) ...[
-            const SizedBox(height: 10),
-            Text(
-              '${AppStrings.t('Submitted')}: ${homework.submission!.submittedAt == null ? '-' : DateFormat('dd.MM.yyyy HH:mm').format(homework.submission!.submittedAt!.toLocal())}',
-              style: const TextStyle(color: AppColors.muted),
+            const SizedBox(height: AppSpace.md),
+            _SubmissionNote(
+              icon: Icons.upload_file_rounded,
+              label:
+                  '${AppStrings.t('Submitted')}: ${homework.submission!.submittedAt == null ? '-' : DateFormat('dd.MM.yyyy HH:mm').format(homework.submission!.submittedAt!.toLocal())}',
             ),
             if (homework.submission!.studentNote.trim().isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(
-                '${AppStrings.t('Student Note')}: ${homework.submission!.studentNote}',
-                style: const TextStyle(color: AppColors.muted),
+              _SubmissionNote(
+                icon: Icons.sticky_note_2_rounded,
+                label:
+                    '${AppStrings.t('Student Note')}: ${homework.submission!.studentNote}',
               ),
             ],
             if (homework.submission!.instructorNote.trim().isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(
-                '${AppStrings.t('Instructor Feedback')}: ${homework.submission!.instructorNote}',
-                style: const TextStyle(color: AppColors.muted),
+              _SubmissionNote(
+                icon: Icons.rate_review_rounded,
+                label:
+                    '${AppStrings.t('Instructor Feedback')}: ${homework.submission!.instructorNote}',
+                color: AppPalette.success,
               ),
             ],
           ],
           if (homework.description.trim().isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             Text(
               homework.description.trim(),
-              style: const TextStyle(color: AppColors.muted),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: AppColors.muted,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
           if (onOpenAttachment != null || onOpenSubmission != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.md),
             Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: AppSpace.sm,
+              runSpacing: AppSpace.sm,
               children: [
                 if (onOpenAttachment != null)
-                  OutlinedButton(
+                  AppGhostButton(
+                    label: AppStrings.t('Homework File'),
                     onPressed: onOpenAttachment,
-                    child: Text(AppStrings.t('Homework File')),
+                    icon: Icons.description_rounded,
+                    expand: false,
                   ),
                 if (onOpenSubmission != null)
-                  OutlinedButton(
+                  AppGhostButton(
+                    label: AppStrings.t('Submission'),
                     onPressed: onOpenSubmission,
-                    child: Text(AppStrings.t('Submission')),
+                    icon: Icons.assignment_turned_in_rounded,
+                    color: AppPalette.success,
+                    expand: false,
                   ),
               ],
             ),
@@ -785,22 +890,35 @@ class _HomeworkTile extends StatelessWidget {
   }
 }
 
-class _EmptyCard extends StatelessWidget {
-  const _EmptyCard({required this.text});
+class _SubmissionNote extends StatelessWidget {
+  const _SubmissionNote({
+    required this.icon,
+    required this.label,
+    this.color = AppColors.muted,
+  });
 
-  final String text;
+  final IconData icon;
+  final String label;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Text(text),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: color == AppColors.muted ? AppColors.muted : AppColors.ink,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

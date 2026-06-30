@@ -27,14 +27,14 @@ void main() {
       expect(find.text('Submission Details'), findsOneWidget);
       expect(find.text('Update Submission'), findsOneWidget);
 
-      final updateButton =
-          find.widgetWithText(ElevatedButton, 'Update Submission');
+      // Reskin: "Update Submission" / "Save" artık AppButton (ElevatedButton değil)
+      final updateButton = find.text('Update Submission');
       await tester.ensureVisible(updateButton);
       await tester.tap(updateButton);
       await tester.pumpAndSettle();
 
       await tester.enterText(find.byType(TextField), 'Updated student note');
-      await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
+      await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
 
       expect(repository.submitCalls.length, 1);
@@ -56,14 +56,16 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      final markAllFinder = find.widgetWithText(TextButton, 'Mark all as read');
+      // Reskin: "Mark all as read" artık AppGhostButton (içinde OutlinedButton)
+      final markAllFinder =
+          find.widgetWithText(OutlinedButton, 'Mark all as read');
       expect(markAllFinder, findsOneWidget);
 
       await tester.tap(markAllFinder);
       await tester.pumpAndSettle();
 
       expect(repository.markAllAsReadCalls, 1);
-      final button = tester.widget<TextButton>(markAllFinder);
+      final button = tester.widget<OutlinedButton>(markAllFinder);
       expect(button.onPressed, isNull);
     });
   });

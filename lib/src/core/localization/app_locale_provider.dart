@@ -16,7 +16,7 @@ class AppLocale {
     await AppStrings.load(code: target);
     ref.read(appLocaleProvider.notifier).state = AppStrings.code;
 
-    // Then persist to storage (don't wait for this)
+    // Then persist to storage (dön't wait for this)
     unawaited(SecureStorage.setLanguageCode(target));
   }
 }

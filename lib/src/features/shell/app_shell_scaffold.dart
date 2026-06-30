@@ -10,12 +10,16 @@ class AppShellDestination {
     required this.label,
     required this.icon,
     this.selectedIcon,
+    this.badge,
   });
 
   final String title;
   final String label;
   final IconData icon;
   final IconData? selectedIcon;
+
+  /// Rozet sayacı (örn. okunmamış mesaj/bildirim). null/0 ise gizli.
+  final int? badge;
 }
 
 class AppShellScaffold extends StatelessWidget {
@@ -44,6 +48,10 @@ class AppShellScaffold extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final destination = destinations[currentIndex];
+    // extendBody:true ile gövde, yüzen alt menünün arkasına uzanır. Sayfa
+    // içeriğinin son öğesi (örn. Çıkış butonu) menünün altında kalmasın diye
+    // alt menü yüksekliği kadar boşluk bırak.
+    final navClearance = MediaQuery.of(context).padding.bottom + 84;
 
     return Scaffold(
       extendBody: true,
@@ -136,7 +144,11 @@ class AppShellScaffold extends StatelessWidget {
                               },
                               child: KeyedSubtree(
                                 key: ValueKey(currentIndex),
-                                child: pages[currentIndex],
+                                child: Padding(
+                                  padding:
+                                      EdgeInsets.only(bottom: navClearance),
+                                  child: pages[currentIndex],
+                                ),
                               ),
                             ),
                           ),
@@ -193,8 +205,9 @@ class AppShellScaffold extends StatelessWidget {
               destinations: [
                 for (final item in destinations)
                   NavigationDestination(
-                    icon: Icon(item.icon),
-                    selectedIcon: Icon(item.selectedIcon ?? item.icon),
+                    icon: _maybeBadge(item.badge, Icon(item.icon)),
+                    selectedIcon: _maybeBadge(
+                        item.badge, Icon(item.selectedIcon ?? item.icon)),
                     label: item.label,
                   ),
               ],
@@ -204,6 +217,15 @@ class AppShellScaffold extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _maybeBadge(int? count, Widget child) {
+  if (count == null || count <= 0) return child;
+  return Badge(
+    label: Text(count > 99 ? '99+' : '$count'),
+    backgroundColor: AppColors.brand,
+    child: child,
+  );
 }
 
 class _ShellHeader extends StatelessWidget {
@@ -246,10 +268,21 @@ class _ShellHeader extends StatelessWidget {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.14),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [accentColor, AppColors.brandDeep],
+                ),
                 borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: accentColor.withValues(alpha: 0.32),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-              child: Icon(Icons.auto_awesome_rounded, color: accentColor),
+              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -313,7 +346,7 @@ class _ShellHeader extends StatelessWidget {
                       children: [
                         const Icon(Icons.home_rounded, size: 18),
                         const SizedBox(width: 10),
-                        Text(AppStrings.t('Ana sayfaya don')),
+                        Text(AppStrings.t('Ana sayfaya dön')),
                       ],
                     ),
                   ),

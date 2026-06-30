@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../payment/iyzico_native_payment_screen.dart';
 import '../../payment/payment_processing_screen.dart';
 import '../../public/public_repository.dart';
@@ -179,40 +180,104 @@ class _StudentCheckoutScreenState extends State<StudentCheckoutScreen> {
     final priceLabel = _formatPrice(plan.price, widget.currency);
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.t('Payment'))),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(AppStrings.t('Payment'),
-              style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          Text(AppStrings.t('Choose your plan and pay securely with Iyzico.'),
-              style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 16),
-          _PackageSummary(
-            title: title,
-            lessons: plan.lessonsTotal,
-            months: plan.durationMonths,
-            priceLabel: priceLabel,
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(AppStrings.t('Payment')),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: AppGlowBackground(
+        child: SafeArea(
+          top: false,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(
+                AppSpace.xl, AppSpace.lg, AppSpace.xl, AppSpace.xxxl),
+            children: [
+              AnimatedPageEntrance(
+                child: GradientHero(
+                  gradient: AppGradients.hero,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.lock_rounded,
+                              color: Colors.white, size: 26),
+                          const SizedBox(width: AppSpace.sm),
+                          Expanded(
+                            child: Text(
+                              AppStrings.t('Payment'),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpace.sm),
+                      Text(
+                        AppStrings.t(
+                            'Choose your plan and pay securely with Iyzico.'),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              fontWeight: FontWeight.w600,
+                              height: 1.4,
+                            ),
+                      ),
+                      const SizedBox(height: AppSpace.lg),
+                      Wrap(
+                        spacing: AppSpace.sm,
+                        runSpacing: AppSpace.sm,
+                        children: [
+                          AppStatPill(
+                            icon: Icons.verified_user_rounded,
+                            label: AppStrings.t('Secure payment'),
+                          ),
+                          AppStatPill(
+                            icon: Icons.favorite_rounded,
+                            label: AppStrings.t('Satisfaction guaranteed'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpace.lg),
+              StaggeredReveal(
+                children: [
+                  _PackageSummary(
+                    title: title,
+                    lessons: plan.lessonsTotal,
+                    months: plan.durationMonths,
+                    priceLabel: priceLabel,
+                  ),
+                  const SizedBox(height: AppSpace.lg),
+                  _OrderSummary(
+                    title: title,
+                    totalLabel: priceLabel,
+                  ),
+                  const SizedBox(height: AppSpace.md),
+                  _Agreement(),
+                  const SizedBox(height: AppSpace.xl),
+                  AppButton(
+                    label: _submitting
+                        ? AppStrings.t('Submitting')
+                        : AppStrings.t('Make Payment'),
+                    onPressed: _submitting ? null : _pay,
+                    loading: _submitting,
+                    tone: AppButtonTone.success,
+                    icon: Icons.lock_rounded,
+                  ),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          _OrderSummary(
-            title: title,
-            totalLabel: priceLabel,
-          ),
-          const SizedBox(height: 12),
-          _Agreement(),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _submitting ? null : _pay,
-              child: Text(_submitting
-                  ? AppStrings.t('Submitting')
-                  : AppStrings.t('Make Payment')),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -256,35 +321,51 @@ class _PackageSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Row(
         children: [
-          const CircleAvatar(
-            radius: 24,
-            backgroundColor: Color(0xFFF1F5F9),
-            child: Icon(Icons.card_membership, color: AppColors.brand),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              gradient: AppGradients.brand,
+              borderRadius: AppRadius.all(AppRadius.sm),
+              boxShadow: AppShadows.glow(AppColors.brand, opacity: 0.28),
+            ),
+            child: const Icon(Icons.card_membership_rounded,
+                color: Colors.white, size: 24),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
+                ),
+                const SizedBox(height: AppSpace.xs),
                 Text(
                   '$lessons ${AppStrings.t('Lessons')} · $months ${AppStrings.t('Months')}',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.muted,
+                        fontWeight: FontWeight.w600,
+                      ),
                 ),
               ],
             ),
           ),
-          Text(priceLabel, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(width: AppSpace.sm),
+          Text(
+            priceLabel,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.brand,
+                ),
+          ),
         ],
       ),
     );
@@ -299,21 +380,21 @@ class _OrderSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(AppStrings.t('Order Summary'),
-              style: const TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
+          SectionHeader(
+            title: AppStrings.t('Order Summary'),
+            icon: Icons.receipt_long_rounded,
+          ),
           _SummaryRow(label: AppStrings.t('Package'), value: title),
-          _SummaryRow(label: AppStrings.t('Total'), value: totalLabel),
+          const Divider(height: AppSpace.lg, color: AppPalette.line),
+          _SummaryRow(
+            label: AppStrings.t('Total'),
+            value: totalLabel,
+            emphasize: true,
+          ),
         ],
       ),
     );
@@ -323,24 +404,23 @@ class _OrderSummary extends StatelessWidget {
 class _Agreement extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
+      color: AppPalette.cloud,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(Icons.check_box_outline_blank, color: AppColors.brand),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpace.sm),
           Expanded(
             child: Text(
               AppStrings.t(
                 'By clicking Send, you accept the Terms of Use and Privacy Policy.',
               ),
-              style: const TextStyle(height: 1.4),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
             ),
           ),
         ],
@@ -350,20 +430,43 @@ class _Agreement extends StatelessWidget {
 }
 
 class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({required this.label, required this.value});
+  const _SummaryRow({
+    required this.label,
+    required this.value,
+    this.emphasize = false,
+  });
 
   final String label;
   final String value;
+  final bool emphasize;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.xs),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(
+            label,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.muted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(
+            value,
+            style: emphasize
+                ? theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.brand,
+                  )
+                : theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
+                  ),
+          ),
         ],
       ),
     );

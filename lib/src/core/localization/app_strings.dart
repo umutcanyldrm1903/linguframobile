@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+
 import '../config/app_config.dart';
 import '../network/api_client.dart';
 import '../storage/secure_storage.dart';
@@ -11,11 +12,21 @@ class AppStrings {
   static const Set<String> _supported = {'tr', 'en'};
 
   static const Map<String, String> _trFallback = {
+    'Welcome back!': 'Tekrar hoş geldin!',
+    'Hey, let\'s start!': 'Hadi, başlayalım!',
+    'I won\'t peek 🙈': 'Bakmıyorum 🙈',
+    'Nice to meet you!': 'Tanıştığımıza sevindim!',
+    'Your adventure starts here': 'Maceran burada başlıyor',
+    'Sign in to continue your journey': 'Yolculuğuna devam etmek için giriş yap',
+    'Create your free account': 'Ücretsiz hesabını oluştur',
+    'Or continue with': 'Veya şununla devam et',
+    'Don\'t have an account?': 'Hesabın yok mu?',
     'Contact Us': 'Bize Ulaşın',
     'View All': 'Hepsini İncele',
     'Please login to comment': 'Yorum yapmak için lütfen giriş yapın',
     'Google Play Link': 'Google Play Bağlantısı',
     'Account': 'Hesap',
+    'Practice': 'Pratik',
     'Watch Our Class Demo': 'Canlı Ders Tanıtımını İzle',
     'Find your Course': 'Size Uygun Paketi Bul',
     'Continue Learning': 'Öğrenmeye Devam Et',
@@ -26,44 +37,46 @@ class AppStrings {
     'Payment Method': 'Ödeme Yöntemi',
     'Follow Us On': 'Bizi Takip Edin',
     'Zoom native support is not available on this device.':
-        'Bu cihazda native Zoom destegi kullanilamiyor.',
+        'Bu cihazda native Zoom desteği kullanılamıyor.',
     'Zoom SDK credentials are missing.': 'Zoom SDK bilgileri eksik.',
     'Zoom could not start. Please try again.':
-        'Zoom baslatilamadi. Lutfen tekrar deneyin.',
+        'Zoom başlatılamadı. Lütfen tekrar deneyin.',
     'Camera and microphone permissions are required to join the lesson.':
-        'Derse katilmak icin kamera ve mikrofon izinleri gerekir.',
+        'Derse katılmak için kamera ve mikrofon izinleri gerekir.',
     'Zoom could not join the lesson. Please try again.':
-        'Zoom derse baglanamadi. Lutfen tekrar deneyin.',
-    'Report User': 'Kullaniciyi bildir',
-    'Block User': 'Kullaniciyi engelle',
-    'Unblock User': 'Kullanicinin engelini kaldir',
-    'Send Report': 'Bildirimi gonder',
+        'Zoom derse bağlanamadı. Lütfen tekrar deneyin.',
+    'Report User': 'Kullanıcıyı bildir',
+    'Block User': 'Kullanıcıyı engelle',
+    'Unblock User': 'Kullanıcının engelini kaldır',
+    'Send Report': 'Bildirimi gönder',
     'Tell us why you are reporting this user.':
-        'Bu kullaniciyi neden bildirdiginizi yazin.',
+        'Bu kullanıcıyı neden bildirdiğinizi yazın.',
     'Blocking this user will stop new messages in this conversation.':
-        'Bu kullaniciyi engellerseniz bu konusmada yeni mesajlasma durur.',
-    'User blocked successfully.': 'Kullanici basariyla engellendi.',
-    'User unblocked successfully.': 'Kullanici engeli kaldirildi.',
-    'Report submitted successfully.': 'Bildirim basariyla gonderildi.',
+        'Bu kullanıcıyı engellerseniz bu konuşmada yeni mesajlaşma durur.',
+    'User blocked successfully.': 'Kullanıcı başarıyla engellendi.',
+    'User unblocked successfully.': 'Kullanıcı engeli kaldırıldı.',
+    'Report submitted successfully.': 'Bildirim başarıyla gönderildi.',
     'You blocked this user. Unblock the user to send messages again.':
-        'Bu kullaniciyi engellediniz. Tekrar mesaj gondermek icin engeli kaldirin.',
+        'Bu kullanıcıyı engellediniz. Tekrar mesaj göndermek için engeli kaldırın.',
     'This user is not accepting messages from you.':
-        'Bu kullanici sizden mesaj kabul etmiyor.',
+        'Bu kullanıcı sizden mesaj kabul etmiyor.',
     'Messaging is disabled for this conversation.':
-        'Bu konusma icin mesajlasma kapali.',
+        'Bu konuşma için mesajlaşma kapalı.',
     'Your one-time free trial lesson has been created.':
-        'Tek seferlik ucretsiz deneme dersin olusturuldu.',
+        'Tek seferlik ücretsiz deneme dersin oluşturuldu.',
     'One moment': 'Bir saniye',
-    'Preparing your lesson...': 'Dersin hazirlaniyor...',
-    'Preparing your flow...': 'Akisin hazirlaniyor...',
-    'Preparing Google sign in...': 'Google girisi hazirlaniyor...',
-    'Free trial lesson': 'Ucretsiz deneme dersi',
+    'Preparing your lesson...': 'Dersin hazırlanıyor...',
+    'Preparing your flow...': 'Akışın hazırlanıyor...',
+    'Preparing Google sign in...': 'Google girişi hazırlanıyor...',
+    'Free trial lesson': 'Ücretsiz deneme dersi',
     'You can book one free trial lesson before purchasing a package.':
-        'Paket satin almadan once bir kez ucretsiz deneme dersi rezerve edebilirsin.',
-    'Book free trial lesson': 'Ucretsiz deneme dersini ayirt',
+        'Paket satın almadan önce bir kez ücretsiz deneme dersi rezerve edebilirsin.',
+    'Book free trial lesson': 'Ücretsiz deneme dersini ayırt',
     'Your free trial lesson reservation has been created.':
-        'Ucretsiz deneme dersi rezervasyonun olusturuldu.',
+        'Ücretsiz deneme dersi rezervasyonun oluşturuldu.',
     'Continue': 'Devam et',
+    'Courses': 'Kurslar',
+    'Browse Courses': 'Kursları Keşfet',
   };
 
   static String get code => _code;
@@ -131,6 +144,6 @@ class AppStrings {
         .replaceAll('Åž', 'Ş')
         .replaceAll('Ä±', 'ı')
         .replaceAll('Ä°', 'İ')
-        .replaceAll('Â©', '©');
+        .replaceAll('Ã‚Â©', '©');
   }
 }

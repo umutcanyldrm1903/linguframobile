@@ -102,7 +102,7 @@ class _PublicHeaderState extends ConsumerState<PublicHeader> {
               ),
               _MoreItem(
                 label: AppStrings.code == 'tr'
-                    ? 'Konusmaya Basla'
+                    ? 'Konusmaya Başla'
                     : 'Start Speaking',
                 onTap: () => _handleNav(context, 'start-speaking'),
               ),

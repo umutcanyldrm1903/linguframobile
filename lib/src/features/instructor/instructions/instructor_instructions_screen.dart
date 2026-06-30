@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import 'instructor_instructions_repository.dart';
 
 class InstructorInstructionsScreen extends StatefulWidget {
@@ -33,54 +34,103 @@ class _InstructorInstructionsScreenState extends State<InstructorInstructionsScr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: Text(AppStrings.t('Instructions'))),
-      body: FutureBuilder<InstructorInstructionsPayload?>(
-        future: _instructionsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: AppGlowBackground(
+        child: FutureBuilder<InstructorInstructionsPayload?>(
+          future: _instructionsFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return AppLoader(message: AppStrings.t('Instructions'));
+            }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            if (snapshot.hasError) {
+              return AppErrorState(
+                message: AppStrings.t('Something went wrong'),
+                onRetry: _reload,
+                retryLabel: AppStrings.t('Try Again'),
+              );
+            }
+
+            final payload = snapshot.data;
+            if (payload == null) {
+              return AppEmptyState(
+                title: AppStrings.t('No Data Found'),
+                icon: Icons.menu_book_rounded,
+              );
+            }
+
+            return AnimatedPageEntrance(
+              child: ListView(
+                padding: const EdgeInsets.all(AppSpace.xl),
                 children: [
-                  Text(AppStrings.t('Something went wrong')),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: _reload,
-                    child: Text(AppStrings.t('Try Again')),
+                  GradientHero(
+                    gradient: AppGradients.hero,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: AppRadius.all(AppRadius.sm),
+                              ),
+                              child: const Icon(
+                                Icons.menu_book_rounded,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.md),
+                            Expanded(
+                              child: Text(
+                                payload.title,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (payload.subtitle.isNotEmpty) ...[
+                          const SizedBox(height: AppSpace.md),
+                          Text(
+                            payload.subtitle,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.92),
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.4,
+                                ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSpace.xl),
+                  StaggeredReveal(
+                    children: [
+                      for (final section in payload.sections)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.lg),
+                          child: _InstructionSection(section: section),
+                        ),
+                    ],
                   ),
                 ],
               ),
             );
-          }
-
-          final payload = snapshot.data;
-          if (payload == null) {
-            return Center(child: Text(AppStrings.t('No Data Found')));
-          }
-
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Text(payload.title, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Text(
-                payload.subtitle,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              ...payload.sections.map(
-                (section) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _InstructionSection(section: section),
-                ),
-              ),
-            ],
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -93,45 +143,65 @@ class _InstructionSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            section.title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+          SectionHeader(
+            title: section.title,
+            icon: Icons.checklist_rounded,
           ),
-          const SizedBox(height: 10),
-          ...section.items.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.only(top: 4),
-                    child: Icon(
-                      Icons.info_outline,
-                      color: AppColors.brandDeep,
-                      size: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(item)),
-                ],
+          for (var i = 0; i < section.items.length; i++)
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: i == section.items.length - 1 ? 0 : AppSpace.md,
               ),
+              child: _InstructionItem(text: section.items[i]),
             ),
-          ),
         ],
       ),
+    );
+  }
+}
+
+class _InstructionItem extends StatelessWidget {
+  const _InstructionItem({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            color: AppColors.brand.withValues(alpha: 0.12),
+            borderRadius: AppRadius.all(AppRadius.sm),
+          ),
+          child: const Icon(
+            Icons.info_outline_rounded,
+            color: AppColors.brand,
+            size: 16,
+          ),
+        ),
+        const SizedBox(width: AppSpace.md),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              text,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.ink,
+                    height: 1.4,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/ui/ui.dart';
 import '../../core/utils/url_resolver.dart';
 import 'blog_detail_screen.dart';
 import 'public_page_scaffold.dart';
@@ -23,15 +24,10 @@ class BlogScreen extends StatelessWidget {
         icon: Icons.article_outlined,
         children: [
           Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: isCompactPublicLayout(context) ? 14 : 18,
-            ),
-            child: Text(
-              AppStrings.t('Latest Post'),
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.ink,
-                  ),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+            child: SectionHeader(
+              title: AppStrings.t('Latest Post'),
+              icon: Icons.auto_stories_rounded,
             ),
           ),
           FutureBuilder<List<PublicBlogPost>>(
@@ -40,25 +36,28 @@ class BlogScreen extends StatelessWidget {
               final posts = snapshot.data ?? const [];
               if (posts.isEmpty) {
                 return Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: isCompactPublicLayout(context) ? 14 : 18,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+                  child: AppEmptyState(
+                    title: AppStrings.t('No latest post yet'),
+                    icon: Icons.article_outlined,
                   ),
-                  child: Text(AppStrings.t('No latest post yet')),
                 );
               }
               return Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isCompactPublicLayout(context) ? 14 : 18,
-                ),
-                child: Column(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+                child: StaggeredReveal(
                   children: posts
                       .map(
-                        (post) => _BlogCard(
-                          post: post,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => BlogDetailScreen(slug: post.slug),
+                        (post) => Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.md),
+                          child: _BlogCard(
+                            post: post,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    BlogDetailScreen(slug: post.slug),
+                              ),
                             ),
                           ),
                         ),
@@ -82,73 +81,84 @@ class _BlogCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compact = isCompactPublicLayout(context);
     final dateLabel = _formatDate(post.dateLabel);
-    return InkWell(
+    return AppCard(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Container(
-        margin: EdgeInsets.only(bottom: compact ? 12 : 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(compact ? 22 : 18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: compact ? 0.08 : 0.06),
-              blurRadius: compact ? 24 : 16,
-              offset: Offset(0, compact ? 10 : 8),
+      padding: EdgeInsets.zero,
+      radius: AppRadius.xl,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.vertical(
-                top: Radius.circular(compact ? 22 : 18),
-              ),
-              child: _PostImage(imageUrl: post.imageUrl),
-            ),
-            Padding(
-              padding: EdgeInsets.all(compact ? 18 : 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    dateLabel,
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontWeight: FontWeight.w600,
+            child: _PostImage(imageUrl: post.imageUrl),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppSpace.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (dateLabel.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.md,
+                      vertical: 6,
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    post.title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
+                    decoration: BoxDecoration(
+                      color: AppColors.brand.withValues(alpha: 0.10),
+                      borderRadius: AppRadius.pill,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.calendar_today_rounded,
+                          size: 13,
+                          color: AppColors.brandDeep,
                         ),
+                        const SizedBox(width: 6),
+                        Text(
+                          dateLabel,
+                          style: const TextStyle(
+                            color: AppColors.brandDeep,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  if (post.excerpt.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      post.excerpt,
-                      style:
-                          const TextStyle(color: AppColors.muted, height: 1.4),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
+                const SizedBox(height: AppSpace.md),
+                Text(
+                  post.title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
+                ),
+                if (post.excerpt.isNotEmpty) ...[
+                  const SizedBox(height: AppSpace.sm),
                   Text(
-                    AppStrings.t('Read More'),
-                    style: TextStyle(
-                      color: AppColors.brandDeep,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    post.excerpt,
+                    style: const TextStyle(color: AppColors.muted, height: 1.4),
                   ),
                 ],
-              ),
+                const SizedBox(height: AppSpace.lg),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: AppGhostButton(
+                    label: AppStrings.t('Read More'),
+                    onPressed: onTap,
+                    expand: false,
+                    icon: Icons.arrow_forward_rounded,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

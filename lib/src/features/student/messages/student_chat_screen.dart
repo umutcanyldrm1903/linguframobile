@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../messages/chat_repository.dart';
 
 enum _ThreadAction { report, block, unblock }
@@ -360,70 +361,126 @@ class _StudentChatScreenState extends State<StudentChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(widget.name),
+        title: Text(
+          widget.name,
+          style: const TextStyle(fontWeight: FontWeight.w800),
+        ),
         actions: [
           PopupMenuButton<_ThreadAction>(
             enabled: !_busyAction,
             onSelected: _handleThreadAction,
+            icon: const Icon(Icons.more_vert_rounded),
+            shape: RoundedRectangleBorder(
+              borderRadius: AppRadius.all(AppRadius.md),
+            ),
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: _ThreadAction.report,
-                child: Text(AppStrings.t('Report User')),
+                child: Row(
+                  children: [
+                    const Icon(Icons.flag_rounded,
+                        size: 18, color: AppPalette.warning),
+                    const SizedBox(width: AppSpace.sm),
+                    Text(AppStrings.t('Report User')),
+                  ],
+                ),
               ),
               PopupMenuItem(
                 value: _moderation.blockedByMe
                     ? _ThreadAction.unblock
                     : _ThreadAction.block,
-                child: Text(
-                  AppStrings.t(
-                    _moderation.blockedByMe ? 'Unblock User' : 'Block User',
-                  ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _moderation.blockedByMe
+                          ? Icons.lock_open_rounded
+                          : Icons.block_rounded,
+                      size: 18,
+                      color: _moderation.blockedByMe
+                          ? AppPalette.success
+                          : AppPalette.danger,
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    Text(
+                      AppStrings.t(
+                        _moderation.blockedByMe ? 'Unblock User' : 'Block User',
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpace.sm),
         ],
       ),
-      body: Column(
-        children: [
-          if (_blockedBannerText.isNotEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: const Color(0xFFFFF7ED),
-              child: Text(
-                _blockedBannerText,
-                style: const TextStyle(
-                  color: Color(0xFF9A3412),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(20),
-                    itemCount: _messages.length,
-                    itemBuilder: (_, index) {
-                      final msg = _messages[index];
-                      final isMe = msg.senderId == _userId;
-                      return _ChatBubble(
-                        text: msg.body,
-                        isMe: isMe,
-                        time: msg.timeLabel,
-                      );
-                    },
+      body: AppGlowBackground(
+        child: SafeArea(
+          top: false,
+          child: Column(
+            children: [
+              if (_blockedBannerText.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSpace.lg, AppSpace.md, AppSpace.lg, 0),
+                  child: AppCard(
+                    color: AppPalette.warning.withValues(alpha: 0.10),
+                    border: false,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.lg, vertical: AppSpace.md),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.warning_amber_rounded,
+                            color: AppPalette.warning, size: 22),
+                        const SizedBox(width: AppSpace.md),
+                        Expanded(
+                          child: Text(
+                            _blockedBannerText,
+                            style: const TextStyle(
+                              color: Color(0xFF9A3412),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                ),
+              Expanded(
+                child: _loading
+                    ? const AppLoader()
+                    : _messages.isEmpty
+                        ? AppEmptyState(
+                            icon: Icons.forum_rounded,
+                            title: AppStrings.t('No messages yet'),
+                            message: AppStrings.t('Write your message...'),
+                          )
+                        : ListView.builder(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.all(AppSpace.xl),
+                            itemCount: _messages.length,
+                            itemBuilder: (_, index) {
+                              final msg = _messages[index];
+                              final isMe = msg.senderId == _userId;
+                              return _ChatBubble(
+                                key: ValueKey(msg.id),
+                                text: msg.body,
+                                isMe: isMe,
+                                time: msg.timeLabel,
+                              );
+                            },
+                          ),
+              ),
+              _ChatInput(
+                controller: _controller,
+                onSend: _moderation.canSend ? _sendMessage : null,
+              ),
+            ],
           ),
-          _ChatInput(
-            controller: _controller,
-            onSend: _moderation.canSend ? _sendMessage : null,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -431,6 +488,7 @@ class _StudentChatScreenState extends State<StudentChatScreen> {
 
 class _ChatBubble extends StatelessWidget {
   const _ChatBubble({
+    super.key,
     required this.text,
     required this.isMe,
     required this.time,
@@ -442,40 +500,74 @@ class _ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final alignment = isMe ? Alignment.centerRight : Alignment.centerLeft;
-    final background = isMe ? AppColors.brand : AppColors.surface;
-    const textColor = AppColors.ink;
-    return Align(
-      alignment: alignment,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: const BoxConstraints(maxWidth: 260),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+    const radius = AppRadius.lg;
+    const tail = Radius.circular(6);
+    final bubbleRadius = BorderRadius.only(
+      topLeft: const Radius.circular(radius),
+      topRight: const Radius.circular(radius),
+      bottomLeft: isMe ? const Radius.circular(radius) : tail,
+      bottomRight: isMe ? tail : const Radius.circular(radius),
+    );
+
+    final timeStyle = TextStyle(
+      fontSize: 11,
+      fontWeight: FontWeight.w600,
+      color: isMe ? Colors.white.withValues(alpha: 0.85) : AppColors.muted,
+    );
+
+    final content = Column(
+      crossAxisAlignment:
+          isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          text,
+          style: TextStyle(
+            color: isMe ? Colors.white : AppColors.ink,
+            fontWeight: FontWeight.w600,
+            height: 1.3,
+          ),
         ),
-        child: Column(
-          crossAxisAlignment:
-              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Text(
-              text,
-              style: const TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.w600,
-              ),
+        if (time.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(time, style: timeStyle),
+        ],
+      ],
+    );
+
+    final Widget bubble = isMe
+        ? Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.lg, vertical: AppSpace.md),
+            decoration: BoxDecoration(
+              gradient: AppGradients.brand,
+              borderRadius: bubbleRadius,
+              boxShadow: AppShadows.glow(AppColors.brand, opacity: 0.22),
             ),
-            const SizedBox(height: 6),
-            Text(
-              time,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(fontSize: 11),
+            child: content,
+          )
+        : Container(
+            padding: const EdgeInsets.symmetric(
+                horizontal: AppSpace.lg, vertical: AppSpace.md),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: bubbleRadius,
+              border: Border.all(color: AppPalette.line, width: 1.2),
+              boxShadow: AppShadows.soft,
             ),
-          ],
+            child: content,
+          );
+
+    return AnimatedPageEntrance(
+      offset: Offset(isMe ? 0.06 : -0.06, 0.04),
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppSpace.md),
+        child: Align(
+          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 280),
+            child: bubble,
+          ),
         ),
       ),
     );
@@ -495,40 +587,71 @@ class _ChatInput extends StatelessWidget {
   Widget build(BuildContext context) {
     final disabled = onSend == null;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      decoration: const BoxDecoration(
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.lg, AppSpace.sm, AppSpace.lg, AppSpace.lg),
+      decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        border: Border(top: BorderSide(color: AppPalette.line, width: 1.2)),
+        boxShadow: AppShadows.soft,
       ),
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              controller: controller,
-              enabled: !disabled,
-              decoration: InputDecoration(
-                hintText: AppStrings.t(
-                  disabled
-                      ? 'Messaging is disabled for this conversation.'
-                      : 'Write your message...',
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppPalette.cloud,
+                borderRadius: AppRadius.pill,
+                border: Border.all(color: AppPalette.line, width: 1.2),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg),
+              child: TextField(
+                controller: controller,
+                enabled: !disabled,
+                minLines: 1,
+                maxLines: 4,
+                style: const TextStyle(
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w600,
                 ),
-                filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                decoration: InputDecoration(
+                  isDense: true,
+                  hintText: AppStrings.t(
+                    disabled
+                        ? 'Messaging is disabled for this conversation.'
+                        : 'Write your message...',
+                  ),
+                  hintStyle: const TextStyle(
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: AppSpace.md),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          GestureDetector(
+          const SizedBox(width: AppSpace.md),
+          PressableScale(
             onTap: onSend,
-            child: CircleAvatar(
-              radius: 22,
-              backgroundColor:
-                  disabled ? const Color(0xFFCBD5E1) : AppColors.brand,
-              child: const Icon(Icons.send, color: AppColors.ink),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: disabled ? null : AppGradients.brand,
+                color: disabled ? AppPalette.line : null,
+                boxShadow: disabled
+                    ? null
+                    : AppShadows.glow(AppColors.brand, opacity: 0.30),
+              ),
+              child: Icon(
+                Icons.send_rounded,
+                color: disabled ? AppColors.muted : Colors.white,
+                size: 22,
+              ),
             ),
           ),
         ],

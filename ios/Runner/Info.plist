@@ -45,10 +45,19 @@
 			</array>
 		</dict>
 	</array>
+	<key>GADApplicationIdentifier</key>
+	<string>$(GAD_APPLICATION_IDENTIFIER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>cstr6suwn9.skadnetwork</string>
+		</dict>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Canli derslere katilmak ve profil islemleri icin kameraya erisim gerekir.</string>
 	<key>NSMicrophoneUsageDescription</key>

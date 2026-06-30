@@ -145,14 +145,14 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
   static final List<GoalSpec> _goals = [
     GoalSpec(
       id: 'speaking',
-      titleTr: 'Gunluk konusma',
+      titleTr: 'Günlük konuşma',
       titleEn: 'Daily speaking',
-      subtitleTr: 'Akicilik ve dogal cevaplar',
+      subtitleTr: 'Akıcılık ve doğal cevaplar',
       subtitleEn: 'Fluency and natural answers',
-      headlineTr: 'Her gun 10 dakikalik net bir akisla ilerle.',
+      headlineTr: 'Her gün 10 dakikalık net bir akisla ilerle.',
       headlineEn: 'Move forward with one clean 10-minute flow every day.',
       supportTr:
-          'Kisa dersler, tekrar kartlari, gercek hayat senaryolari ve canli hoca destegi ayni yerde.',
+          'Kısa dersler, tekrar kartları, gerçek hayat senaryolari ve canlı hoca destegi ayni yerde.',
       supportEn:
           'Short lessons, review cards, real-life scenarios, and live tutor access in one place.',
       icon: Icons.forum_rounded,
@@ -163,7 +163,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       titleEn: 'Business English',
       subtitleTr: 'Toplanti, update, sunum dili',
       subtitleEn: 'Meetings, updates, presentations',
-      headlineTr: 'Is gunu temposuna uygun kisa ama guclu calisma bloklari.',
+      headlineTr: 'Is günü temposuna uygun kısa ama güçlü çalışma bloklari.',
       headlineEn:
           'Short but strong study blocks designed for a working schedule.',
       supportTr:
@@ -176,13 +176,13 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       id: 'ielts',
       titleTr: 'IELTS ve TOEFL',
       titleEn: 'IELTS & TOEFL',
-      subtitleTr: 'Band odakli konusma ve ifade',
+      subtitleTr: 'Band odaklı konuşma ve ifade',
       subtitleEn: 'Band-focused speaking and structure',
-      headlineTr: 'Sinav speaking icin gunluk tekrar ve net cevap iskeletleri.',
+      headlineTr: 'Sınav speaking için günlük tekrar ve net cevap iskeletleri.',
       headlineEn:
           'Daily revision and answer structures for speaking exam performance.',
       supportTr:
-          'Cue card akisi, linking words, opinion yapisi ve band arttiran tekrar destesi.',
+          'Cue card akışı, linking words, opinion yapisi ve band arttiran tekrar destesi.',
       supportEn:
           'Cue card structure, linking words, opinion framing, and revision packs that lift band scores.',
       icon: Icons.workspace_premium_rounded,
@@ -194,11 +194,11 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       subtitleTr: 'Havalimani, otel, restoran',
       subtitleEn: 'Airport, hotel, restaurant',
       headlineTr:
-          'Gundelik seyahat durumlari icin hizli ve kullanisli kaliplar.',
+          'Gündelik seyahat durumları için hızlı ve kullanisli kalıplar.',
       headlineEn:
           'Fast and useful phrases for the situations you actually face while traveling.',
       supportTr:
-          'Check-in, rezervasyon, yardim isteme ve acil durum ifadeleri mini paketlerle hazir.',
+          'Check-in, rezervasyon, yardım isteme ve acil durum ifadeleri mini paketlerle hazır.',
       supportEn:
           'Check-in, reservations, asking for help, and emergency phrases are ready in compact packs.',
       icon: Icons.flight_takeoff_rounded,
@@ -206,10 +206,10 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
   ];
 
   static const List<PlannerTarget> _targets = [
-    PlannerTarget(3, '3 gun', '3 days'),
-    PlannerTarget(4, '4 gun', '4 days'),
-    PlannerTarget(5, '5 gun', '5 days'),
-    PlannerTarget(6, '6 gun', '6 days'),
+    PlannerTarget(3, '3 gün', '3 days'),
+    PlannerTarget(4, '4 gün', '4 days'),
+    PlannerTarget(5, '5 gün', '5 days'),
+    PlannerTarget(6, '6 gün', '6 days'),
   ];
 
   static const List<ScheduleSpec> _schedules = [
@@ -220,7 +220,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
 
   static const List<ReminderSpec> _reminders = [
     ReminderSpec('morning', 'Sabah hatirlaticisi', 'Morning reminder'),
-    ReminderSpec('afternoon', 'Gun ortasi hatirlaticisi', 'Midday reminder'),
+    ReminderSpec('afternoon', 'Gün ortasi hatirlaticisi', 'Midday reminder'),
     ReminderSpec('evening', 'Aksam hatirlaticisi', 'Evening reminder'),
   ];
 
@@ -236,9 +236,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     ),
     PracticeModeSpec(
       'speed',
-      'Hizli cevap',
+      'Hızlı cevap',
       'Speed response',
-      'Kisa surede net cevap cikarma aliskanligi kur.',
+      'Kısa surede net cevap cikarma aliskanligi kur.',
       'Build the habit of producing clean answers under time pressure.',
       Icons.flash_on_rounded,
       Color(0xFFB45309),
@@ -397,11 +397,11 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     }
     if (score < 82) {
       weaknesses
-          .add(AppStrings.code == 'tr' ? 'cumle anlami' : 'sentence meaning');
+          .add(AppStrings.code == 'tr' ? 'cümle anlamı' : 'sentence meaning');
     }
     if (weaknesses.isEmpty) {
       weaknesses.add(
-          AppStrings.code == 'tr' ? 'konusma akiciligi' : 'speaking fluency');
+          AppStrings.code == 'tr' ? 'konuşma akiciligi' : 'speaking fluency');
     }
     return weaknesses.take(3).toList(growable: false);
   }
@@ -699,7 +699,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
   }
 
   String get _topGoalLabel => _copy(
-        'En cok secilen hedef: ${_goal.titleTr}',
+        'En çok seçilen hedef: ${_goal.titleTr}',
         'Top selected goal: ${_goal.titleEn}',
       );
 
@@ -711,15 +711,15 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       ),
       ProofMetric(
         value: '$_availableTodayCount',
-        label: _copy('Bugun acik slot', 'Open today'),
+        label: _copy('Bugün açık slot', 'Open today'),
       ),
       ProofMetric(
         value: '${_localState.weeklyTarget}',
-        label: _copy('Haftalik hedef', 'Weekly target'),
+        label: _copy('Haftalık hedef', 'Weekly target'),
       ),
       ProofMetric(
         value: '${_todayTasks.length}',
-        label: _copy('Gunluk gorev', 'Daily tasks'),
+        label: _copy('Günlük görev', 'Daily tasks'),
       ),
     ];
   }
@@ -787,7 +787,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
 
   String get _trialCtaLabel {
     return _growthDecision?.trialCtaLabel ??
-        _copy('Ucretsiz deneme iste', 'Request free trial');
+        _copy('Ücretsiz deneme iste', 'Request free trial');
   }
 
   void _nudgeFreeTrial() {
@@ -891,30 +891,30 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
         id: 'challenge_ab',
         titleTr: 'A/B tekrar',
         titleEn: 'A/B repeat',
-        detailTr: 'Ornek cumleyi dinle, ayni ritimde tekrar kaydet.',
+        detailTr: 'Ornek cümleyi dinle, ayni ritimde tekrar kaydet.',
         detailEn:
             'Listen to the sample line, then record it with the same rhythm.',
         durationLabel: _copy('2 dk', '2 min'),
         icon: Icons.compare_arrows_rounded,
-        buttonTr: 'Kayda gec',
+        buttonTr: 'Kayda geç',
         buttonEn: 'Start recording',
       ),
       TodayTask(
         id: 'challenge_speed',
-        titleTr: 'Hizli cevap',
+        titleTr: 'Hızlı cevap',
         titleEn: 'Speed answer',
         detailTr: '10 saniyede net bir cevap kur ve kaydet.',
         detailEn: 'Build a clear answer in 10 seconds and save it.',
         durationLabel: _copy('3 dk', '3 min'),
         icon: Icons.flash_on_rounded,
-        buttonTr: 'Modu ac',
+        buttonTr: 'Modu aç',
         buttonEn: 'Open mode',
       ),
       TodayTask(
         id: 'challenge_tutor',
-        titleTr: 'Canli adim',
+        titleTr: 'Canlı adım',
         titleEn: 'Live step',
-        detailTr: 'Uygun bir tutor secip deneme dersini kilitle.',
+        detailTr: 'Uygun bir tutor seçip deneme dersini kilitle.',
         detailEn: 'Pick a suitable tutor and lock your free trial step.',
         durationLabel: _copy('2 dk', '2 min'),
         icon: Icons.headset_mic_rounded,
@@ -929,9 +929,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     return [
       TodayTask(
         id: 'placement',
-        titleTr: '2 dakikalik seviye testi',
+        titleTr: '2 dakikalık seviye testi',
         titleEn: '2-minute level test',
-        detailTr: 'Gercek backend sonucu ile seviyeni netlestir.',
+        detailTr: 'Gerçek backend sonucu ile seviyeni netleştir.',
         detailEn: 'Confirm your starting level with a real backend result.',
         durationLabel: _copy('2 dk', '2 min'),
         icon: Icons.verified_rounded,
@@ -946,18 +946,18 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
         detailEn: firstPack.subtitleEn,
         durationLabel: firstPack.durationLabel,
         icon: firstPack.icon,
-        buttonTr: 'Paketi ac',
+        buttonTr: 'Paketi aç',
         buttonEn: 'Open pack',
       ),
       TodayTask(
         id: 'review',
         titleTr: 'Tekrar destesi',
         titleEn: 'Review deck',
-        detailTr: 'Gunluk ifadeleri hizli tekrar et ve ritmi koru.',
+        detailTr: 'Günlük ifadeleri hızlı tekrar et ve ritmi koru.',
         detailEn: 'Revisit the core phrases and keep the rhythm alive.',
         durationLabel: _copy('4 dk', '4 min'),
         icon: Icons.layers_rounded,
-        buttonTr: 'Kartlari ac',
+        buttonTr: 'Kartları aç',
         buttonEn: 'Open cards',
       ),
     ];
@@ -966,9 +966,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
   List<PathStep> get _pathSteps {
     return [
       PathStep(
-        title: _copy('Goal sec', 'Pick goal'),
+        title: _copy('Hedef seç', 'Pick goal'),
         detail: _copy(
-          'Calisma yolunu ihtiyacina gore kur.',
+          'Çalışma yolunu ihtiyacına göre kur.',
           'Shape the study path around what you need.',
         ),
         done: true,
@@ -976,7 +976,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       PathStep(
         title: _copy('Mini paket', 'Mini pack'),
         detail: _copy(
-          'Kisa ifade ve mini diyalog ile basla.',
+          'Kısa ifade ve mini diyalog ile başla.',
           'Start with short phrases and a compact dialogue.',
         ),
         done: _completedToday.contains('pack'),
@@ -984,15 +984,15 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       PathStep(
         title: _copy('Tekrar', 'Review'),
         detail: _copy(
-          'Kartlari tara ve kullanacagin cumleyi sec.',
+          'Kartları tara ve kullanacağın cümleyi seç.',
           'Scan the cards and keep the sentence you will use.',
         ),
         done: _completedToday.contains('review'),
       ),
       PathStep(
-        title: _copy('Canli ders', 'Live lesson'),
+        title: _copy('Canlı ders', 'Live lesson'),
         detail: _copy(
-          'Ucretsiz deneme veya egitmen profili ile devam et.',
+          'Ücretsiz deneme veya eğitmen profili ile devam et.',
           'Continue with a free trial or a tutor profile.',
         ),
         done: _weeklySessions > 0,
@@ -1006,9 +1006,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
         return const [
           StudyPack(
               'business-update',
-              'Gunluk update',
+              'Günlük update',
               'Daily update',
-              'Toplanti oncesi net durum ozeti',
+              'Toplanti oncesi net durum özeti',
               'A clear status update before the meeting',
               '6 min',
               Icons.campaign_rounded,
@@ -1019,7 +1019,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                 'The main blocker is timing.',
               ],
               'Quick update: we finished the deck, but we still need legal review before launch.',
-              'Kisa, net ve sonuca giden cumleler kullan.',
+              'Kısa, net ve sonuca giden cümleler kullan.',
               'Keep it short and directional.'),
           StudyPack(
               'business-followup',
@@ -1036,7 +1036,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                 'Let me know if anything changes on your side.',
               ],
               'I am following up on the draft we discussed yesterday. If the latest version is ready, I can review it tonight.',
-              'Tarih veya saat ver, sonraki hareketi netlestir.',
+              'Tarih veya saat ver, sonraki hareketi netleştir.',
               'Add a time marker and make the next action obvious.'),
         ];
       case 'ielts':
@@ -1045,7 +1045,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               'ielts-part1',
               'Part 1 iskeleti',
               'Part 1 skeleton',
-              'Kisa cevaplari bir tik daha bandli yap',
+              'Kısa cevapları bir tik daha bandli yap',
               'Lift short answers with a better structure',
               '5 min',
               Icons.question_answer_rounded,
@@ -1060,9 +1060,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               'Use answer + reason + a small detail.'),
           StudyPack(
               'ielts-opinion',
-              'Opinion cevabi',
+              'Opinion cevabı',
               'Opinion answer',
-              'Katiliyorum derken nedeni guclendir',
+              'Katılıyorum derken nedeni güçlendir',
               'Strengthen the reason when you agree or disagree',
               '6 min',
               Icons.record_voice_over_rounded,
@@ -1073,7 +1073,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                 'That said, there is one limitation.',
               ],
               'To a large extent, I agree that online learning is more flexible; however, it still requires a strong routine to stay effective.',
-              'Opinion ver, dayanak ver, sonra dengeli bir ikinci cumle ekle.',
+              'Opinion ver, dayanak ver, sonra dengeli bir ikinci cümle ekle.',
               'State the opinion, justify it, then add a balanced second sentence.'),
         ];
       case 'travel':
@@ -1110,7 +1110,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                 'The air conditioner is not working.',
               ],
               'There seems to be a problem with my booking. I requested a quiet room, but this one is next to the elevator.',
-              'Sorunu belirt, talebini soyle, sonra gerekce ver.',
+              'Sorunu belirt, talebini söyle, sonra gerekce ver.',
               'State the issue, make the request, then explain the reason.'),
         ];
       default:
@@ -1119,7 +1119,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               'speaking-intro',
               'Kendini tanit',
               'Introduce yourself',
-              'Ilk 30 saniyeyi guclu kur',
+              'İlk 30 saniyeyi güçlü kur',
               'Make the first 30 seconds stronger',
               '5 min',
               Icons.waving_hand_rounded,
@@ -1130,13 +1130,13 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                 'Outside work, I enjoy...',
               ],
               'Hi, I am Ece. I work in digital marketing, and these days I am focused on improving my English for meetings and daily communication.',
-              'Isim, ne yaptigin, neden buradasin.',
+              'İsim, ne yaptığın, neden buradasın.',
               'Name, what you do, why you are here.'),
           StudyPack(
               'speaking-smalltalk',
               'Small talk',
               'Small talk',
-              'Gunluk kisitli ama dogal cevaplar',
+              'Günlük kisitli ama doğal cevaplar',
               'Short but natural everyday answers',
               '4 min',
               Icons.coffee_rounded,
@@ -1147,7 +1147,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                 'I finally had time to rest.',
               ],
               'It has been a busy week so far, but I finally had time to slow down last night and read for a while.',
-              'Kisa cevap ver ama bir detay ekle.',
+              'Kısa cevap ver ama bir detay ekle.',
               'Keep the answer short, but add one detail.'),
         ];
     }
@@ -1163,15 +1163,15 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               'We are on track.',
               'Planlanan tempodayiz.',
               'We are moving at the planned pace.',
-              'Status guncellerken ilk cumle olarak kullan.',
+              'Status güncellerken ilk cümle olarak kullan.',
               'Use it as the first line of a status update.'),
           ReviewCard(
               'Acil ama profesyonel',
               'Urgent but professional',
               'Could you share the latest version by EOD?',
-              'Gun sonuna kadar son versiyonu paylasabilir misin?',
+              'Gün sonuna kadar son versiyonu paylasabilir misin?',
               'Can you send the latest version by end of day?',
-              'Tarih veya saat eklemek tonu guclendirir.',
+              'Tarih veya saat eklemek tonu güçlendirir.',
               'Adding a time marker makes the tone stronger.'),
         ];
       case 'ielts':
@@ -1182,7 +1182,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               'To a large extent, I agree that...',
               'Buyuk olcude katiliyorum ki...',
               'I agree to a great extent that...',
-              'Speaking opinion cevabina guclu girer.',
+              'Speaking opinion cevabina güçlü girer.',
               'A strong start for a speaking opinion answer.'),
           ReviewCard(
               'Baglayici',
@@ -1190,7 +1190,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               'As a result, ...',
               'Sonuc olarak...',
               'As a consequence...',
-              'Neden-sonuc baglamak icin kullan.',
+              'Neden-sonuç bağlamak için kullan.',
               'Use it when the idea moves into a result.'),
         ];
       case 'travel':
@@ -1199,7 +1199,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               'Check-in',
               'Check-in',
               'I would like to check in for my flight.',
-              'Ucusum icin check-in yapmak istiyorum.',
+              'Uçuşum için check-in yapmak istiyorum.',
               'I want to check in for my flight.',
               'Havalimani masasinda acilis cumlesi.',
               'A clean opening line at the airport desk.'),
@@ -1220,7 +1220,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               'These days I am focused on...',
               'Bu aralar odagim su konuda...',
               'Lately I am focused on...',
-              'Kendini tanitirken net bir hedef gosterir.',
+              'Kendini tanitirken net bir hedef gösterir.',
               'It shows a clear purpose when you introduce yourself.'),
           ReviewCard(
               'Dogal baglayici',
@@ -1228,7 +1228,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               'On top of that, ...',
               'Bunun da ustune...',
               'In addition to that...',
-              'Cok resmi olmadan cumleyi uzatir.',
+              'Çok resmi olmadan cümleyi uzatir.',
               'It extends the thought without sounding too formal.'),
         ];
     }
@@ -1249,12 +1249,12 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           'Uzun cevap ritmi',
           'Long answer rhythm',
           'To a LARGE exTENT, I aGREE that...',
-          'Uzun cevabi tek blok okumak yerine vurguyu iki durakta topla.',
+          'Uzun cevabı tek blok okumak yerine vurguyu iki durakta topla.',
           'Do not read the long answer as one block.',
         );
       case 'travel':
         return const PronunciationSpot(
-          'Kisa soru netligi',
+          'Kısa soru netligi',
           'Short-question clarity',
           'Is it WITH-in WALK-ing dis-TANCE?',
           'Soruyu hizlandirma. Her ana kelime net ciksin.',
@@ -1421,7 +1421,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
         content: Text(
           granted
               ? _copy(
-                  'Gunluk bildirim aktif edildi.',
+                  'Günlük bildirim aktif edildi.',
                   'Daily notification has been enabled.',
                 )
               : _copy(
@@ -1441,7 +1441,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     await _recordActivity(
       'practice_mode',
       AppStrings.code == 'tr'
-          ? 'Pratik modu guncellendi'
+          ? 'Pratik modu güncellendi'
           : 'Practice mode updated',
     );
     _nudgeFreeTrial();
@@ -1464,7 +1464,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
         SnackBar(
           content: Text(
             _copy(
-              'Mikrofon izni verilmedi. Kayda baslamak icin izin vermelisin.',
+              'Mikrofon izni verilmedi. Kayda başlamak için izin vermelisin.',
               'Microphone permission was not granted. You need to allow it before recording.',
             ),
           ),
@@ -1480,7 +1480,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
         SnackBar(
           content: Text(
             _copy(
-              'Bu cihazda desteklenen bir ses encoder bulunamadi.',
+              'Bu cihazda desteklenen bir ses encoder bulunamadı.',
               'No supported audio encoder was found on this device.',
             ),
           ),
@@ -1515,7 +1515,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
         SnackBar(
           content: Text(
             _copy(
-              'Kayit baslatilamadi. Mikrofon veya tarayici ayarlarini kontrol et.',
+              'Kayıt baslatilamadi. Mikrofon veya tarayici ayarlarini kontrol et.',
               'Recording could not start. Check the microphone or browser settings.',
             ),
           ),
@@ -1541,7 +1541,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     await _recordActivity(
       'compare_start',
       AppStrings.code == 'tr'
-          ? 'Record + compare kaydi basladi'
+          ? 'Record + compare kaydı başladı'
           : 'Record + compare session started',
     );
     return null;
@@ -1575,7 +1575,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
         SnackBar(
           content: Text(
             _copy(
-              'Kayit tamamlanamadi. Tekrar dene.',
+              'Kayıt tamamlanamadı. Tekrar dene.',
               'The recording could not be completed. Try again.',
             ),
           ),
@@ -1639,7 +1639,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     await _triggerBehavioralPush(
       triggerId: 'record_completed',
       titleTr: 'Harika ilerleme',
-      bodyTr: 'Bugunku akisi tamamladin. 1 mini tur daha yapip skoru sabitle.',
+      bodyTr: 'Bugünkü akışı tamamladın. 1 mini tur daha yapıp skoru sabitle.',
       titleEn: 'Great progress',
       bodyEn:
           'You completed today\'s flow. Add one more mini round to lock the score.',
@@ -1657,7 +1657,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       SnackBar(
         content: Text(
           _copy(
-            'Yeni speaking kaydi compare listesine eklendi.',
+            'Yeni speaking kaydı compare listesine eklendi.',
             'A new speaking record was added to the compare list.',
           ),
         ),
@@ -1718,7 +1718,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
         SnackBar(
           content: Text(
             _copy(
-              'Kayit oynatilamadi. Dosya artik mevcut olmayabilir.',
+              'Kayıt oynatilamadi. Dosya artik mevcut olmayabilir.',
               'The recording could not be played. The file may no longer be available.',
             ),
           ),
@@ -1817,7 +1817,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context, true),
                     child:
-                        Text(AppStrings.code == 'tr' ? 'Giris yap' : 'Log in'),
+                        Text(AppStrings.code == 'tr' ? 'Giriş yap' : 'Log in'),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1857,11 +1857,11 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
   Future<void> _toggleFavoriteTutor(InstructorSummary instructor) async {
     if (!await _ensurePremiumGate(
       title: _copy(
-        'Favoriler giris ister',
+        'Favoriler giriş ister',
         'Saving tutors requires login',
       ),
       detail: _copy(
-        'Hocalari kaydedip sonra donmek icin giris yap.',
+        'Hocaları kaydedip sonra dönmek için giriş yap.',
         'Log in to save tutors and come back later.',
       ),
     )) {
@@ -1897,7 +1897,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       await _recordActivity(
         'phrase_removed',
         AppStrings.code == 'tr'
-            ? 'Phrasebook icinden bir ifade kaldirildi'
+            ? 'Phrasebook içinden bir ifade kaldırıldı'
             : 'A phrase was removed from the phrasebook',
       );
     } else {
@@ -1912,7 +1912,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       await _recordActivity(
         'phrase_saved',
         AppStrings.code == 'tr'
-            ? 'Phrasebook icine yeni ifade eklendi'
+            ? 'Phrasebook içine yeni ifade eklendi'
             : 'A new phrase was added to the phrasebook',
       );
     }
@@ -1929,7 +1929,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     await _recordActivity(
       'challenge',
       AppStrings.code == 'tr'
-          ? '7 gunluk challenge basladi'
+          ? '7 günlük challenge başladı'
           : '7-day challenge started',
     );
   }
@@ -1965,7 +1965,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     final code = _localState.referralCode.trim();
     if (code.isEmpty) return;
     final message = _copy(
-      'Skillgro ile speaking calisiyorum. Bu kodla katil: $code',
+      'Skillgro ile speaking çalışıyorum. Bu kodla katil: $code',
       'I am practicing speaking on Skillgro. Join with this code: $code',
     );
     await Clipboard.setData(ClipboardData(text: message));
@@ -1994,22 +1994,22 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     if (parsed == null) return '-';
     final difference = DateTime.now().difference(parsed.toLocal());
     if (difference.inMinutes < 1) {
-      return _copy('Simdi', 'Now');
+      return _copy('Şimdi', 'Now');
     }
     if (difference.inHours < 1) {
       return _copy(
-        '${difference.inMinutes} dk once',
+        '${difference.inMinutes} dk önce',
         '${difference.inMinutes}m ago',
       );
     }
     if (difference.inDays < 1) {
       return _copy(
-        '${difference.inHours} sa once',
+        '${difference.inHours} sa önce',
         '${difference.inHours}h ago',
       );
     }
     return _copy(
-      '${difference.inDays} gun once',
+      '${difference.inDays} gün önce',
       '${difference.inDays}d ago',
     );
   }
@@ -2175,7 +2175,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     await _markTaskDone('placement');
     await _recordActivity(
       'placement',
-      AppStrings.code == 'tr' ? 'Seviye testi acildi' : 'Level test opened',
+      AppStrings.code == 'tr' ? 'Seviye testi açıldı' : 'Level test opened',
     );
     if (!mounted) return;
     Navigator.pushNamed(context, '/placement-test');
@@ -2187,7 +2187,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     await _recordActivity(
       'trial',
       AppStrings.code == 'tr'
-          ? 'Ucretsiz deneme CTA acildi'
+          ? 'Ücretsiz deneme CTA açıldı'
           : 'Free trial CTA opened',
     );
     if (!mounted) return;
@@ -2199,8 +2199,8 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
         await _setTrialBookingIntent();
         await _triggerBehavioralPush(
           triggerId: 'trial_requested',
-          titleTr: 'Deneme dersi hazir',
-          bodyTr: 'Rezervasyon ekranina gecip ilk slotu sec.',
+          titleTr: 'Deneme dersi hazır',
+          bodyTr: 'Rezervasyon ekranina geçip ilk slotu seç.',
           titleEn: 'Trial lesson is ready',
           bodyEn: 'Open booking and pick your first slot.',
           cooldown: const Duration(hours: 12),
@@ -2225,11 +2225,11 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             title: Text(
-              isTr ? 'Ilk dersi kilitle' : 'Lock first lesson',
+              isTr ? 'İlk dersi kilitle' : 'Lock first lesson',
             ),
             content: Text(
               isTr
-                  ? 'Deneme dersini tamamlamak icin ${bestTutor.name} ile ilk rezervasyon adimina gec.'
+                  ? 'Deneme dersini tamamlamak için ${bestTutor.name} ile ilk rezervasyon adımına geç.'
                   : 'To complete your trial flow, continue to the first booking step with ${bestTutor.name}.',
             ),
             actions: [
@@ -2239,7 +2239,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: Text(isTr ? 'Rezervasyona gec' : 'Go to booking'),
+                child: Text(isTr ? 'Rezervasyona geç' : 'Go to booking'),
               ),
             ],
           ),
@@ -2250,8 +2250,8 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
         properties: {'instructor_id': '${bestTutor.id}'});
     await _triggerBehavioralPush(
       triggerId: 'booking_started',
-      titleTr: 'Rezervasyon adimi acik',
-      bodyTr: '${bestTutor.name} icin uygun saati secip kaydet.',
+      titleTr: 'Rezervasyon adımı açık',
+      bodyTr: '${bestTutor.name} için uygun saati seçip kaydet.',
       titleEn: 'Booking step is open',
       bodyEn: 'Choose a time with ${bestTutor.name} and confirm it.',
       cooldown: const Duration(hours: 10),
@@ -2267,9 +2267,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
   Future<void> _openTutorsAsync() async {
     await _tapFeedback();
     if (!await _ensurePremiumGate(
-      title: _copy('Tutor listesi giris ister', 'Tutor list requires login'),
+      title: _copy('Tutor listesi giriş ister', 'Tutor list requires login'),
       detail: _copy(
-        'Mini gorevler acik kalir. Hoca secimi ve rezervasyon icin giris yap.',
+        'Mini görevler açık kalır. Hoca seçimi ve rezervasyon için giriş yap.',
         'Mini tasks stay open. Log in to pick tutors and book lessons.',
       ),
     )) {
@@ -2277,7 +2277,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     }
     await _recordActivity(
       'tutors',
-      AppStrings.code == 'tr' ? 'Tutor listesi acildi' : 'Tutor list opened',
+      AppStrings.code == 'tr' ? 'Tutor listesi açıldı' : 'Tutor list opened',
     );
     if (!mounted) return;
     Navigator.push(
@@ -2296,9 +2296,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     await _tapFeedback();
     if (!await _ensurePremiumGate(
       title:
-          _copy('Tutor profilleri giris ister', 'Tutor profiles require login'),
+          _copy('Tutor profilleri giriş ister', 'Tutor profiles require login'),
       detail: _copy(
-        'Ilk mini paket ve tekrar acik. Hoca profili, favori ve rezervasyon icin giris yap.',
+        'İlk mini paket ve tekrar açık. Hoca profili, favori ve rezervasyon için giriş yap.',
         'The first mini pack and review are open. Log in for tutor profiles, favorites, and booking.',
       ),
     )) {
@@ -2359,7 +2359,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                       initial
                           ? _copy('Planini kur', 'Build your plan')
                           : _copy(
-                              'Calisma planini duzenle', 'Adjust your plan'),
+                              'Çalışma planini düzenle', 'Adjust your plan'),
                       style: Theme.of(context).textTheme.headlineSmall,
                     ),
                     const SizedBox(height: 8),
@@ -2456,9 +2456,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     final defaultPack = _packsForGoal(_goal).first.id;
     if (pack.id != defaultPack &&
         !await _ensurePremiumGate(
-          title: _copy('Ek paketler giris ister', 'Extra packs require login'),
+          title: _copy('Ek paketler giriş ister', 'Extra packs require login'),
           detail: _copy(
-            'Ilk mini paket acik. Diger paketler ve tam rutin icin giris yap.',
+            'İlk mini paket açık. Diğer paketler ve tam rutin için giriş yap.',
             'The first mini pack is open. Log in for extra packs and the full routine.',
           ),
         )) {
@@ -2468,7 +2468,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     await _recordActivity(
       'pack',
       AppStrings.code == 'tr'
-          ? '${pack.titleTr} acildi'
+          ? '${pack.titleTr} açıldı'
           : '${pack.titleEn} opened',
     );
     if (!mounted) return;
@@ -2499,7 +2499,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                           SnackBar(
                             content: Text(
                               _copy(
-                                'Paket ifadeleri phrasebook icine eklendi.',
+                                'Paket ifadeleri phrasebook içine eklendi.',
                                 'Pack phrases were added to your phrasebook.',
                               ),
                             ),
@@ -2537,10 +2537,10 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     final defaultReview = _reviewCardsForGoal(_goal).first.phrase;
     if (card.phrase != defaultReview &&
         !await _ensurePremiumGate(
-          title: _copy('Ek tekrar kartlari giris ister',
+          title: _copy('Ek tekrar kartları giriş ister',
               'Extra review cards require login'),
           detail: _copy(
-            'Ilk review deck acik. Tum tekrar seti icin giris yap.',
+            'İlk review deck açık. Tüm tekrar seti için giriş yap.',
             'The first review deck is open. Log in for the full review set.',
           ),
         )) {
@@ -2550,7 +2550,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     await _recordActivity(
       'review',
       AppStrings.code == 'tr'
-          ? '${card.titleTr} acildi'
+          ? '${card.titleTr} açıldı'
           : '${card.titleEn} opened',
     );
     if (!mounted) return;
@@ -2612,13 +2612,13 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isTr ? 'Tum mini paketler' : 'All mini packs',
+                    isTr ? 'Tüm mini paketler' : 'All mini packs',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     isTr
-                        ? 'Ana yuzey kisa kalsin diye tum paketleri burada tutuyorum.'
+                        ? 'Ana yüzey kısa kalsın diye tüm paketleri burada tutuyorum.'
                         : 'The full pack library lives here so the home surface stays short.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.muted,
@@ -2666,13 +2666,13 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isTr ? 'Tum review kartlari' : 'All review cards',
+                    isTr ? 'Tüm review kartları' : 'All review cards',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     isTr
-                        ? 'Review alanini kisaltip tam listeyi bu sheet icine aldım.'
+                        ? 'Review alanını kısaltıp tam listeyi bu sheet içine aldım.'
                         : 'The review surface is condensed and the full list is available in this sheet.',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: AppColors.muted,
@@ -2716,31 +2716,31 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               ? 'Baslangic noktasi netlesti'
               : 'Your starting point is set',
           detail: isTr
-              ? 'Simdi bugunun mini paketine gecip ritmi kur.'
+              ? 'Şimdi bugünün mini paketine geçip ritmi kur.'
               : 'Now move into today\'s mini pack and build the rhythm.',
-          primaryLabel: isTr ? 'Mini paketi ac' : 'Open mini pack',
+          primaryLabel: isTr ? 'Mini paketi aç' : 'Open mini pack',
           primaryAction: () => _openPackSheet(packs.first),
-          secondaryLabel: isTr ? 'Plani duzenle' : 'Adjust plan',
+          secondaryLabel: isTr ? 'Plani düzenle' : 'Adjust plan',
           secondaryAction: () => _openPlannerSheet(),
         ),
       'review' => CompletionSpec(
-          title: isTr ? 'Tekrar tamamlandi' : 'Review completed',
+          title: isTr ? 'Tekrar tamamlandı' : 'Review completed',
           detail: isTr
-              ? 'Siradaki en mantikli adim uygun hoca secmek veya ucretsiz deneme istemek.'
+              ? 'Sıradaki en mantikli adım uygun hoca seçmek veya ücretsiz deneme istemek.'
               : 'The best next step is picking a tutor or requesting a free trial.',
           primaryLabel: _trialCtaLabel,
           primaryAction: _openTrial,
-          secondaryLabel: isTr ? 'Uygun hocalari ac' : 'Open tutors',
+          secondaryLabel: isTr ? 'Uygun hocaları aç' : 'Open tutors',
           secondaryAction: _openTutors,
         ),
       _ => CompletionSpec(
-          title: isTr ? 'Gunluk gorev tamamlandi' : 'Daily task completed',
+          title: isTr ? 'Günlük görev tamamlandı' : 'Daily task completed',
           detail: isTr
-              ? 'Bir adim daha attin. Simdi tekrar destesiyle pekistir veya hocaya gec.'
+              ? 'Bir adım daha attin. Şimdi tekrar destesiyle pekistir veya hocaya geç.'
               : 'You moved one step forward. Reinforce it with the review deck or move to a tutor.',
-          primaryLabel: isTr ? 'Tekrar kartlarini ac' : 'Open review cards',
+          primaryLabel: isTr ? 'Tekrar kartlarini aç' : 'Open review cards',
           primaryAction: () => _openReviewSheet(reviews.first),
-          secondaryLabel: isTr ? 'Uygun hocalari ac' : 'Open tutors',
+          secondaryLabel: isTr ? 'Uygun hocaları aç' : 'Open tutors',
           secondaryAction: _openTutors,
         ),
     };
@@ -2814,19 +2814,19 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     final snapshot = _availability[instructor.id];
     if (snapshot == null) {
       return _loadingAvailability
-          ? _copy('Takvim yukleniyor', 'Loading schedule')
+          ? _copy('Takvim yükleniyor', 'Loading schedule')
           : _copy('Takvim hazirlaniyor', 'Schedule is loading');
     }
     if (snapshot.todayAvailableCount > 0) {
       return _copy(
-        'Bugun ${snapshot.todayAvailableCount} slot acik',
+        'Bugün ${snapshot.todayAvailableCount} slot açık',
         '${snapshot.todayAvailableCount} slots open today',
       );
     }
     if (snapshot.nextAvailableDate != null &&
         snapshot.nextAvailableDate!.trim().isNotEmpty) {
       return _copy(
-        'Siradaki uygunluk ${snapshot.nextAvailableDate}',
+        'Sıradaki uygunluk ${snapshot.nextAvailableDate}',
         'Next opening ${snapshot.nextAvailableDate}',
       );
     }
@@ -2899,27 +2899,27 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           reasons.add(_copy('IELTS speaking uyumu', 'IELTS speaking fit'));
         }
         if (haystack.contains('toefl') || haystack.contains('exam')) {
-          reasons.add(_copy('Sinav odakli calisma', 'Exam-focused support'));
+          reasons.add(_copy('Sınav odaklı çalışma', 'Exam-focused support'));
         }
         break;
       case 'travel':
-        reasons.add(_copy('Pratik konusma akisi', 'Practical speaking flow'));
+        reasons.add(_copy('Pratik konuşma akışı', 'Practical speaking flow'));
         break;
       default:
         if (haystack.contains('speaking') ||
             haystack.contains('conversation')) {
           reasons.add(_copy('Speaking odagi', 'Speaking focused'));
         }
-        reasons.add(_copy('Gunluk kullanim dili', 'Daily-use language'));
+        reasons.add(_copy('Günlük kullanim dili', 'Daily-use language'));
         break;
     }
 
     if ((availability?.todayAvailableCount ?? 0) > 0) {
-      reasons.add(_copy('Bugun uygun slotu var', 'Available today'));
+      reasons.add(_copy('Bugün uygun slotu var', 'Available today'));
     } else if (availability?.nextAvailableSlotLabel != null &&
         availability!.nextAvailableSlotLabel!.isNotEmpty) {
       reasons.add(
-          '${_copy('Siradaki slot', 'Next slot')}: ${availability.nextAvailableSlotLabel}');
+          '${_copy('Sıradaki slot', 'Next slot')}: ${availability.nextAvailableSlotLabel}');
     }
 
     if (instructor.avgRating > 0) {
@@ -2979,9 +2979,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       const SizedBox(height: 18),
       _SectionCard(
         title:
-            isTr ? 'Canli speaking geri bildirimi' : 'Live speaking feedback',
+            isTr ? 'Canlı speaking geri bildirimi' : 'Live speaking feedback',
         subtitle: isTr
-            ? 'Son kaydina gore netlik, ritim ve guven durumunu tek ekranda gor.'
+            ? 'Son kaydına göre netlik, ritim ve güven durumunu tek ekranda gor.'
             : 'See clarity, rhythm, and confidence from your latest speaking take.',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -2989,9 +2989,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
             _FeatureGuideCard(
               icon: Icons.auto_graph_rounded,
               accentColor: AppColors.brand,
-              title: isTr ? 'Bu blok neyi gosterir?' : 'What this block shows',
+              title: isTr ? 'Bu blok neyi gösterir?' : 'What this block shows',
               detail: isTr
-                  ? 'Son kaydinin netlik, ritim ve guven skorunu aninda gorursun.'
+                  ? 'Son kaydının netlik, ritim ve güven skorunu anında gorursun.'
                   : 'You instantly see clarity, rhythm, and confidence from your last take.',
             ),
             const SizedBox(height: 12),
@@ -3004,11 +3004,11 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
             ),
             const SizedBox(height: 14),
             _SentenceFixCard(
-              title: isTr ? 'Cumle duzeltme' : 'Sentence refinement',
+              title: isTr ? 'Cümle duzeltme' : 'Sentence refinement',
               yourLine: _asrTranscript,
               naturalLine: _rewrittenTranscript,
               note: isTr
-                  ? 'Ipucu: once ana fiili net soyle, sonra nedeni tek cumlede bagla.'
+                  ? 'Ipucu: önce ana fiili net söyle, sonra nedeni tek cumlede bagla.'
                   : 'Tip: land the core verb first, then connect the reason in one clean sentence.',
             ),
             const SizedBox(height: 10),
@@ -3032,9 +3032,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                 icon: const Icon(Icons.multitrack_audio_rounded),
                 label: Text(
                   _recordingCompare
-                      ? (isTr ? 'Kaydi bitir' : 'Finish recording')
+                      ? (isTr ? 'Kaydı bitir' : 'Finish recording')
                       : (isTr
-                          ? 'Canli feedback icin kaydet'
+                          ? 'Canlı feedback için kaydet'
                           : 'Record for live feedback'),
                 ),
               ),
@@ -3044,16 +3044,16 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       ),
       const SizedBox(height: 18),
       _SectionCard(
-        title: isTr ? 'Bugunun akisi' : 'Today flow',
+        title: isTr ? 'Bugünün akışı' : 'Today flow',
         subtitle: isTr
-            ? 'Challenge, bugunluk gorev ve canli gecis ayni blokta.'
+            ? 'Challenge, bugünlük görev ve canlı geçiş ayni blokta.'
             : 'Challenge, today tasks, and live conversion are grouped in one block.',
         action: TextButton(
           onPressed: _challengeStarted ? _openPlacement : _startChallenge,
           child: Text(
             !_challengeStarted
-                ? (isTr ? 'Challenge baslat' : 'Start challenge')
-                : (isTr ? 'Seviyeni gor' : 'See level'),
+                ? (isTr ? 'Challenge başlat' : 'Start challenge')
+                : (isTr ? 'Seviyeni gör' : 'See level'),
           ),
         ),
         child: Column(
@@ -3062,9 +3062,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
             _FeatureGuideCard(
               icon: Icons.flag_circle_rounded,
               accentColor: const Color(0xFF0F766E),
-              title: isTr ? 'Ne yapacaksin?' : 'What you do here',
+              title: isTr ? 'Ne yapacaksın?' : 'What you do here',
               detail: isTr
-                  ? 'Bugun 3 kisa gorevi kapat, sonra tutor veya deneme dersine gec.'
+                  ? 'Bugün 3 kısa görevi kapat, sonra tutor veya deneme dersine geç.'
                   : 'Close 3 short tasks today, then move to tutors or a free trial.',
             ),
             const SizedBox(height: 12),
@@ -3085,16 +3085,16 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
             Text(
               !_challengeStarted
                   ? _copy(
-                      '7 gun boyunca mini paket, tekrar ve tutor ritmini kur.',
+                      '7 gün boyunca mini paket, tekrar ve tutor ritmini kur.',
                       'Build a 7-day rhythm with mini packs, reviews, and tutors.',
                     )
                   : _challengeCompleted
                       ? _copy(
-                          'Challenge tamamlandi. Seviye ozetini acip uygun hocaya gec.',
+                          'Challenge tamamlandı. Seviye özetini açıp uygun hocaya geç.',
                           'Challenge is complete. Open the level summary and move to the right tutor.',
                         )
                       : _copy(
-                          'Gun $_challengeProgressDays / 7 aktif. Bugunun 3 kisa adimini kapat.',
+                          'Gün $_challengeProgressDays / 7 aktif. Bugünün 3 kısa adımını kapat.',
                           'Day $_challengeProgressDays / 7 is active. Close today\'s 3 short steps.',
                         ),
               style: Theme.of(context).textTheme.bodyMedium,
@@ -3130,7 +3130,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                   child: OutlinedButton.icon(
                     onPressed: _openTutors,
                     icon: const Icon(Icons.groups_2_rounded),
-                    label: Text(isTr ? 'Tutor onerileri' : 'Tutor picks'),
+                    label: Text(isTr ? 'Tutor önerileri' : 'Tutor picks'),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -3150,11 +3150,11 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       _SectionCard(
         title: isTr ? 'Pratik merkezi' : 'Practice hub',
         subtitle: isTr
-            ? 'Mod secimi, paketler ve review ayni merkezde.'
+            ? 'Mod seçimi, paketler ve review ayni merkezde.'
             : 'Mode selection, packs, and reviews live in one hub.',
         action: TextButton(
           onPressed: () => _openPackLibrarySheet(packs),
-          child: Text(isTr ? 'Tum paketler' : 'All packs'),
+          child: Text(isTr ? 'Tüm paketler' : 'All packs'),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -3162,9 +3162,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
             _FeatureGuideCard(
               icon: Icons.bolt_rounded,
               accentColor: const Color(0xFFB45309),
-              title: isTr ? 'Buradan basla' : 'Start here',
+              title: isTr ? 'Buradan başla' : 'Start here',
               detail: isTr
-                  ? 'Modunu sec, mini paketi ac, review ile tekrar et.'
+                  ? 'Modunu seç, mini paketi aç, review ile tekrar et.'
                   : 'Pick a mode, open a mini pack, and reinforce it with review.',
             ),
             const SizedBox(height: 12),
@@ -3219,7 +3219,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                   child: OutlinedButton(
                     onPressed: () => _openReviewLibrarySheet(reviews),
                     child:
-                        Text(isTr ? 'Tum review kartlari' : 'All review cards'),
+                        Text(isTr ? 'Tüm review kartları' : 'All review cards'),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -3269,9 +3269,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       _buildCompactRecordSection(context, isTr: isTr, spot: spot),
       const SizedBox(height: 18),
       _SectionCard(
-        title: isTr ? 'Mini challenge gorevleri' : 'Mini challenge drills',
+        title: isTr ? 'Mini challenge görevleri' : 'Mini challenge drills',
         subtitle: isTr
-            ? 'Kisa, odakli ve tamamlamasi kolay 3 speaking gorevi.'
+            ? 'Kısa, odaklı ve tamamlaması kolay 3 speaking görevi.'
             : 'Three short speaking drills designed for fast daily wins.',
         child: Column(
           children: _microChallenges.map((task) {
@@ -3296,9 +3296,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       ),
       const SizedBox(height: 18),
       _SectionCard(
-        title: isTr ? 'Haftalik speaking raporu' : 'Weekly speaking report',
+        title: isTr ? 'Haftalık speaking raporu' : 'Weekly speaking report',
         subtitle: isTr
-            ? 'Son 7 gunde kayit performansi ve hata dagilimi.'
+            ? 'Son 7 günde kayıt performansı ve hata dağılımı.'
             : 'Recording performance and error distribution for the last 7 days.',
         child: _WeeklyReportCard(
           report: _weeklySpeakingReport,
@@ -3309,7 +3309,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       _SectionCard(
         title: isTr ? 'Daha fazlasi' : 'More',
         subtitle: isTr
-            ? 'Takvim, tutor eslesmesi ve diger araclar ikinci seviyede.'
+            ? 'Takvim, tutor eşleşmesi ve diğer araclar ikinci seviyede.'
             : 'Calendar, tutor matching, and advanced tools are in a second-level panel.',
         child: SizedBox(
           width: double.infinity,
@@ -3319,7 +3319,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               matchedPreview: matchedPreview,
             ),
             icon: const Icon(Icons.layers_rounded),
-            label: Text(isTr ? 'Gelismis paneli ac' : 'Open advanced panel'),
+            label: Text(isTr ? 'Gelismis paneli aç' : 'Open advanced panel'),
           ),
         ),
       ),
@@ -3375,28 +3375,28 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     await showCupertinoModalPopup<void>(
       context: context,
       builder: (sheetContext) => CupertinoActionSheet(
-        title: Text(isTr ? 'Hizli islemler' : 'Quick actions'),
+        title: Text(isTr ? 'Hızlı işlemler' : 'Quick actions'),
         actions: [
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(sheetContext);
               _openTrial();
             },
-            child: Text(isTr ? 'Ucretsiz deneme dersi' : 'Free trial lesson'),
+            child: Text(isTr ? 'Ücretsiz deneme dersi' : 'Free trial lesson'),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(sheetContext);
               _openTutors();
             },
-            child: Text(isTr ? 'Tutorleri ac' : 'Open tutors'),
+            child: Text(isTr ? 'Tutorleri aç' : 'Open tutors'),
           ),
           CupertinoActionSheetAction(
             onPressed: () {
               Navigator.pop(sheetContext);
               _openPlannerSheet();
             },
-            child: Text(isTr ? 'Plan ayarlarini ac' : 'Open plan settings'),
+            child: Text(isTr ? 'Plan ayarlarini aç' : 'Open plan settings'),
           ),
         ],
         cancelButton: CupertinoActionSheetAction(
@@ -3416,7 +3416,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     return _SectionCard(
       title: isTr ? 'Record + compare' : 'Record + compare',
       subtitle: isTr
-          ? 'Gercek mikrofon kaydi, replay ve onceki denemeyle karsilastirma.'
+          ? 'Gerçek mikrofon kaydı, replay ve önceki denemeyle karsilastirma.'
           : 'Real microphone capture, replay, and comparison with the previous take.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3426,7 +3426,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
             accentColor: const Color(0xFF1D4ED8),
             title: isTr ? 'Burada ne olur?' : 'What happens here',
             detail: isTr
-                ? 'Kayit al, replay yap, onceki denemeyle karsilastir ve anlik ilerlemeyi hisset.'
+                ? 'Kayıt al, replay yap, önceki denemeyle karsilastir ve anlık ilerlemeyi hisset.'
                 : 'Record, replay, compare with the previous take, and feel progress immediately.',
           ),
           const SizedBox(height: 12),
@@ -3473,8 +3473,8 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         ),
                         label: Text(
                           _recordingCompare
-                              ? _copy('Kaydi bitir', 'Finish recording')
-                              : _copy('Kaydi baslat', 'Start recording'),
+                              ? _copy('Kaydı bitir', 'Finish recording')
+                              : _copy('Kaydı başlat', 'Start recording'),
                         ),
                       ),
                     ),
@@ -3532,11 +3532,11 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     return _SectionCard(
       title: isTr ? 'Ritim ve tutorler' : 'Rhythm and tutors',
       subtitle: isTr
-          ? 'Takvim, sosyal proof ve canli tutor eslesmesini ayni blokta topladim.'
+          ? 'Takvim, sosyal proof ve canlı tutor eslesmesini ayni blokta topladim.'
           : 'Calendar rhythm, social proof, and live tutor matching now sit in one block.',
       action: TextButton(
         onPressed: _openTutors,
-        child: Text(isTr ? 'Tum tutorler' : 'All tutors'),
+        child: Text(isTr ? 'Tüm tutorler' : 'All tutors'),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3544,9 +3544,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           _FeatureGuideCard(
             icon: Icons.insights_rounded,
             accentColor: AppColors.brandNight,
-            title: isTr ? 'Bu kisim neyi gosterir?' : 'What this section shows',
+            title: isTr ? 'Bu kisim neyi gösterir?' : 'What this section shows',
             detail: isTr
-                ? 'Serini, uygun tutorleri ve bugunun canli firsatlarini tek bakista gorursun.'
+                ? 'Serini, uygun tutorları ve bugünün canlı fırsatlarını tek bakista gorursun.'
                 : 'You see your streak, the right tutors, and today’s live opportunities at a glance.',
           ),
           const SizedBox(height: 12),
@@ -3566,7 +3566,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
             ),
             child: Text(
               _copy(
-                'Bugun $_availableTodayCount acik tutor slotu var. $_topGoalLabel.',
+                'Bugün $_availableTodayCount açık tutor slotu var. $_topGoalLabel.',
                 'There are $_availableTodayCount open tutor slots today. $_topGoalLabel.',
               ),
               style: Theme.of(context).textTheme.bodyMedium,
@@ -3610,7 +3610,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                   imageUrl: instructor.imageUrl ?? '',
                   tags: _matchReasons(instructor),
                   availabilityLabel: _availabilityLabel(instructor),
-                  ctaLabel: isTr ? 'Profili ac' : 'Open profile',
+                  ctaLabel: isTr ? 'Profili aç' : 'Open profile',
                   isFavorite:
                       _localState.favoriteInstructorIds.contains(instructor.id),
                   onTap: () => _openTutorProfile(instructor),
@@ -3638,7 +3638,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
 
   Widget _buildMoreToolsSection(BuildContext context, {required bool isTr}) {
     return _SectionCard(
-      title: isTr ? 'Diger araclar' : 'More tools',
+      title: isTr ? 'Diğer araclar' : 'More tools',
       subtitle: isTr
           ? 'Ozellikleri silmedim. Derin araclari acilir yuzeylere tasidim.'
           : 'No features were removed. Deeper tools were moved into expandable surfaces.',
@@ -3742,7 +3742,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                   : 'Phrasebook and review saves'),
               subtitle: Text(
                 _savedPhrases.isEmpty
-                    ? _copy('Henuz kayit yok', 'No saved phrases yet')
+                    ? _copy('Henüz kayıt yok', 'No saved phrases yet')
                     : _copy('${_savedPhrases.length} kayitli ifade',
                         '${_savedPhrases.length} saved phrases'),
               ),
@@ -3752,7 +3752,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         contentPadding: EdgeInsets.zero,
                         title: Text(
                           _copy(
-                            'Ilk ifadeyi review veya paket icinden kaydet.',
+                            'İlk ifadeyi review veya paket içinden kaydet.',
                             'Save your first phrase from a review card or pack.',
                           ),
                         ),
@@ -3779,7 +3779,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               title: Text(isTr ? 'Kaydedilen tutorler' : 'Saved tutors'),
               subtitle: Text(
                 _favoriteTutors.isEmpty
-                    ? _copy('Henuz favori yok', 'No favorites yet')
+                    ? _copy('Henüz favori yok', 'No favorites yet')
                     : _copy('${_favoriteTutors.length} kayitli tutor',
                         '${_favoriteTutors.length} saved tutors'),
               ),
@@ -3865,7 +3865,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                       ),
                       const SizedBox(height: 10),
                       ...[
-                        _copy('1 ucretsiz mini speaking seansi',
+                        _copy('1 ücretsiz mini speaking seansi',
                             '1 free mini speaking session'),
                         _copy('Bonus materyal paketi', 'Bonus material pack'),
                         _copy('Deneme dersi onceligi', 'Priority trial lesson'),
@@ -3915,12 +3915,12 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               tilePadding: EdgeInsets.zero,
               childrenPadding: EdgeInsets.zero,
               title: Text(isTr
-                  ? 'Speaking gecmisi ve yol'
+                  ? 'Speaking geçmişi ve yol'
                   : 'Speaking history and path'),
               subtitle: Text(
                 _activityLog.isEmpty
                     ? _copy(
-                        'Hareketler burada gorunecek',
+                        'Hareketler burada görünecek',
                         'Your actions will appear here',
                       )
                     : _activityTimeLabel(_activityLog.first),
@@ -3938,7 +3938,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                           ),
                           title: Text(
                             _copy(
-                              'Ilk hareketini yaptiginda gecmis burada gorunecek.',
+                              'İlk hareketini yaptığında geçmiş burada görünecek.',
                               'Your first action will appear here.',
                             ),
                           ),
@@ -3966,9 +3966,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
   // ignore: unused_element
   Widget _buildLiveFeedbackSection(BuildContext context, {required bool isTr}) {
     return _SectionCard(
-      title: isTr ? 'Canli speaking geri bildirimi' : 'Live speaking feedback',
+      title: isTr ? 'Canlı speaking geri bildirimi' : 'Live speaking feedback',
       subtitle: isTr
-          ? 'Son kaydina gore netlik, ritim ve guven durumunu tek ekranda gor.'
+          ? 'Son kaydına göre netlik, ritim ve güven durumunu tek ekranda gor.'
           : 'See clarity, rhythm, and confidence from your latest speaking take.',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -3976,9 +3976,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           _FeatureGuideCard(
             icon: Icons.auto_graph_rounded,
             accentColor: AppColors.brand,
-            title: isTr ? 'Bu blok neyi gosterir?' : 'What this block shows',
+            title: isTr ? 'Bu blok neyi gösterir?' : 'What this block shows',
             detail: isTr
-                ? 'Son kaydinin netlik, ritim ve guven skorunu aninda gorursun.'
+                ? 'Son kaydının netlik, ritim ve güven skorunu anında gorursun.'
                 : 'You instantly see clarity, rhythm, and confidence from your last take.',
           ),
           const SizedBox(height: 12),
@@ -3991,11 +3991,11 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           ),
           const SizedBox(height: 14),
           _SentenceFixCard(
-            title: isTr ? 'Cumle duzeltme' : 'Sentence refinement',
+            title: isTr ? 'Cümle duzeltme' : 'Sentence refinement',
             yourLine: _asrTranscript,
             naturalLine: _rewrittenTranscript,
             note: isTr
-                ? 'Ipucu: once ana fiili net soyle, sonra nedeni tek cumlede bagla.'
+                ? 'Ipucu: önce ana fiili net söyle, sonra nedeni tek cumlede bagla.'
                 : 'Tip: land the core verb first, then connect the reason in one clean sentence.',
           ),
           const SizedBox(height: 10),
@@ -4017,9 +4017,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               icon: const Icon(Icons.multitrack_audio_rounded),
               label: Text(
                 _recordingCompare
-                    ? (isTr ? 'Kaydi bitir' : 'Finish recording')
+                    ? (isTr ? 'Kaydı bitir' : 'Finish recording')
                     : (isTr
-                        ? 'Canli feedback icin kaydet'
+                        ? 'Canlı feedback için kaydet'
                         : 'Record for live feedback'),
               ),
             ),
@@ -4039,16 +4039,16 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     required ReviewCard firstReview,
   }) {
     return _SectionCard(
-      title: isTr ? 'Bugunun akisi' : 'Today flow',
+      title: isTr ? 'Bugünün akışı' : 'Today flow',
       subtitle: isTr
-          ? 'Challenge, bugunluk gorev ve canli gecis ayni blokta.'
+          ? 'Challenge, bugünlük görev ve canlı geçiş ayni blokta.'
           : 'Challenge, today tasks, and live conversion are grouped in one block.',
       action: TextButton(
         onPressed: _challengeStarted ? _openPlacement : _startChallenge,
         child: Text(
           !_challengeStarted
-              ? (isTr ? 'Challenge baslat' : 'Start challenge')
-              : (isTr ? 'Seviyeni gor' : 'See level'),
+              ? (isTr ? 'Challenge başlat' : 'Start challenge')
+              : (isTr ? 'Seviyeni gör' : 'See level'),
         ),
       ),
       child: Column(
@@ -4057,9 +4057,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           _FeatureGuideCard(
             icon: Icons.flag_circle_rounded,
             accentColor: const Color(0xFF0F766E),
-            title: isTr ? 'Ne yapacaksin?' : 'What you do here',
+            title: isTr ? 'Ne yapacaksın?' : 'What you do here',
             detail: isTr
-                ? 'Bugun 3 kisa gorevi kapat, sonra tutor veya deneme dersine gec.'
+                ? 'Bugün 3 kısa görevi kapat, sonra tutor veya deneme dersine geç.'
                 : 'Close 3 short tasks today, then move to tutors or a free trial.',
           ),
           const SizedBox(height: 12),
@@ -4080,16 +4080,16 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           Text(
             !_challengeStarted
                 ? _copy(
-                    '7 gun boyunca mini paket, tekrar ve tutor ritmini kur.',
+                    '7 gün boyunca mini paket, tekrar ve tutor ritmini kur.',
                     'Build a 7-day rhythm with mini packs, reviews, and tutors.',
                   )
                 : _challengeCompleted
                     ? _copy(
-                        'Challenge tamamlandi. Seviye ozetini acip uygun hocaya gec.',
+                        'Challenge tamamlandı. Seviye özetini açıp uygun hocaya geç.',
                         'Challenge is complete. Open the level summary and move to the right tutor.',
                       )
                     : _copy(
-                        'Gun $_challengeProgressDays / 7 aktif. Bugunun 3 kisa adimini kapat.',
+                        'Gün $_challengeProgressDays / 7 aktif. Bugünün 3 kısa adımını kapat.',
                         'Day $_challengeProgressDays / 7 is active. Close today\'s 3 short steps.',
                       ),
             style: Theme.of(context).textTheme.bodyMedium,
@@ -4125,7 +4125,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                 child: OutlinedButton.icon(
                   onPressed: _openTutors,
                   icon: const Icon(Icons.groups_2_rounded),
-                  label: Text(isTr ? 'Tutor onerileri' : 'Tutor picks'),
+                  label: Text(isTr ? 'Tutor önerileri' : 'Tutor picks'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -4156,11 +4156,11 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
     return _SectionCard(
       title: isTr ? 'Pratik merkezi' : 'Practice hub',
       subtitle: isTr
-          ? 'Mod secimi, paketler ve review ayni merkezde.'
+          ? 'Mod seçimi, paketler ve review ayni merkezde.'
           : 'Mode selection, packs, and reviews live in one hub.',
       action: TextButton(
         onPressed: () => _openPackLibrarySheet(packs),
-        child: Text(isTr ? 'Tum paketler' : 'All packs'),
+        child: Text(isTr ? 'Tüm paketler' : 'All packs'),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -4168,9 +4168,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           _FeatureGuideCard(
             icon: Icons.bolt_rounded,
             accentColor: const Color(0xFFB45309),
-            title: isTr ? 'Buradan basla' : 'Start here',
+            title: isTr ? 'Buradan başla' : 'Start here',
             detail: isTr
-                ? 'Modunu sec, mini paketi ac, review ile tekrar et.'
+                ? 'Modunu seç, mini paketi aç, review ile tekrar et.'
                 : 'Pick a mode, open a mini pack, and reinforce it with review.',
           ),
           const SizedBox(height: 12),
@@ -4225,7 +4225,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                 child: OutlinedButton(
                   onPressed: () => _openReviewLibrarySheet(reviews),
                   child:
-                      Text(isTr ? 'Tum review kartlari' : 'All review cards'),
+                      Text(isTr ? 'Tüm review kartları' : 'All review cards'),
                 ),
               ),
               const SizedBox(width: 10),
@@ -4277,9 +4277,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
   Widget _buildMiniChallengeSection(BuildContext context,
       {required bool isTr}) {
     return _SectionCard(
-      title: isTr ? 'Mini challenge gorevleri' : 'Mini challenge drills',
+      title: isTr ? 'Mini challenge görevleri' : 'Mini challenge drills',
       subtitle: isTr
-          ? 'Kisa, odakli ve tamamlamasi kolay 3 speaking gorevi.'
+          ? 'Kısa, odaklı ve tamamlaması kolay 3 speaking görevi.'
           : 'Three short speaking drills designed for fast daily wins.',
       child: Column(
         children: _microChallenges.map((task) {
@@ -4307,9 +4307,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
   // ignore: unused_element
   Widget _buildWeeklyReportSection(BuildContext context, {required bool isTr}) {
     return _SectionCard(
-      title: isTr ? 'Haftalik speaking raporu' : 'Weekly speaking report',
+      title: isTr ? 'Haftalık speaking raporu' : 'Weekly speaking report',
       subtitle: isTr
-          ? 'Son 7 gunde kayit performansi ve hata dagilimi.'
+          ? 'Son 7 günde kayıt performansı ve hata dağılımı.'
           : 'Recording performance and error distribution for the last 7 days.',
       child: _WeeklyReportCard(
         report: _weeklySpeakingReport,
@@ -4382,16 +4382,16 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           _LessonTaskData(
             id: 'business_listen_word',
             type: _LessonTaskType.listenChoice,
-            titleTr: 'Dinle ve sec',
+            titleTr: 'Dinle ve seç',
             titleEn: 'Listen and choose',
-            subtitleTr: 'Kelimeyi duy, Turkcesini sec.',
+            subtitleTr: 'Kelimeyi duy, Türkçesini seç.',
             subtitleEn: 'Hear the word and pick the meaning.',
-            coachTr: 'Sesi dinle. Dogru anlami alttan sec.',
+            coachTr: 'Sesi dinle. Doğru anlamı alttan seç.',
             coachEn: 'Listen to the word. Pick the correct meaning below.',
             questionTr: 'Bu kelime ne anlama geliyor?',
             questionEn: 'What does this word mean?',
             promptText: 'deadline',
-            promptDetailTr: 'Sese gore Turkce anlami sec.',
+            promptDetailTr: 'Sese göre Türkçe anlamı seç.',
             promptDetailEn: 'Choose the Turkish meaning from the audio.',
             options: const [
               _LessonOptionData(
@@ -4404,7 +4404,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                   id: 'coffee', labelTr: 'kahve', labelEn: 'coffee'),
             ],
             correctOptionId: 'deadline',
-            successTitleTr: 'Dogru cevap',
+            successTitleTr: 'Doğru cevap',
             successTitleEn: 'Correct answer',
             successDetailTr: 'Deadline = son tarih.',
             successDetailEn: 'Deadline = son tarih.',
@@ -4412,53 +4412,53 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           _LessonTaskData(
             id: 'business_listen_sentence',
             type: _LessonTaskType.listenChoice,
-            titleTr: 'Cumleyi dinle',
+            titleTr: 'Cümleyi dinle',
             titleEn: 'Listen to the sentence',
-            subtitleTr: 'Cumleyi duy, Turkce karsiligini sec.',
+            subtitleTr: 'Cümleyi duy, Türkçe karşılığını seç.',
             subtitleEn: 'Hear the sentence and choose its meaning.',
-            coachTr: 'Cumleyi bir kez dinle. Anlamini tek secimle kapat.',
-            coachEn: 'Listen once, then close it with one clean choice.',
-            questionTr: 'Bu cumlenin Turkcesi hangisi?',
+            coachTr: 'Cümleyi bir kez dinle. Anlamini tek secimle kapat.',
+            coachEn: 'Listen önce, then close it with one clean choice.',
+            questionTr: 'Bu cümlenin Türkçesi hangisi?',
             questionEn: 'Which Turkish meaning is correct?',
             promptText: 'We need to finish this report before Friday.',
-            promptDetailTr: 'Sesi dinle ve anlami sec.',
+            promptDetailTr: 'Sesi dinle ve anlamı seç.',
             promptDetailEn: 'Listen and choose the correct meaning.',
             options: const [
               _LessonOptionData(
                 id: 'report_correct',
-                labelTr: 'Bu raporu cumadan once bitirmemiz gerekiyor.',
-                labelEn: 'Bu raporu cumadan once bitirmemiz gerekiyor.',
+                labelTr: 'Bu raporu cumadan önce bitirmemiz gerekiyor.',
+                labelEn: 'Bu raporu cumadan önce bitirmemiz gerekiyor.',
               ),
               _LessonOptionData(
                 id: 'report_wrong_1',
-                labelTr: 'Toplantiyi cuma gunu baslatmamiz gerekiyor.',
-                labelEn: 'Toplantiyi cuma gunu baslatmamiz gerekiyor.',
+                labelTr: 'Toplantıyı cuma günü baslatmamiz gerekiyor.',
+                labelEn: 'Toplantıyı cuma günü baslatmamiz gerekiyor.',
               ),
               _LessonOptionData(
                 id: 'report_wrong_2',
-                labelTr: 'Bu faturayi bugun gondermemiz gerekiyor.',
-                labelEn: 'Bu faturayi bugun gondermemiz gerekiyor.',
+                labelTr: 'Bu faturayı bugün göndermemiz gerekiyor.',
+                labelEn: 'Bu faturayı bugün göndermemiz gerekiyor.',
               ),
             ],
             correctOptionId: 'report_correct',
-            successTitleTr: 'Cumleyi dogru yakaladin',
+            successTitleTr: 'Cümleyi doğru yakaladın',
             successTitleEn: 'You caught the sentence',
-            successDetailTr: 'Sira gorsel secim gorevinde.',
+            successDetailTr: 'Sıra görsel seçim görevinde.',
             successDetailEn: 'Next up: the visual choice task.',
           ),
           _LessonTaskData(
             id: 'business_picture',
             type: _LessonTaskType.pictureChoice,
-            titleTr: 'Resmi sec',
+            titleTr: 'Resmi seç',
             titleEn: 'Choose the image',
             subtitleTr: 'Kelimeye uygun nesneyi bul.',
             subtitleEn: 'Find the object that matches the word.',
-            coachTr: 'Yaziyi oku ve dogru gorseli sec.',
+            coachTr: 'Yazıyı oku ve doğru görseli seç.',
             coachEn: 'Read the word and pick the right visual.',
             questionTr: 'Hangisi "laptop"?',
             questionEn: 'Which one is "laptop"?',
             promptText: 'laptop',
-            promptDetailTr: 'Dogru gorseli sec.',
+            promptDetailTr: 'Doğru görseli seç.',
             promptDetailEn: 'Choose the matching visual.',
             options: const [
               _LessonOptionData(
@@ -4483,86 +4483,86 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                   icon: Icons.calendar_month_rounded),
             ],
             correctOptionId: 'laptop',
-            successTitleTr: 'Gorsel dogru',
+            successTitleTr: 'Görsel doğru',
             successTitleEn: 'Visual selected',
-            successDetailTr: 'Sira yaziyi anlama gorevinde.',
+            successDetailTr: 'Sıra yazıyı anlama görevinde.',
             successDetailEn: 'Now move to the text meaning task.',
           ),
           _LessonTaskData(
             id: 'business_text',
             type: _LessonTaskType.textChoice,
-            titleTr: 'Yaziyi anla',
+            titleTr: 'Yazıyı anla',
             titleEn: 'Understand the text',
-            subtitleTr: 'Ingilizce cumleyi oku ve Turkcesini sec.',
+            subtitleTr: 'İngilizce cümleyi oku ve Türkçesini seç.',
             subtitleEn:
                 'Read the English sentence and pick the Turkish meaning.',
-            coachTr: 'Bu adimda ses yok. Sadece okuyup karar ver.',
+            coachTr: 'Bu adımda ses yok. Sadece okuyup karar ver.',
             coachEn: 'No audio here. Just read and decide.',
-            questionTr: 'Bu cumlenin anlami hangisi?',
+            questionTr: 'Bu cümlenin anlamı hangisi?',
             questionEn: 'Which meaning is correct?',
             promptText: 'Can we move the meeting to next Monday?',
-            promptDetailTr: 'Cumleyi oku ve en yakin anlami sec.',
+            promptDetailTr: 'Cümleyi oku ve en yakın anlamı seç.',
             promptDetailEn: 'Read the sentence and choose the closest meaning.',
             options: const [
               _LessonOptionData(
                   id: 'meeting_correct',
-                  labelTr: 'Toplantiyi gelecek pazartesiye alabilir miyiz?',
-                  labelEn: 'Toplantiyi gelecek pazartesiye alabilir miyiz?'),
+                  labelTr: 'Toplantıyı gelecek pazartesiye alabilir miyiz?',
+                  labelEn: 'Toplantıyı gelecek pazartesiye alabilir miyiz?'),
               _LessonOptionData(
                   id: 'meeting_wrong_1',
-                  labelTr: 'Toplantiyi bugun bitirmemiz gerekiyor mu?',
-                  labelEn: 'Toplantiyi bugun bitirmemiz gerekiyor mu?'),
+                  labelTr: 'Toplantıyı bugün bitirmemiz gerekiyor mu?',
+                  labelEn: 'Toplantıyı bugün bitirmemiz gerekiyor mu?'),
               _LessonOptionData(
                   id: 'meeting_wrong_2',
                   labelTr: 'Raporu gelecek hafta gonderecek misin?',
                   labelEn: 'Raporu gelecek hafta gonderecek misin?'),
             ],
             correctOptionId: 'meeting_correct',
-            successTitleTr: 'Anlam dogru',
+            successTitleTr: 'Anlam doğru',
             successTitleEn: 'Meaning locked',
-            successDetailTr: 'Simdi ayni dili sen soyle.',
+            successDetailTr: 'Şimdi ayni dili sen söyle.',
             successDetailEn: 'Now it is your turn to say it.',
           ),
           _LessonTaskData(
             id: 'business_speak_1',
             type: _LessonTaskType.speakRepeat,
-            titleTr: 'Konus ve puan al',
+            titleTr: 'Konuş ve puan al',
             titleEn: 'Speak and score',
-            subtitleTr: 'Cumleyi soyle, sistem puanlasin.',
+            subtitleTr: 'Cümleyi söyle, sistem puanlasin.',
             subtitleEn: 'Say the sentence and let the app score it.',
-            coachTr: 'Mikrofona bas. Cumleyi temiz ve net soyle.',
+            coachTr: 'Mikrofona bas. Cümleyi temiz ve net söyle.',
             coachEn: 'Tap the mic. Say the sentence clearly.',
-            questionTr: 'Asagidaki cumleyi sesli soyle.',
+            questionTr: 'Asagidaki cümleyi sesli söyle.',
             questionEn: 'Say the sentence below out loud.',
             promptText: 'I will send the updated file this afternoon.',
-            promptDetailTr: 'Ayni cumleyi mikrofonla soyle.',
+            promptDetailTr: 'Ayni cümleyi mikrofonla söyle.',
             promptDetailEn: 'Repeat the same sentence with your microphone.',
             targetSpeech: 'I will send the updated file this afternoon.',
             minimumSpeakingScore: 46,
-            successTitleTr: 'Speaking skoru hazir',
+            successTitleTr: 'Speaking skoru hazır',
             successTitleEn: 'Speaking score ready',
-            successDetailTr: 'Bir konusma gorevi daha kaldi.',
+            successDetailTr: 'Bir konuşma görevi daha kaldi.',
             successDetailEn: 'One more speaking task left.',
           ),
           _LessonTaskData(
             id: 'business_speak_2',
             type: _LessonTaskType.speakRepeat,
-            titleTr: 'Konus ve bitir',
+            titleTr: 'Konuş ve bitir',
             titleEn: 'Speak and finish',
-            subtitleTr: 'Son cumleyi soyle ve gunluk dersi kapat.',
+            subtitleTr: 'Son cümleyi söyle ve günlük dersi kapat.',
             subtitleEn: 'Say the final line and finish the daily lesson.',
-            coachTr: 'Son gorev. Cumleyi ritimle tamamla.',
+            coachTr: 'Son görev. Cümleyi ritimle tamamla.',
             coachEn: 'Final step. Say the line with clean rhythm.',
-            questionTr: 'Bu cumleyi sesli tekrar et.',
+            questionTr: 'Bu cümleyi sesli tekrar et.',
             questionEn: 'Repeat this sentence out loud.',
             promptText: 'Could you share the final numbers with the team?',
             promptDetailTr: 'Netlik ve vurguya dikkat et.',
             promptDetailEn: 'Pay attention to clarity and stress.',
             targetSpeech: 'Could you share the final numbers with the team?',
             minimumSpeakingScore: 48,
-            successTitleTr: 'Gunluk business dersi bitti',
+            successTitleTr: 'Günlük business dersi bitti',
             successTitleEn: 'Business lesson complete',
-            successDetailTr: 'Bugunku akisi temiz kapattin.',
+            successDetailTr: 'Bugünkü akışı temiz kapattın.',
             successDetailEn: 'You completed today\'s flow cleanly.',
           ),
         ];
@@ -4571,16 +4571,16 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           _LessonTaskData(
             id: 'ielts_listen_word',
             type: _LessonTaskType.listenChoice,
-            titleTr: 'Dinle ve sec',
+            titleTr: 'Dinle ve seç',
             titleEn: 'Listen and choose',
-            subtitleTr: 'Kelimeyi dinle, Turkcesini sec.',
+            subtitleTr: 'Kelimeyi dinle, Türkçesini seç.',
             subtitleEn: 'Hear the word and choose the meaning.',
-            coachTr: 'Tek kelimeyi dinle. Dogru anlami sec.',
+            coachTr: 'Tek kelimeyi dinle. Doğru anlamı seç.',
             coachEn: 'Listen to the word and pick the right meaning.',
             questionTr: 'Bu kelime ne demek?',
             questionEn: 'What does this word mean?',
             promptText: 'opinion',
-            promptDetailTr: 'Sesi dinle ve anlami sec.',
+            promptDetailTr: 'Sesi dinle ve anlamı seç.',
             promptDetailEn: 'Listen and choose the meaning.',
             options: const [
               _LessonOptionData(
@@ -4593,24 +4593,24 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                   id: 'coffee', labelTr: 'kahve', labelEn: 'coffee'),
             ],
             correctOptionId: 'opinion',
-            successTitleTr: 'Dogru cevap',
+            successTitleTr: 'Doğru cevap',
             successTitleEn: 'Correct answer',
-            successDetailTr: 'Simdi cumle anlamina gec.',
+            successDetailTr: 'Şimdi cümle anlamına geç.',
             successDetailEn: 'Now move to sentence meaning.',
           ),
           _LessonTaskData(
             id: 'ielts_listen_sentence',
             type: _LessonTaskType.listenChoice,
-            titleTr: 'Cumleyi dinle',
+            titleTr: 'Cümleyi dinle',
             titleEn: 'Listen to the sentence',
-            subtitleTr: 'Speaking tarzinda cumleyi duy.',
+            subtitleTr: 'Speaking tarzinda cümleyi duy.',
             subtitleEn: 'Hear a sentence in speaking style.',
-            coachTr: 'Cumleyi dinle ve Turkce karsiligini sec.',
+            coachTr: 'Cümleyi dinle ve Türkçe karşılığını seç.',
             coachEn: 'Listen and choose the Turkish meaning.',
-            questionTr: 'Bu cumlenin Turkcesi hangisi?',
+            questionTr: 'Bu cümlenin Türkçesi hangisi?',
             questionEn: 'Which Turkish meaning is correct?',
             promptText: 'To a large extent, I agree with this idea.',
-            promptDetailTr: 'IELTS speaking tonunu da duymaya calis.',
+            promptDetailTr: 'IELTS speaking tonunu da duymaya çalış.',
             promptDetailEn: 'Notice the IELTS-style intonation too.',
             options: const [
               _LessonOptionData(
@@ -4627,24 +4627,24 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                   labelEn: 'Bu raporu yarin gonderecegim.'),
             ],
             correctOptionId: 'ielts_correct',
-            successTitleTr: 'Anlami dogru yakaladin',
+            successTitleTr: 'Anlamı doğru yakaladın',
             successTitleEn: 'You got the meaning',
-            successDetailTr: 'Sira gorsel secim gorevinde.',
+            successDetailTr: 'Sıra görsel seçim görevinde.',
             successDetailEn: 'Next is the visual task.',
           ),
           _LessonTaskData(
             id: 'ielts_picture',
             type: _LessonTaskType.pictureChoice,
-            titleTr: 'Gorseli sec',
+            titleTr: 'Görseli seç',
             titleEn: 'Choose the visual',
             subtitleTr: 'Kelimeyi gorselle bagla.',
             subtitleEn: 'Match the word to the visual.',
             coachTr: 'Hangisi "library"?',
             coachEn: 'Which one is "library"?',
-            questionTr: 'Dogru resmi sec.',
+            questionTr: 'Doğru resmi seç.',
             questionEn: 'Pick the correct image.',
             promptText: 'library',
-            promptDetailTr: 'Kelimeye uyan gorseli bul.',
+            promptDetailTr: 'Kelimeye uyan görseli bul.',
             promptDetailEn: 'Find the image that matches the word.',
             options: const [
               _LessonOptionData(
@@ -4669,9 +4669,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                   icon: Icons.beach_access_rounded),
             ],
             correctOptionId: 'library',
-            successTitleTr: 'Dogru secim',
+            successTitleTr: 'Doğru seçim',
             successTitleEn: 'Correct choice',
-            successDetailTr: 'Simdi yazi anlamina gec.',
+            successDetailTr: 'Şimdi yazi anlamına geç.',
             successDetailEn: 'Now move to text meaning.',
           ),
           _LessonTaskData(
@@ -4679,15 +4679,15 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
             type: _LessonTaskType.textChoice,
             titleTr: 'Metni anla',
             titleEn: 'Understand the text',
-            subtitleTr: 'Uzun cumleyi oku ve anlamini sec.',
+            subtitleTr: 'Uzun cümleyi oku ve anlamını seç.',
             subtitleEn: 'Read the longer sentence and choose its meaning.',
-            coachTr: 'Bu tip cumleler speaking icin cok kullanilir.',
+            coachTr: 'Bu tip cümleler speaking için çok kullanılır.',
             coachEn: 'This type of sentence appears often in speaking answers.',
-            questionTr: 'Bu cumlenin Turkcesi hangisi?',
+            questionTr: 'Bu cümlenin Türkçesi hangisi?',
             questionEn: 'Which Turkish meaning is correct?',
             promptText:
                 'One of the main reasons is that public transport saves time.',
-            promptDetailTr: 'Cumleyi parcalara ayirarak oku.',
+            promptDetailTr: 'Cümleyi parcalara ayirarak oku.',
             promptDetailEn: 'Read it in chunks, not as one block.',
             options: const [
               _LessonOptionData(
@@ -4698,29 +4698,29 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                       'Ana nedenlerden biri toplu tasimanin zaman kazandirmasidir.'),
               _LessonOptionData(
                   id: 'transport_wrong_1',
-                  labelTr: 'Toplu tasima cok pahali olabilir.',
-                  labelEn: 'Toplu tasima cok pahali olabilir.'),
+                  labelTr: 'Toplu taşıma çok pahalı olabilir.',
+                  labelEn: 'Toplu taşıma çok pahalı olabilir.'),
               _LessonOptionData(
                   id: 'transport_wrong_2',
-                  labelTr: 'Sehirde trafik her gun artiyor.',
-                  labelEn: 'Sehirde trafik her gun artiyor.'),
+                  labelTr: 'Sehirde trafik her gün artiyor.',
+                  labelEn: 'Sehirde trafik her gün artiyor.'),
             ],
             correctOptionId: 'transport_correct',
             successTitleTr: 'Anlam tamam',
             successTitleEn: 'Meaning complete',
-            successDetailTr: 'Simdi ayni dili sen uret.',
+            successDetailTr: 'Şimdi ayni dili sen uret.',
             successDetailEn: 'Now produce the same language yourself.',
           ),
           _LessonTaskData(
             id: 'ielts_speak_1',
             type: _LessonTaskType.speakRepeat,
-            titleTr: 'Konus ve puan al',
+            titleTr: 'Konuş ve puan al',
             titleEn: 'Speak and score',
             subtitleTr: 'IELTS speaking ritmiyle tekrar et.',
             subtitleEn: 'Repeat it with IELTS speaking rhythm.',
-            coachTr: 'Cumleyi iki ritim duragiyla soyle.',
+            coachTr: 'Cümleyi iki ritim duragiyla söyle.',
             coachEn: 'Say it with two clear stress points.',
-            questionTr: 'Asagidaki cumleyi sesli tekrar et.',
+            questionTr: 'Asagidaki cümleyi sesli tekrar et.',
             questionEn: 'Repeat the sentence out loud.',
             promptText:
                 'In my opinion, learning a language opens more opportunities.',
@@ -4737,13 +4737,13 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           _LessonTaskData(
             id: 'ielts_speak_2',
             type: _LessonTaskType.speakRepeat,
-            titleTr: 'Son speaking gorevi',
+            titleTr: 'Son speaking görevi',
             titleEn: 'Final speaking task',
-            subtitleTr: 'Gunluk speaking turunu bitir.',
+            subtitleTr: 'Günlük speaking turunu bitir.',
             subtitleEn: 'Finish the daily speaking round.',
-            coachTr: 'Son cumleyi net kapat.',
+            coachTr: 'Son cümleyi net kapat.',
             coachEn: 'Close the final sentence cleanly.',
-            questionTr: 'Bu cumleyi sesli soyle.',
+            questionTr: 'Bu cümleyi sesli söyle.',
             questionEn: 'Say this sentence out loud.',
             promptText: 'To sum up, I believe this change would be beneficial.',
             promptDetailTr: 'To sum up kismini yutma, net cikar.',
@@ -4751,9 +4751,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
             targetSpeech:
                 'To sum up, I believe this change would be beneficial.',
             minimumSpeakingScore: 48,
-            successTitleTr: 'Gunluk IELTS dersi bitti',
+            successTitleTr: 'Günlük IELTS dersi bitti',
             successTitleEn: 'IELTS lesson complete',
-            successDetailTr: 'Gunluk speaking ritmini korudun.',
+            successDetailTr: 'Günlük speaking ritmini korudun.',
             successDetailEn: 'You kept your daily speaking rhythm.',
           ),
         ];
@@ -4762,16 +4762,16 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           _LessonTaskData(
             id: 'daily_listen_word',
             type: _LessonTaskType.listenChoice,
-            titleTr: 'Dinle ve sec',
+            titleTr: 'Dinle ve seç',
             titleEn: 'Listen and choose',
-            subtitleTr: 'Kelimeyi duy, Turkcesini sec.',
+            subtitleTr: 'Kelimeyi duy, Türkçesini seç.',
             subtitleEn: 'Hear the word and pick the meaning.',
-            coachTr: 'Ses oynayacak. Dogru Turkce karsiligi alttan sec.',
+            coachTr: 'Ses oynayacak. Doğru Türkçe karşılığı alttan seç.',
             coachEn: 'The audio will play. Pick the correct meaning below.',
-            questionTr: 'Bu kelimenin Turkcesi hangisi?',
+            questionTr: 'Bu kelimenin Türkçesi hangisi?',
             questionEn: 'Which Turkish meaning is correct?',
             promptText: 'coffee',
-            promptDetailTr: 'Sesi dinle ve dogru anlami sec.',
+            promptDetailTr: 'Sesi dinle ve doğru anlamı seç.',
             promptDetailEn: 'Listen and select the correct meaning.',
             options: const [
               _LessonOptionData(
@@ -4782,7 +4782,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               _LessonOptionData(id: 'tea', labelTr: 'cay', labelEn: 'tea'),
             ],
             correctOptionId: 'coffee',
-            successTitleTr: 'Dogru cevap',
+            successTitleTr: 'Doğru cevap',
             successTitleEn: 'Correct answer',
             successDetailTr: 'Coffee = kahve.',
             successDetailEn: 'Coffee = kahve.',
@@ -4790,17 +4790,17 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           _LessonTaskData(
             id: 'daily_listen_sentence',
             type: _LessonTaskType.listenChoice,
-            titleTr: 'Cumleyi dinle',
+            titleTr: 'Cümleyi dinle',
             titleEn: 'Listen to the sentence',
-            subtitleTr: 'Cumleyi duy ve Turkce anlamini sec.',
+            subtitleTr: 'Cümleyi duy ve Türkçe anlamını seç.',
             subtitleEn: 'Hear the sentence and choose its Turkish meaning.',
-            coachTr: 'Bu adimda cumleyi dinleyip tek secim yapacaksin.',
+            coachTr: 'Bu adımda cümleyi dinleyip tek seçim yapacaksın.',
             coachEn:
                 'In this step you will listen to the sentence and make one choice.',
-            questionTr: 'Bu cumlenin Turkcesi hangisi?',
+            questionTr: 'Bu cümlenin Türkçesi hangisi?',
             questionEn: 'Which Turkish meaning is correct?',
             promptText: 'I would like a coffee, please.',
-            promptDetailTr: 'Sesli cumleyi dinle ve anlamini sec.',
+            promptDetailTr: 'Sesli cümleyi dinle ve anlamını seç.',
             promptDetailEn:
                 'Listen to the spoken sentence and choose the meaning.',
             options: const [
@@ -4818,24 +4818,24 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                   labelEn: 'Kahvemi hemen bitirdim.'),
             ],
             correctOptionId: 'coffee_sentence_correct',
-            successTitleTr: 'Cumleyi dogru anladin',
+            successTitleTr: 'Cümleyi doğru anladın',
             successTitleEn: 'You understood the sentence',
-            successDetailTr: 'Simdi kelimeyi gorselle bagla.',
+            successDetailTr: 'Şimdi kelimeyi gorselle bagla.',
             successDetailEn: 'Now connect the word to a visual.',
           ),
           _LessonTaskData(
             id: 'daily_picture',
             type: _LessonTaskType.pictureChoice,
-            titleTr: 'Resmi sec',
+            titleTr: 'Resmi seç',
             titleEn: 'Choose the image',
             subtitleTr: 'Kelimeye uygun resmi bul.',
             subtitleEn: 'Find the image that matches the word.',
-            coachTr: 'Yaziyi oku ve dogru nesneyi sec.',
+            coachTr: 'Yazıyı oku ve doğru nesneyi seç.',
             coachEn: 'Read the word and choose the right object.',
             questionTr: 'Hangisi "coffee"?',
             questionEn: 'Which one is "coffee"?',
             promptText: 'coffee',
-            promptDetailTr: 'Dogru gorseli sec.',
+            promptDetailTr: 'Doğru görseli seç.',
             promptDetailEn: 'Pick the matching visual.',
             options: const [
               _LessonOptionData(
@@ -4860,25 +4860,25 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                   icon: Icons.local_drink_rounded),
             ],
             correctOptionId: 'coffee_icon',
-            successTitleTr: 'Gorsel dogru',
+            successTitleTr: 'Görsel doğru',
             successTitleEn: 'Visual selected',
-            successDetailTr: 'Simdi yaziyi okuyup anlamini sec.',
+            successDetailTr: 'Şimdi yazıyı okuyup anlamını seç.',
             successDetailEn: 'Now read the text and pick the meaning.',
           ),
           _LessonTaskData(
             id: 'daily_text',
             type: _LessonTaskType.textChoice,
-            titleTr: 'Yaziyi anla',
+            titleTr: 'Yazıyı anla',
             titleEn: 'Understand the text',
-            subtitleTr: 'Ingilizce cumleyi oku ve Turkcesini sec.',
+            subtitleTr: 'İngilizce cümleyi oku ve Türkçesini seç.',
             subtitleEn:
                 'Read the English sentence and choose its Turkish meaning.',
-            coachTr: 'Bu adimda ses yok. Sadece oku ve sec.',
+            coachTr: 'Bu adımda ses yok. Sadece oku ve seç.',
             coachEn: 'There is no audio in this step. Just read and choose.',
-            questionTr: 'Bu cumlenin anlami hangisi?',
+            questionTr: 'Bu cümlenin anlamı hangisi?',
             questionEn: 'Which meaning is correct?',
             promptText: 'Where is the train station?',
-            promptDetailTr: 'Cumleyi oku ve en yakin anlami sec.',
+            promptDetailTr: 'Cümleyi oku ve en yakın anlamı seç.',
             promptDetailEn: 'Read the sentence and choose the closest meaning.',
             options: const [
               _LessonOptionData(
@@ -4895,51 +4895,51 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                   labelEn: 'Tren ne zaman geliyor?'),
             ],
             correctOptionId: 'station_correct',
-            successTitleTr: 'Metin anlami dogru',
+            successTitleTr: 'Metin anlamı doğru',
             successTitleEn: 'Text meaning correct',
-            successDetailTr: 'Simdi sirada konusma gorevi var.',
+            successDetailTr: 'Şimdi sırada konuşma görevi var.',
             successDetailEn: 'Now it is time for the speaking task.',
           ),
           _LessonTaskData(
             id: 'daily_speak_1',
             type: _LessonTaskType.speakRepeat,
-            titleTr: 'Konus ve puan al',
+            titleTr: 'Konuş ve puan al',
             titleEn: 'Speak and score',
-            subtitleTr: 'Cumleyi sesli tekrar et, puanini gor.',
+            subtitleTr: 'Cümleyi sesli tekrar et, puanini gor.',
             subtitleEn: 'Repeat the sentence aloud and see your score.',
-            coachTr: 'Mikrofona bas. Cumleyi net bir ritimle soyle.',
+            coachTr: 'Mikrofona bas. Cümleyi net bir ritimle söyle.',
             coachEn: 'Tap the mic. Say the sentence with clean rhythm.',
-            questionTr: 'Bu cumleyi sesli tekrar et.',
+            questionTr: 'Bu cümleyi sesli tekrar et.',
             questionEn: 'Repeat this sentence out loud.',
             promptText: 'Could I have a coffee, please?',
-            promptDetailTr: 'Kisa duraklar kullan. Son kelimeyi yutma.',
+            promptDetailTr: 'Kısa duraklar kullan. Son kelimeyi yutma.',
             promptDetailEn: 'Use small pauses. Do not swallow the last word.',
             targetSpeech: 'Could I have a coffee, please?',
             minimumSpeakingScore: 44,
             successTitleTr: 'Speaking skoru olustu',
             successTitleEn: 'Speaking score created',
-            successDetailTr: 'Bir speaking gorevi daha kaldi.',
+            successDetailTr: 'Bir speaking görevi daha kaldi.',
             successDetailEn: 'One more speaking task remains.',
           ),
           _LessonTaskData(
             id: 'daily_speak_2',
             type: _LessonTaskType.speakRepeat,
-            titleTr: 'Son speaking gorevi',
+            titleTr: 'Son speaking görevi',
             titleEn: 'Final speaking task',
-            subtitleTr: 'Son cumleyi soyle ve dersi bitir.',
+            subtitleTr: 'Son cümleyi söyle ve dersi bitir.',
             subtitleEn: 'Say the final sentence and finish the lesson.',
-            coachTr: 'Son gorevdesin. Cumleyi net kapat.',
+            coachTr: 'Son gorevdesin. Cümleyi net kapat.',
             coachEn: 'You are on the final task. Close the sentence clearly.',
-            questionTr: 'Bu cumleyi sesli soyle.',
+            questionTr: 'Bu cümleyi sesli söyle.',
             questionEn: 'Say this sentence out loud.',
             promptText: 'I am looking for the train station.',
             promptDetailTr: 'Looking ve station kelimelerini net cikar.',
             promptDetailEn: 'Keep the words looking and station clear.',
             targetSpeech: 'I am looking for the train station.',
             minimumSpeakingScore: 46,
-            successTitleTr: 'Gunluk ders tamamlandi',
+            successTitleTr: 'Günlük ders tamamlandı',
             successTitleEn: 'Daily lesson complete',
-            successDetailTr: 'Bugunku gorevleri temiz kapattin.',
+            successDetailTr: 'Bugünkü görevleri temiz kapattın.',
             successDetailEn: 'You completed today\'s lesson cleanly.',
           ),
         ];
@@ -4960,7 +4960,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       _missionCompletionTitle = _copy('Tekrar dene', 'Try again');
       _missionCompletionDetail = (snackMessage ?? '').trim().isEmpty
           ? _copy(
-              'Bu secim dogru degil. Bir kez daha odaklan.',
+              'Bu seçim doğru değil. Bir kez daha odaklan.',
               'That choice is not correct. Focus and try again.',
             )
           : snackMessage!.trim();
@@ -5055,28 +5055,28 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       case _LessonTaskType.textChoice:
         return isTr ? 'Anlam' : 'Meaning';
       case _LessonTaskType.pictureChoice:
-        return isTr ? 'Gorsel' : 'Visual';
+        return isTr ? 'Görsel' : 'Visual';
       case _LessonTaskType.speakRepeat:
-        return isTr ? 'Konus' : 'Speak';
+        return isTr ? 'Konuş' : 'Speak';
     }
   }
 
   String _lessonMeasurementLabel(_LessonTaskData step, bool isTr) {
     switch (step.type) {
       case _LessonTaskType.listenChoice:
-        return isTr ? 'Dinleme olculuyor' : 'Listening is being measured';
+        return isTr ? 'Dinleme ölçülüyor' : 'Listening is being measured';
       case _LessonTaskType.textChoice:
-        return isTr ? 'Anlama olculuyor' : 'Comprehension is being measured';
+        return isTr ? 'Anlama ölçülüyor' : 'Comprehension is being measured';
       case _LessonTaskType.pictureChoice:
         return isTr
-            ? 'Kelime-gorsel eslesmesi olculuyor'
+            ? 'Kelime-görsel eşleşmesi ölçülüyor'
             : 'Word matching is being measured';
       case _LessonTaskType.speakRepeat:
         return _isFinalLessonStep(step)
             ? (isTr
                 ? 'Speaking skoru hazirlaniyor'
                 : 'Speaking score is being prepared')
-            : (isTr ? 'Telaffuz olculuyor' : 'Pronunciation is being measured');
+            : (isTr ? 'Telaffuz ölçülüyor' : 'Pronunciation is being measured');
     }
   }
 
@@ -5155,8 +5155,8 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                       _handleWrongMissionChoice(
                         selectedChoice: option.id,
                         snackMessage: isTr
-                            ? 'Bu secim dogru degil. Sesi bir kez daha dinle.'
-                            : 'That choice is not correct. Listen once more.',
+                            ? 'Bu seçim doğru değil. Sesi bir kez daha dinle.'
+                            : 'That choice is not correct. Listen önce more.',
                       );
                     },
                   ),
@@ -5255,7 +5255,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                             : Icons.volume_up_rounded,
                       ),
                       label:
-                          Text(isTr ? 'Cumleyi dinle' : 'Listen to sentence'),
+                          Text(isTr ? 'Cümleyi dinle' : 'Listen to sentence'),
                     ),
                   ],
                 ),
@@ -5282,7 +5282,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                       _handleWrongMissionChoice(
                         selectedChoice: option.id,
                         snackMessage: isTr
-                            ? 'Bu anlam degil. Cumleyi tekrar oku.'
+                            ? 'Bu anlam değil. Cümleyi tekrar oku.'
                             : 'That is not the right meaning. Read it again.',
                       );
                     },
@@ -5414,7 +5414,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                       _handleWrongMissionChoice(
                         selectedChoice: option.id,
                         snackMessage: isTr
-                            ? 'Bu gorsel dogru degil. Yaziyi tekrar oku.'
+                            ? 'Bu görsel doğru değil. Yazıyı tekrar oku.'
                             : 'That visual is not correct. Read the word again.',
                       );
                     },
@@ -5518,7 +5518,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                 : Icons.volume_up_rounded,
                           ),
                           label: Text(
-                              isTr ? 'Cumleyi dinle' : 'Listen to sentence'),
+                              isTr ? 'Cümleyi dinle' : 'Listen to sentence'),
                         ),
                         FilledButton.icon(
                           onPressed: () async {
@@ -5558,7 +5558,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                   content: Text(
                                     isTr
                                         ? 'Skorun $score/100. Bir kez daha dene.'
-                                        : 'Your score is $score/100. Try once more.',
+                                        : 'Your score is $score/100. Try önce more.',
                                   ),
                                 ),
                               );
@@ -5582,7 +5582,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                           label: Text(
                             _recordingCompare
                                 ? (isTr ? 'Konusmayi bitir' : 'Finish speaking')
-                                : (isTr ? 'Mikrofonu ac' : 'Open microphone'),
+                                : (isTr ? 'Mikrofonu aç' : 'Open microphone'),
                           ),
                         ),
                       ],
@@ -5674,7 +5674,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
   }) {
     return [
       (
-        title: isTr ? 'Canli feedback' : 'Live feedback',
+        title: isTr ? 'Canlı feedback' : 'Live feedback',
         subtitle: isTr
             ? 'Son speaking denemenden net geri bildirim al.'
             : 'Get clear feedback from your latest speaking take.',
@@ -5682,34 +5682,34 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           context,
           isTr: isTr,
           question: isTr
-              ? 'Bugun en cok hangi alana odaklanacaksin?'
+              ? 'Bugün en çok hangi alana odaklanacaksın?'
               : 'Which area will you focus on today?',
           helper: isTr
-              ? 'Bir alan sec. Bu ilk gorevi temiz kapatir.'
+              ? 'Bir alan seç. Bu ilk görevi temiz kapatir.'
               : 'Pick one area. This clears your first mission.',
           prompt: spot.focusLine,
           options: proofPreview
               .map((metric) => (id: metric.label, label: metric.label))
               .toList(),
           correctOptionId: proofPreview.isEmpty ? '' : proofPreview.first.label,
-          successTitle: isTr ? 'Odak alanin hazir' : 'Focus area locked',
+          successTitle: isTr ? 'Odak alanın hazır' : 'Focus area locked',
           successDetail: isTr
-              ? 'Simdi bugunun gorevine gecebilirsin.'
+              ? 'Şimdi bugünün görevine gecebilirsin.'
               : 'Now you can move to today’s mission.',
         ),
       ),
       (
-        title: isTr ? 'Bugunun akisi' : 'Today flow',
+        title: isTr ? 'Bugünün akışı' : 'Today flow',
         subtitle:
-            isTr ? 'Gorevleri sirayla kapat.' : 'Close the tasks one by one.',
+            isTr ? 'Görevleri sırayla kapat.' : 'Close the tasks one by one.',
         section: _buildMatchMission(
           context,
           isTr: isTr,
           question: isTr
-              ? 'Gorevi dogru sonucuyla eslestir.'
+              ? 'Görevi doğru sonucuyla eşleştir.'
               : 'Match the task with its outcome.',
           helper: isTr
-              ? 'Soldan bir gorev, sagdan dogru sonucu sec.'
+              ? 'Soldan bir görev, sagdan doğru sonucu seç.'
               : 'Pick one task on the left, then its result on the right.',
           leftOptions: [
             (id: 'placement', label: isTr ? 'Seviye Testi' : 'Placement test'),
@@ -5721,16 +5721,16 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
             (id: 'review', label: isTr ? 'Tekrar et' : 'Repeat'),
             (id: 'pack', label: isTr ? 'Pratik yap' : 'Practice'),
           ],
-          successTitle: isTr ? 'Bugunun gorevi secildi' : 'Today task selected',
+          successTitle: isTr ? 'Bugünün görevi seçildi' : 'Today task selected',
           successDetail: isTr
-              ? 'Sira speaking modunu secmeye geldi.'
+              ? 'Sıra speaking modunu seçmeye geldi.'
               : 'Next up: choose your speaking mode.',
         ),
       ),
       (
         title: isTr ? 'Pratik merkezi' : 'Practice hub',
         subtitle: isTr
-            ? 'Mod sec, mini paket ac, tekrar et.'
+            ? 'Mod seç, mini paket aç, tekrar et.'
             : 'Pick a mode, open a pack, and review.',
         section: _buildSingleChoiceMission(
           context,
@@ -5740,7 +5740,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               ? 'Hangi speaking moduyla devam edeceksin?'
               : 'Which speaking mode will you use next?',
           helper: isTr
-              ? 'Bir mod sec. Sonra recording gorevine gececeksin.'
+              ? 'Bir mod seç. Sonra recording görevine geçeceksin.'
               : 'Pick one mode. Then you will move to the recording mission.',
           options: _practiceModes
               .map((mode) => (
@@ -5748,9 +5748,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                     label: isTr ? mode.titleTr : mode.titleEn,
                   ))
               .toList(),
-          successTitle: isTr ? 'Mod secildi' : 'Mode selected',
+          successTitle: isTr ? 'Mod seçildi' : 'Mode selected',
           successDetail: isTr
-              ? 'Simdi tek bir recording denemesi yap.'
+              ? 'Şimdi tek bir recording denemesi yap.'
               : 'Now complete one recording attempt.',
           onSelect: (id) => _setPracticeMode(id),
         ),
@@ -5758,35 +5758,35 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
       (
         title: 'Record + Compare',
         subtitle: isTr
-            ? 'Kayit al ve onceki denemenle karsilastir.'
+            ? 'Kayıt al ve önceki denemenle karsilastir.'
             : 'Record and compare with your previous take.',
         section: _buildSpeakMission(
           context,
           isTr: isTr,
           question: isTr
-              ? 'Bir speaking denemesi tamamlamaya hazir misin?'
+              ? 'Bir speaking denemesi tamamlamaya hazır misin?'
               : 'Are you ready to complete one speaking attempt?',
           helper: isTr
-              ? 'Bu adimda tek bir recording aksiyonu var.'
+              ? 'Bu adımda tek bir recording aksiyonu var.'
               : 'This step has one recording action only.',
-          actionLabel: isTr ? 'Kaydi tamamla' : 'Complete recording',
-          successTitle: isTr ? 'Kayit tamamlandi' : 'Recording complete',
+          actionLabel: isTr ? 'Kaydı tamamla' : 'Complete recording',
+          successTitle: isTr ? 'Kayıt tamamlandı' : 'Recording complete',
           successDetail: isTr
-              ? 'Guzel. Simdi mini challenge sec.'
+              ? 'Guzel. Şimdi mini challenge seç.'
               : 'Good. Next, choose a mini challenge.',
         ),
       ),
       (
         title: isTr ? 'Mini challenge' : 'Mini challenge',
         subtitle: isTr
-            ? 'Kisa speaking gorevleriyle ritmi koru.'
+            ? 'Kısa speaking gorevleriyle ritmi koru.'
             : 'Keep the rhythm with short speaking drills.',
         section: _buildPictureSelectMission(
           context,
           isTr: isTr,
-          question: isTr ? 'Dogru resmi sec.' : 'Pick the correct image.',
+          question: isTr ? 'Doğru resmi seç.' : 'Pick the correct image.',
           helper: isTr
-              ? 'Konusma sprintine en yakin gorev kartini bul.'
+              ? 'Konuşma sprintine en yakın görev kartını bul.'
               : 'Find the card that best matches a speaking sprint.',
           options: _microChallenges
               .take(3)
@@ -5797,26 +5797,26 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               .toList(),
           correctOptionId:
               _microChallenges.isEmpty ? '' : _microChallenges.first.id,
-          successTitle: isTr ? 'Challenge secildi' : 'Challenge selected',
+          successTitle: isTr ? 'Challenge seçildi' : 'Challenge selected',
           successDetail: isTr
-              ? 'Sira dogru tutoru secmeye geldi.'
+              ? 'Sıra doğru tutoru seçmeye geldi.'
               : 'Now it is time to choose the right tutor.',
         ),
       ),
       (
         title: isTr ? 'Ritim ve tutorler' : 'Rhythm and tutors',
         subtitle: isTr
-            ? 'Ilerlemeni gor ve dogru hocaya gec.'
+            ? 'Ilerlemeni gor ve doğru hocaya geç.'
             : 'See your progress and move to the right tutor.',
         section: _buildSingleChoiceMission(
           context,
           isTr: isTr,
           style: _MissionChoiceStyle.tutorCards,
           question: isTr
-              ? 'Bugun sana en uygun hocayi sec.'
+              ? 'Bugün sana en uygun hocayı seç.'
               : 'Pick the tutor that fits you today.',
           helper: isTr
-              ? 'Bir tutor sec. Sonra rapor adimina gececeksin.'
+              ? 'Bir tutor seç. Sonra rapor adımına geçeceksin.'
               : 'Choose one tutor. Then move to your report.',
           options: matchedPreview
               .map((instructor) => (
@@ -5824,39 +5824,39 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                     label: instructor.name,
                   ))
               .toList(),
-          successTitle: isTr ? 'Tutor secildi' : 'Tutor selected',
+          successTitle: isTr ? 'Tutor seçildi' : 'Tutor selected',
           successDetail: isTr
-              ? 'Ilerlemeni kisa raporda goreceksin.'
+              ? 'Ilerlemeni kısa raporda göreceksin.'
               : 'You will see your progress in a short report.',
         ),
       ),
       (
-        title: isTr ? 'Haftalik rapor' : 'Weekly report',
+        title: isTr ? 'Haftalık rapor' : 'Weekly report',
         subtitle: isTr
-            ? 'Speaking performansini haftalik gor.'
+            ? 'Speaking performansini haftalık gor.'
             : 'See your speaking performance weekly.',
         section: _buildSingleChoiceMission(
           context,
           isTr: isTr,
           style: _MissionChoiceStyle.visualCards,
           question: isTr
-              ? 'Bu hafta en guclu alanin hangisi?'
+              ? 'Bu hafta en güçlü alanın hangisi?'
               : 'What was your strongest area this week?',
           helper: isTr
-              ? 'Bir alan sec. Sonra son araca gec.'
+              ? 'Bir alan seç. Sonra son araca geç.'
               : 'Choose one strength. Then move to the final tool step.',
           options: _proofMetrics
               .take(3)
               .map((metric) => (id: metric.label, label: metric.label))
               .toList(),
-          successTitle: isTr ? 'Rapor tamamlandi' : 'Report complete',
+          successTitle: isTr ? 'Rapor tamamlandı' : 'Report complete',
           successDetail: isTr
-              ? 'Son adimda aracini sec.'
+              ? 'Son adımda aracını seç.'
               : 'Choose your tool in the final step.',
         ),
       ),
       (
-        title: isTr ? 'Diger araclar' : 'More tools',
+        title: isTr ? 'Diğer araclar' : 'More tools',
         subtitle: isTr
             ? 'Kayitlar, favoriler ve reminderlar.'
             : 'Saved items, favorites, and reminders.',
@@ -5865,10 +5865,10 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
           isTr: isTr,
           style: _MissionChoiceStyle.toolPills,
           question: isTr
-              ? 'Bugun hangi araci once kullanacaksin?'
+              ? 'Bugün hangi aracı önce kullanacaksin?'
               : 'Which tool will you use first today?',
           helper: isTr
-              ? 'Bir araci sec ve gunluk akisi bitir.'
+              ? 'Bir aracı seç ve günlük akışı bitir.'
               : 'Pick one tool and finish the daily flow.',
           options: [
             (id: 'phrasebook', label: 'Phrasebook'),
@@ -5881,9 +5881,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               label: isTr ? 'Hatirlaticilar' : 'Reminders',
             ),
           ],
-          successTitle: isTr ? 'Gunluk akisi bitirdin' : 'Daily flow complete',
+          successTitle: isTr ? 'Günlük akışı bitirdin' : 'Daily flow complete',
           successDetail: isTr
-              ? 'Tum gorevler temiz kapandi.'
+              ? 'Tüm görevler temiz kapandi.'
               : 'All missions were completed cleanly.',
         ),
       ),
@@ -6424,7 +6424,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
               const SizedBox(height: 16),
               Text(
                 isTr
-                    ? 'Bu adimda tek bir aksiyon var.'
+                    ? 'Bu adımda tek bir aksiyon var.'
                     : 'This mission has one clear action.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -6733,7 +6733,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                     padding: const EdgeInsets.fromLTRB(18, 14, 18, 0),
                     child: _MissionPromptCard(
                       stepLabel:
-                          '${isTr ? 'Gorev' : 'Mission'} ${safeLessonIndex + 1}',
+                          '${isTr ? 'Görev' : 'Mission'} ${safeLessonIndex + 1}',
                       title: activeLessonStep.title(isTr),
                       subtitle: activeLessonStep.subtitle(isTr),
                       coachMessage: activeLessonStep.coach(isTr),
@@ -6847,7 +6847,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                       (isTr ? 'Harika' : 'Nice work'),
                                   detail: _missionCompletionDetail ??
                                       (isTr
-                                          ? 'Gorevi tamamladin.'
+                                          ? 'Görevi tamamladın.'
                                           : 'You completed the mission.'),
                                 ),
                               ),
@@ -6868,7 +6868,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                             icon: lessonIcon,
                             label: _lessonOutroVisible
                                 ? (isTr
-                                    ? 'Gorev tamamlandi'
+                                    ? 'Görev tamamlandı'
                                     : 'Mission complete')
                                 : lessonSceneLabel,
                             title: _lessonOutroVisible
@@ -6878,7 +6878,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                             detail: _lessonOutroVisible
                                 ? (_missionCompletionDetail ??
                                     (isTr
-                                        ? 'Siradaki goreve hazirsin.'
+                                        ? 'Sıradaki goreve hazirsin.'
                                         : 'You are ready for the next mission.'))
                                 : activeLessonStep.coach(isTr),
                             mood: _lessonOutroVisible
@@ -7086,14 +7086,14 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         const SizedBox(height: 18),
                         _SectionCard(
                           title:
-                              isTr ? '7 gunluk challenge' : '7-day challenge',
+                              isTr ? '7 günlük challenge' : '7-day challenge',
                           subtitle: isTr
-                              ? 'Her gun 1 speaking gorevi. Sonunda ozet + tutor onerisi.'
+                              ? 'Her gün 1 speaking görevi. Sonunda özet + tutor önerisi.'
                               : 'One speaking task per day. End with a summary and tutor recommendation.',
                           action: !_challengeStarted
                               ? TextButton(
                                   onPressed: _startChallenge,
-                                  child: Text(isTr ? 'Baslat' : 'Start'),
+                                  child: Text(isTr ? 'Başlat' : 'Start'),
                                 )
                               : null,
                           child: Column(
@@ -7102,16 +7102,16 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                               Text(
                                 !_challengeStarted
                                     ? _copy(
-                                        '7 gun boyunca mini paket + tekrar + tutor inceleme ritmi kur.',
+                                        '7 gün boyunca mini paket + tekrar + tutor inceleme ritmi kur.',
                                         'Build a 7-day rhythm with mini packs, review, and tutor discovery.',
                                       )
                                     : _challengeCompleted
                                         ? _copy(
-                                            'Challenge tamamlandi. Simdi seviyeni gorup uygun hocaya gec.',
+                                            'Challenge tamamlandı. Şimdi seviyeni görüp uygun hocaya geç.',
                                             'Challenge complete. Now review your level and move to the right tutor.',
                                           )
                                         : _copy(
-                                            'Gun $_challengeProgressDays / 7 aktif. Ritmi bozma.',
+                                            'Gün $_challengeProgressDays / 7 aktif. Ritmi bozma.',
                                             'Day $_challengeProgressDays / 7 is active. Keep the rhythm.',
                                           ),
                                 style: Theme.of(context).textTheme.bodyLarge,
@@ -7136,16 +7136,16 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                           ? '$_challengeProgressDays/7'
                                           : '0/7',
                                       label: _copy(
-                                          'Challenge gunu', 'Challenge day'),
+                                          'Challenge günü', 'Challenge day'),
                                     ),
                                   ),
                                   _ProofPill(
                                     metric: ProofMetric(
                                       value: _challengeCompleted
-                                          ? _copy('Hazir', 'Ready')
+                                          ? _copy('Hazır', 'Ready')
                                           : _copy('Devam', 'Live'),
                                       label: _copy(
-                                          'Seviye ozeti', 'Level summary'),
+                                          'Seviye özeti', 'Level summary'),
                                     ),
                                   ),
                                 ],
@@ -7160,9 +7160,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                           : _startChallenge,
                                       child: Text(
                                         !_challengeStarted
-                                            ? _copy('Challenge baslat',
+                                            ? _copy('Challenge başlat',
                                                 'Start challenge')
-                                            : _copy('Seviyeni gor',
+                                            : _copy('Seviyeni gör',
                                                 'See your level'),
                                       ),
                                     ),
@@ -7172,7 +7172,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                     child: OutlinedButton(
                                       onPressed: _openTutors,
                                       child: Text(
-                                        isTr ? 'Tutor onerisi' : 'Tutor picks',
+                                        isTr ? 'Tutor önerisi' : 'Tutor picks',
                                       ),
                                     ),
                                   ),
@@ -7183,9 +7183,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         ),
                         const SizedBox(height: 18),
                         _SectionCard(
-                          title: isTr ? 'Canli sinyaller' : 'Live momentum',
+                          title: isTr ? 'Canlı sinyaller' : 'Live momentum',
                           subtitle: isTr
-                              ? 'Uygulamadaki gercek akistan gelen sinyaller.'
+                              ? 'Uygulamadaki gerçek akıştan gelen sinyaller.'
                               : 'Signals that come from the real flow inside the app.',
                           child: Column(
                             children: [
@@ -7226,7 +7226,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                     const SizedBox(height: 8),
                                     Text(
                                       _copy(
-                                        'Bugun $_availableTodayCount acik tutor slotu var. $_topGoalLabel.',
+                                        'Bugün $_availableTodayCount açık tutor slotu var. $_topGoalLabel.',
                                         'There are $_availableTodayCount open tutor slots today. $_topGoalLabel.',
                                       ),
                                       style: Theme.of(context)
@@ -7241,36 +7241,36 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         ),
                         const SizedBox(height: 18),
                         _SectionCard(
-                          title: isTr ? 'Hemen basla' : 'Start now',
+                          title: isTr ? 'Hemen başla' : 'Start now',
                           subtitle: isTr
-                              ? 'Reklamdan gelen yeni kullanici icin en hizli deger akisi burada.'
+                              ? 'Reklamdan gelen yeni kullanıcı için en hızlı değer akışı burada.'
                               : 'This is the fastest value loop for a new user coming from an ad.',
                           child: Column(
                             children: [
                               _QuickActionCard(
                                 title: isTr
-                                    ? '90 saniyede baslangic noktani sec'
+                                    ? '90 saniyede başlangıç noktani seç'
                                     : 'Pick your starting point in 90 seconds',
                                 detail: isTr
-                                    ? 'Seviye testi ile hemen basla, sonra bugunun mini paketine gec.'
+                                    ? 'Seviye testi ile hemen başla, sonra bugünün mini paketine geç.'
                                     : 'Start with the level test, then move into today\'s mini pack.',
-                                badge: isTr ? 'Ucretsiz' : 'Free',
+                                badge: isTr ? 'Ücretsiz' : 'Free',
                                 icon: Icons.rocket_launch_rounded,
                                 accentColor: AppColors.brand,
                                 ctaLabel: isTr
-                                    ? 'Seviye testini ac'
+                                    ? 'Seviye testini aç'
                                     : 'Open level test',
                                 onTap: _openPlacement,
                               ),
                               const SizedBox(height: 12),
                               _QuickActionCard(
                                 title: isTr
-                                    ? 'Ilk canli adimi kilitle'
+                                    ? 'İlk canlı adımı kilitle'
                                     : 'Lock the first live step',
                                 detail: isTr
-                                    ? 'Ucretsiz deneme ile hocaya gecmeden once ritmi yakala.'
-                                    : 'Use the free trial to connect to a tutor once the rhythm is set.',
-                                badge: isTr ? 'Canli gecis' : 'Live next step',
+                                    ? 'Ücretsiz deneme ile hocaya gecmeden önce ritmi yakala.'
+                                    : 'Use the free trial to connect to a tutor önce the rhythm is set.',
+                                badge: isTr ? 'Canlı geçiş' : 'Live next step',
                                 icon: Icons.headset_mic_rounded,
                                 accentColor: const Color(0xFF0F766E),
                                 ctaLabel: _trialCtaLabel,
@@ -7283,7 +7283,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         _SectionCard(
                           title: isTr ? 'Pratik modlari' : 'Practice modes',
                           subtitle: isTr
-                              ? 'Rakip uygulamalardaki en guclu pattern: ayni hedefe farkli calisma modu.'
+                              ? 'Rakip uygulamalardaki en güçlü pattern: ayni hedefe farkli çalışma modu.'
                               : 'The strongest competitor pattern: different training modes for the same goal.',
                           child: Column(
                             children: _practiceModes.map((mode) {
@@ -7300,7 +7300,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                   accentColor: mode.accentColor,
                                   ctaLabel: selected
                                       ? _copy('Aktif', 'Active')
-                                      : _copy('Bu modu sec', 'Use this mode'),
+                                      : _copy('Bu modu seç', 'Use this mode'),
                                   onTap: () => _setPracticeMode(mode.id),
                                 ),
                               );
@@ -7309,9 +7309,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         ),
                         const SizedBox(height: 18),
                         _SectionCard(
-                          title: isTr ? 'Bugunun plan\'i' : 'Today plan',
+                          title: isTr ? 'Bugünün plan\'i' : 'Today plan',
                           subtitle: isTr
-                              ? 'Test, mini paket ve tekrar ile kisa ama net bir gunluk akis.'
+                              ? 'Test, mini paket ve tekrar ile kısa ama net bir günlük akış.'
                               : 'A short but clean daily loop: test, mini pack, and review.',
                           child: Column(
                             children: _todayTasks.map((task) {
@@ -7345,7 +7345,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         _SectionCard(
                           title: isTr ? 'Bu haftanin yolu' : 'This week path',
                           subtitle: isTr
-                              ? 'Calis, tekrar et, sonra canli derse baglan.'
+                              ? 'Çalış, tekrar et, sonra canlı derse bağlan.'
                               : 'Study, review, then connect a live lesson.',
                           child: Column(
                             children: _pathSteps
@@ -7357,7 +7357,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         _SectionCard(
                           title: isTr ? 'Mini paketler' : 'Mini packs',
                           subtitle: isTr
-                              ? 'Gercek hayat kaliplari ve mini diyaloglarla ilerle.'
+                              ? 'Gerçek hayat kaliplari ve mini diyaloglarla ilerle.'
                               : 'Move through real-life phrase sets and short dialogues.',
                           child: SizedBox(
                             height: 198,
@@ -7387,10 +7387,10 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         _SectionCard(
                           title: isTr ? 'Tekrar destesi' : 'Review deck',
                           subtitle: isTr
-                              ? 'Kartlari ac, notu gor ve ihtiyacin olan cumleyi sec.'
+                              ? 'Kartları aç, notu gor ve ihtiyacın olan cümleyi seç.'
                               : 'Open the cards, scan the note, and keep the sentence you need.',
                           child: SizedBox(
-                            height: 184,
+                            height: 196,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               itemCount: reviews.length,
@@ -7418,7 +7418,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         _SectionCard(
                           title: 'Pronunciation spot',
                           subtitle: isTr
-                              ? 'Tek odakli ritim calismasi. Sahte skor yok, temiz pratik var.'
+                              ? 'Tek odaklı ritim çalışması. Sahte skor yok, temiz pratik var.'
                               : 'A single-focus rhythm drill. No fake score, just clean practice.',
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -7440,7 +7440,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                 icon:
                                     const Icon(Icons.multitrack_audio_rounded),
                                 label: Text(
-                                  _copy('Netlik drilline gec',
+                                  _copy('Netlik drilline geç',
                                       'Switch to clarity drill'),
                                 ),
                               ),
@@ -7507,9 +7507,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                             ),
                                             label: Text(
                                               _recordingCompare
-                                                  ? _copy('Kaydi bitir',
+                                                  ? _copy('Kaydı bitir',
                                                       'Finish recording')
-                                                  : _copy('Kaydi baslat',
+                                                  : _copy('Kaydı başlat',
                                                       'Start recording'),
                                             ),
                                           ),
@@ -7532,11 +7532,11 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                     Text(
                                       _recordingCompare
                                           ? _copy(
-                                              'Kayit aktif. Mikrofona yakin konus, ritmi sabit tut. Ses seviye cubugu anlik tepki veriyor.',
+                                              'Kayıt aktif. Mikrofona yakın konuş, ritmi sabit tut. Ses seviye çubuğu anlık tepki veriyor.',
                                               'Recording is active. Stay close to the mic and keep the rhythm steady. The level bar reacts live.',
                                             )
                                           : _copy(
-                                              'Gercek mikrofon kaydi alinir. Son kaydi oynatabilir, onceki denemeyle yan yana karsilastirabilirsin.',
+                                              'Gerçek mikrofon kaydı alinir. Son kaydı oynatabilir, önceki denemeyle yan yana karsilastirabilirsin.',
                                               'A real microphone capture is saved. You can replay the latest take and compare it side by side with the previous attempt.',
                                             ),
                                       style: Theme.of(context)
@@ -7584,7 +7584,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         _SectionCard(
                           title: isTr ? 'Streak takvimi' : 'Streak calendar',
                           subtitle: isTr
-                              ? 'Son 14 gundeki ritmini gor. Devam gunleri retention icin kritik.'
+                              ? 'Son 14 gündeki ritmini gor. Devam günleri retention için kritik.'
                               : 'See your rhythm across the last 14 days. Consistency days matter for retention.',
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -7626,8 +7626,8 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                 ? 'Kaydedilen phrasebook'
                                 : 'Saved phrasebook',
                             subtitle: isTr
-                                ? 'Duolingo/Falou tipi hizli geri donus alani. Ihtiyacin olan ifadeyi tek yerde tut.'
-                                : 'A fast-return area inspired by Duolingo/Falou style phrase practice.',
+                                ? 'Hızlı geri dönüş alanı: ihtiyacın olan ifadeyi tek yerde tut.'
+                                : 'A fast-return area to keep the phrases you need in one place.',
                             child: Column(
                               children: _savedPhrases.map((phrase) {
                                 return ListTile(
@@ -7652,11 +7652,11 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                               ? 'Sana en uygun 3 hoca'
                               : '3 tutors that fit your goal',
                           subtitle: isTr
-                              ? 'Sahte AI degil. Hedef, uygunluk ve aktif profile gore secilen canli liste.'
+                              ? 'Sahte AI değil. Hedef, uygunluk ve aktif profile göre seçilen canlı liste.'
                               : 'Not fake AI. Picked from the live list based on goal, availability, and active profile data.',
                           action: TextButton(
                             onPressed: _openTutors,
-                            child: Text(isTr ? 'Tumunu ac' : 'Open all'),
+                            child: Text(isTr ? 'Tumunu aç' : 'Open all'),
                           ),
                           child: Column(
                             children: [
@@ -7671,7 +7671,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                   ),
                                   child: Text(
                                     isTr
-                                        ? 'Baglanti zayif. Uygunluk bilgisi onbellekten gosteriliyor. Bekleyen tekrar: $_pendingAvailabilityRetryCount'
+                                        ? 'Bağlantı zayıf. Uygunluk bilgisi onbellekten gösteriliyor. Bekleyen tekrar: $_pendingAvailabilityRetryCount'
                                         : 'Weak network. Availability is shown from cache. Pending retries: $_pendingAvailabilityRetryCount',
                                     style:
                                         Theme.of(context).textTheme.bodySmall,
@@ -7691,7 +7691,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                       availabilityLabel:
                                           _availabilityLabel(instructor),
                                       ctaLabel:
-                                          isTr ? 'Profili ac' : 'Open profile',
+                                          isTr ? 'Profili aç' : 'Open profile',
                                       isFavorite: _localState
                                           .favoriteInstructorIds
                                           .contains(instructor.id),
@@ -7711,7 +7711,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                           _SectionCard(
                             title: isTr ? 'Kaydedilen hocalar' : 'Saved tutors',
                             subtitle: isTr
-                                ? 'Kararsiz kaldigin profilleri burada tut.'
+                                ? 'Kararsiz kaldığın profilleri burada tut.'
                                 : 'Keep the profiles you want to revisit here.',
                             child: Column(
                               children: _favoriteTutors.map((instructor) {
@@ -7727,7 +7727,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                       tags: _matchReasons(instructor),
                                       availabilityLabel:
                                           _availabilityLabel(instructor),
-                                      ctaLabel: isTr ? 'Geri don' : 'Resume',
+                                      ctaLabel: isTr ? 'Geri dön' : 'Resume',
                                       isFavorite: true,
                                       onTap: () =>
                                           _openTutorProfile(instructor),
@@ -7742,9 +7742,9 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         ],
                         const SizedBox(height: 18),
                         _SectionCard(
-                          title: isTr ? 'Referral akisi' : 'Referral flow',
+                          title: isTr ? 'Referral akışı' : 'Referral flow',
                           subtitle: isTr
-                              ? 'Arkadas getir, ekstra speaking ve oncelik kazan.'
+                              ? 'Arkadaş getir, ekstra speaking ve öncelik kazan.'
                               : 'Bring a friend and unlock extra speaking plus priority.',
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -7798,7 +7798,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                               ),
                               const SizedBox(height: 14),
                               ...[
-                                _copy('1 ucretsiz mini speaking seansi',
+                                _copy('1 ücretsiz mini speaking seansi',
                                     '1 free mini speaking session'),
                                 _copy('Bonus materyal paketi',
                                     'Bonus material pack'),
@@ -7826,7 +7826,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         _SectionCard(
                           title: isTr ? 'Hatirlatici plani' : 'Reminder plan',
                           subtitle: isTr
-                              ? 'Gunluk 5 dakikalik gorev icin en uygun zamani sec.'
+                              ? 'Günlük 5 dakikalık görev için en uygun zamanı seç.'
                               : 'Choose the best time for the daily 5-minute task.',
                           child: Column(
                             children: [
@@ -7849,7 +7849,7 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                   ),
                                   subtitle: Text(
                                     isTr
-                                        ? 'Rutini bu zaman penceresine gore kur.'
+                                        ? 'Rutini bu zaman penceresine göre kur.'
                                         : 'Build the routine around this time window.',
                                   ),
                                   trailing: selected
@@ -7881,11 +7881,11 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                                     ),
                                     const SizedBox(height: 10),
                                     ...[
-                                      _copy('Gunluk gorev hazir',
+                                      _copy('Günlük görev hazır',
                                           'Daily task is ready'),
                                       _copy('Streak gidiyor',
                                           'Your streak is at risk'),
-                                      _copy('Bugun uygun tutor var',
+                                      _copy('Bugün uygun tutor var',
                                           'A tutor is available today'),
                                       _copy('Deneme dersi seni bekliyor',
                                           'Your trial lesson is waiting'),
@@ -7914,16 +7914,16 @@ class _SpeakCoachScreenState extends State<SpeakCoachScreen> {
                         ),
                         const SizedBox(height: 18),
                         _SectionCard(
-                          title: isTr ? 'Speaking gecmisi' : 'Speaking history',
+                          title: isTr ? 'Speaking geçmişi' : 'Speaking history',
                           subtitle: isTr
-                              ? 'Bugun ne actin, ne bitirdin, hangi hocayi inceledin.'
+                              ? 'Bugün ne actin, ne bitirdin, hangi hocayı inceledin.'
                               : 'See what you opened, completed, and reviewed today.',
                           child: Column(
                             children: _activityLog.isEmpty
                                 ? [
                                     Text(
                                       _copy(
-                                        'Ilk hareketini yaptiginda gecmis burada gorunecek.',
+                                        'İlk hareketini yaptığında geçmiş burada görünecek.',
                                         'Your first actions will appear here.',
                                       ),
                                       style: Theme.of(context)
@@ -8149,7 +8149,7 @@ class _HeroCard extends StatelessWidget {
               _LogoCoach(
                 size: 92,
                 bubbleText: isTr
-                    ? 'Bugun sadece bir sonraki adima odaklan.'
+                    ? 'Bugün sadece bir sonraki adima odaklan.'
                     : 'Focus only on the next step today.',
                 bubbleAccent: const Color(0xFF9FB3FF),
               ),
@@ -8262,11 +8262,11 @@ class _PlannerSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _SectionCard(
-      title: AppStrings.code == 'tr' ? 'Plan ozeti' : 'Plan summary',
+      title: AppStrings.code == 'tr' ? 'Plan özeti' : 'Plan summary',
       subtitle: scheduleDetail,
       action: TextButton(
         onPressed: () => onEdit(),
-        child: Text(AppStrings.code == 'tr' ? 'Duzenle' : 'Edit'),
+        child: Text(AppStrings.code == 'tr' ? 'Düzenle' : 'Edit'),
       ),
       child: Row(
         children: [
@@ -8403,7 +8403,7 @@ class _MissionStepperCard extends StatelessWidget {
                   ),
                   child: Text(
                     currentIndex >= totalSteps - 1
-                        ? (isTr ? 'Son adim' : 'Last step')
+                        ? (isTr ? 'Son adım' : 'Last step')
                         : (isTr ? 'Devam et' : 'Continue'),
                   ),
                 ),
@@ -9335,7 +9335,7 @@ class _FinalLessonRewardSceneState extends State<_FinalLessonRewardScene> {
   }
 
   List<String> get _slotOptions => widget.isTr
-      ? const ['Bugun 19:00', 'Yarin 20:30', 'Hafta sonu']
+      ? const ['Bugün 19:00', 'Yarin 20:30', 'Hafta sonu']
       : const ['Today 19:00', 'Tomorrow 20:30', 'Weekend'];
 
   InstructorSummary? get _selectedTutor {
@@ -9349,12 +9349,12 @@ class _FinalLessonRewardSceneState extends State<_FinalLessonRewardScene> {
     final score = widget.finalScore;
     if (widget.isTr) {
       if (score >= 88) {
-        return 'Speaking seviyen B1-B2 arasi. Akicilik iyi, canli derste hiz ve dogallik calisilmali.';
+        return 'Speaking seviyen B1-B2 arası. Akıcılık iyi, canlı derste hız ve doğallık çalışılmalı.';
       }
       if (score >= 72) {
-        return 'Speaking seviyen A2-B1 arasi. En hizli gelisim telaffuz ve cumle kurma ile gelir.';
+        return 'Speaking seviyen A2-B1 arası. En hızlı gelişim telaffuz ve cümle kurma ile gelir.';
       }
-      return 'Speaking seviyen A1-A2 arasi. Once temel cumle ritmi ve gunluk kaliplar guclenmeli.';
+      return 'Speaking seviyen A1-A2 arası. Önce temel cümle ritmi ve günlük kalıplar güçlenmeli.';
     }
     if (score >= 88) {
       return 'Your speaking level is around B1-B2. Fluency is strong; live lessons should focus on speed and natural delivery.';
@@ -9368,7 +9368,7 @@ class _FinalLessonRewardSceneState extends State<_FinalLessonRewardScene> {
   String get _weaknessText {
     final joined = widget.weaknesses.join(', ');
     return widget.isTr
-        ? 'Bugun zorlandigin alanlar: $joined.'
+        ? 'Bugün zorlandigin alanlar: $joined.'
         : 'Today you struggled most with: $joined.';
   }
 
@@ -9438,7 +9438,7 @@ class _FinalLessonRewardSceneState extends State<_FinalLessonRewardScene> {
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        isTr ? 'Ders tamamlandi' : 'Lesson complete',
+                        isTr ? 'Ders tamamlandı' : 'Lesson complete',
                         style: TextStyle(
                           color: accent,
                           fontWeight: FontWeight.w800,
@@ -9456,7 +9456,7 @@ class _FinalLessonRewardSceneState extends State<_FinalLessonRewardScene> {
                     const SizedBox(height: 14),
                     Text(
                       isTr
-                          ? 'Harika, bugunku akisi bitirdin'
+                          ? 'Harika, bugunku akışı bitirdin'
                           : 'Nice work, you finished today\'s flow',
                       textAlign: TextAlign.center,
                       style:
@@ -9562,7 +9562,7 @@ class _FinalLessonRewardSceneState extends State<_FinalLessonRewardScene> {
                         ),
                         child: Text(
                           isTr
-                              ? 'Ucretsiz deneme dersi al'
+                              ? 'Ücretsiz deneme dersi al'
                               : 'Get a free trial lesson',
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
@@ -9691,7 +9691,7 @@ class _RewardInsightCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             isTr
-                ? 'Sana uygun hedef: gunluk speaking rutini ve canli telaffuz dersi.'
+                ? 'Sana uygun hedef: günlük speaking rutini ve canlı telaffuz dersi.'
                 : 'Recommended goal: daily speaking routine and live pronunciation lesson.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.brandNight,
@@ -9709,7 +9709,7 @@ class _RewardInsightCard extends StatelessWidget {
             ),
             child: Text(
               isTr
-                  ? 'Odul: 1 ucretsiz mini speaking seansi kazandin. Bu hak 24 saat gecerli.'
+                  ? 'Ödül: 1 ücretsiz mini speaking seansi kazandın. Bu hak 24 saat geçerli.'
                   : 'Reward: you unlocked 1 free mini speaking session. This is valid for 24 hours.',
               style: const TextStyle(
                 color: Color(0xFF2E7D10),
@@ -9752,7 +9752,7 @@ class _RewardSlotPicker extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isTr ? 'Deneme dersi icin saat sec' : 'Pick a trial lesson time',
+            isTr ? 'Deneme dersi için saat seç' : 'Pick a trial lesson time',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: AppColors.brandNight,
                   fontWeight: FontWeight.w900,
@@ -9894,7 +9894,7 @@ class _TutorCompareSection extends StatelessWidget {
                             Text(
                               tutor.jobTitle.isEmpty
                                   ? (isTr
-                                      ? 'Speaking ogretmeni'
+                                      ? 'Speaking öğretmeni'
                                       : 'Speaking teacher')
                                   : tutor.jobTitle,
                               maxLines: 1,
@@ -9949,11 +9949,11 @@ class _TrialBookingCard extends StatelessWidget {
         : (isTr ? 'Speaking tutoru' : 'Speaking tutor');
     final role = (tutor?.jobTitle.trim().isNotEmpty ?? false)
         ? tutor!.jobTitle.trim()
-        : (isTr ? 'Canli ders ogretmeni' : 'Live lesson teacher');
+        : (isTr ? 'Canlı ders öğretmeni' : 'Live lesson teacher');
     final about = (tutor?.shortBio.trim().isNotEmpty ?? false)
         ? tutor!.shortBio.trim()
         : (isTr
-            ? 'Puanina gore sana uygun deneme dersi icin ogretmen onerisi hazir.'
+            ? 'Puanına göre sana uygun deneme dersi için öğretmen önerisi hazır.'
             : 'A teacher recommendation is ready for your trial lesson based on your score.');
     final imageUrl = tutor?.imageUrl?.trim() ?? '';
     final tags = (tutor?.tags ?? const <String>[]).take(2).toList();
@@ -9970,7 +9970,7 @@ class _TrialBookingCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isTr ? 'Siradaki adim' : 'Next step',
+            isTr ? 'Sıradaki adım' : 'Next step',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: accent,
                   fontWeight: FontWeight.w900,
@@ -10092,7 +10092,7 @@ class _TrialBookingCard extends StatelessWidget {
               icon: const Icon(Icons.calendar_month_rounded),
               label: Text(
                 isTr
-                    ? 'Rezervasyon yap, kayit ol'
+                    ? 'Rezervasyon yap, kayıt ol'
                     : 'Book a lesson, create account',
               ),
             ),
@@ -10485,7 +10485,7 @@ class _MissionTutorTile extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       AppStrings.code == 'tr'
-                          ? 'Bugun uygun ve eslesmeye hazir'
+                          ? 'Bugün uygun ve eşleşmeye hazır'
                           : 'Available today and ready to match',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: AppColors.muted,
@@ -10640,15 +10640,15 @@ class _LessonTaskHero extends StatelessWidget {
       _LessonTaskType.listenChoice => (
           isTr ? 'DINLE' : 'LISTEN',
           isTr
-              ? 'Bir kez dinle ve dogru anlami sec.'
-              : 'Listen once and choose the right meaning.',
+              ? 'Bir kez dinle ve doğru anlamı seç.'
+              : 'Listen önce and choose the right meaning.',
           Icons.volume_up_rounded,
           _LogoCoachMood.listen,
         ),
       _LessonTaskType.textChoice => (
           isTr ? 'ANLAM' : 'MEANING',
           isTr
-              ? 'Cumleyi oku ve Turkce karsiligini bul.'
+              ? 'Cümleyi oku ve Türkçe karşılığını bul.'
               : 'Read the line and catch the translation.',
           Icons.translate_rounded,
           _LogoCoachMood.guide,
@@ -10656,7 +10656,7 @@ class _LessonTaskHero extends StatelessWidget {
       _LessonTaskType.pictureChoice => (
           isTr ? 'GORSEL' : 'VISUAL',
           isTr
-              ? 'Kelimeyi dogru gorselle eslestir.'
+              ? 'Kelimeyi doğru gorselle eşleştir.'
               : 'Match the word with the right scene.',
           Icons.auto_awesome_mosaic_rounded,
           _LogoCoachMood.guide,
@@ -10664,7 +10664,7 @@ class _LessonTaskHero extends StatelessWidget {
       _LessonTaskType.speakRepeat => (
           isTr ? 'KONUS' : 'SPEAK',
           isTr
-              ? 'Net soyle ve speaking skorunu gor.'
+              ? 'Net söyle ve speaking skorunu gor.'
               : 'Say it clearly and watch the score.',
           Icons.mic_rounded,
           _LogoCoachMood.celebrate,
@@ -11704,7 +11704,7 @@ class _WeeklyReportCard extends StatelessWidget {
     if (report.sessionCount == 0) {
       return Text(
         isTr
-            ? 'Bu hafta henuz speaking kaydi yok. Ilk kaydinla rapor olusacak.'
+            ? 'Bu hafta henüz speaking kaydı yok. İlk kaydinla rapor olusacak.'
             : 'No speaking recordings yet this week. Your first take will build the report.',
         style: Theme.of(context).textTheme.bodyMedium,
       );
@@ -11722,7 +11722,7 @@ class _WeeklyReportCard extends StatelessWidget {
               metric: ProofMetric(
                 value:
                     '${report.sessionCount} (${_deltaLabel(report.sessionDelta)})',
-                label: isTr ? 'Kayit' : 'Sessions',
+                label: isTr ? 'Kayıt' : 'Sessions',
               ),
             ),
             _ProofPill(
@@ -11743,14 +11743,14 @@ class _WeeklyReportCard extends StatelessWidget {
               metric: ProofMetric(
                 value:
                     '${report.avgConfidence} (${_deltaLabel(report.confidenceDelta)})',
-                label: isTr ? 'Ort. guven' : 'Avg confidence',
+                label: isTr ? 'Ort. güven' : 'Avg confidence',
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
         Text(
-          isTr ? 'Hata turu dagilimi' : 'Error type distribution',
+          isTr ? 'Hata turu dağılımı' : 'Error type distribution',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: 8),
@@ -11861,7 +11861,7 @@ class _SentenceFixCard extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             AppStrings.code == 'tr'
-                ? 'Daha dogal versiyon'
+                ? 'Daha doğal versiyon'
                 : 'More natural version',
             style: Theme.of(context).textTheme.labelLarge,
           ),
@@ -12092,7 +12092,7 @@ class _PackCard extends StatelessWidget {
               Navigator.pop(context);
               data.onTap();
             },
-            child: Text(isTr ? 'Paketi ac' : 'Open pack'),
+            child: Text(isTr ? 'Paketi aç' : 'Open pack'),
           ),
         ],
         child: child,
@@ -12126,7 +12126,7 @@ class _ReviewDeckCard extends StatelessWidget {
               Navigator.pop(context);
               data.onTap();
             },
-            child: Text(isTr ? 'Review kartini ac' : 'Open review'),
+            child: Text(isTr ? 'Review kartını aç' : 'Open review'),
           ),
         ],
         child: child,

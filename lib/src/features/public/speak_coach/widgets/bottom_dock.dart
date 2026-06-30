@@ -69,7 +69,7 @@ class BottomDock extends StatelessWidget {
           Expanded(
             child: _DockItem(
               icon: Icons.login_rounded,
-              label: 'Giris',
+              label: 'Giriş',
               onTap: onLogin,
             ),
           ),

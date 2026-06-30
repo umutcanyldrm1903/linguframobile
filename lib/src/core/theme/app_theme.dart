@@ -219,4 +219,50 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData dark() {
+    final base = ThemeData.dark(useMaterial3: true);
+    final textTheme = GoogleFonts.nunitoTextTheme(base.textTheme).apply(
+      bodyColor: Colors.white,
+      displayColor: Colors.white,
+    );
+
+    return base.copyWith(
+      textTheme: textTheme,
+      scaffoldBackgroundColor: const Color(0xFF101827),
+      canvasColor: const Color(0xFF101827),
+      colorScheme: const ColorScheme.dark(
+        primary: AppColors.brand,
+        secondary: AppColors.brandDeep,
+        surface: Color(0xFF172033),
+        error: Color(0xFFFF5964),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF101827),
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: false,
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        color: const Color(0xFF172033),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFF27364E)),
+        ),
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: Color(0xFF172033),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Color(0xFF172033),
+        surfaceTintColor: Colors.transparent,
+        showDragHandle: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+        ),
+      ),
+    );
+  }
 }

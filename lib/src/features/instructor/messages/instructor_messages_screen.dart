@@ -1,7 +1,8 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../messages/chat_repository.dart';
 import 'instructor_chat_screen.dart';
 
@@ -58,50 +59,61 @@ class _InstructorMessagesScreenState extends State<InstructorMessagesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(AppStrings.t('Messages'))),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : (_errorText != null && _threads.isEmpty)
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(_errorText!),
-                      const SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: _loadThreads,
-                        child: Text(AppStrings.t('Try Again')),
-                      ),
-                    ],
-                  ),
-                )
-              : _threads.isEmpty
-                  ? Center(child: Text(AppStrings.t('No messages yet.')))
-                  : ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
-                    Text(AppStrings.t('Messages'),
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 12),
-                    ..._threads.map(
-                      (thread) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _MessageTile(
-                          thread: thread,
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => InstructorChatScreen(
-                                partnerId: thread.partnerId,
-                                name: thread.partnerName,
-                              ),
-                            ),
-                          ),
-                        ),
+      body: AppGlowBackground(
+        accent: AppColors.brand,
+        child: SafeArea(child: _buildBody(context)),
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context) {
+    if (_loading) {
+      return AppLoader(message: AppStrings.t('Messages'));
+    }
+    if (_errorText != null && _threads.isEmpty) {
+      return AppErrorState(
+        message: _errorText!,
+        onRetry: _loadThreads,
+        retryLabel: AppStrings.t('Try Again'),
+      );
+    }
+    if (_threads.isEmpty) {
+      return AppEmptyState(
+        icon: Icons.forum_rounded,
+        title: AppStrings.t('No messages yet.'),
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.all(AppSpace.xl),
+      children: [
+        SectionHeader(
+          title: AppStrings.t('Messages'),
+          icon: Icons.forum_rounded,
+        ),
+        const SizedBox(height: AppSpace.xs),
+        StaggeredReveal(
+          children: [
+            for (final thread in _threads)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpace.md),
+                child: _MessageTile(
+                  thread: thread,
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => InstructorChatScreen(
+                        partnerId: thread.partnerId,
+                        name: thread.partnerName,
                       ),
                     ),
-                  ],
+                  ),
                 ),
+              ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -114,84 +126,129 @@ class _MessageTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    final theme = Theme.of(context);
+    final hasUnread = thread.unreadCount > 0;
+    return AppCard(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: AppColors.brandDeep.withValues(alpha: 0.2),
-              child: (() {
-                final initial = thread.partnerName.isNotEmpty
-                    ? thread.partnerName.substring(0, 1)
-                    : '?';
-                if (thread.partnerImage.isEmpty) {
-                  return Text(initial);
-                }
-                return ClipOval(
-                  child: Image.network(
-                    thread.partnerImage,
-                    width: 44,
-                    height: 44,
-                    fit: BoxFit.cover,
-                    webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-                    errorBuilder: (_, __, ___) => SizedBox(
-                      width: 44,
-                      height: 44,
-                      child: Center(child: Text(initial)),
-                    ),
-                  ),
-                );
-              })(),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(thread.partnerName, style: Theme.of(context).textTheme.titleLarge),
-                  const SizedBox(height: 4),
-                  Text(thread.lastMessage, style: Theme.of(context).textTheme.bodyMedium),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+      padding: const EdgeInsets.all(AppSpace.lg),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Avatar(thread: thread),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(thread.lastTimeLabel, style: Theme.of(context).textTheme.bodyMedium),
-                if (thread.unreadCount > 0) ...[
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.brandDeep,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      thread.unreadCount.toString(),
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Colors.white),
-                    ),
+                Text(
+                  thread.partnerName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
                   ),
-                ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  thread.lastMessage,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: hasUnread ? AppColors.ink : AppColors.muted,
+                    fontWeight:
+                        hasUnread ? FontWeight.w700 : FontWeight.w500,
+                  ),
+                ),
               ],
             ),
-          ],
+          ),
+          const SizedBox(width: AppSpace.sm),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                thread.lastTimeLabel,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.muted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (hasUnread) ...[
+                const SizedBox(height: AppSpace.sm),
+                Container(
+                  constraints: const BoxConstraints(minWidth: 22),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: AppGradients.brand,
+                    borderRadius: AppRadius.pill,
+                    boxShadow: AppShadows.glow(AppColors.brand, opacity: 0.30),
+                  ),
+                  child: Text(
+                    thread.unreadCount.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.thread});
+
+  final ChatThread thread;
+
+  @override
+  Widget build(BuildContext context) {
+    final initial =
+        thread.partnerName.isNotEmpty ? thread.partnerName.substring(0, 1) : '?';
+    final fallback = Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: AppGradients.brand,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initial.toUpperCase(),
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+          fontSize: 18,
         ),
       ),
+    );
+
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: const BoxDecoration(shape: BoxShape.circle),
+      child: thread.partnerImage.isEmpty
+          ? fallback
+          : ClipOval(
+              child: Image.network(
+                thread.partnerImage,
+                width: 48,
+                height: 48,
+                fit: BoxFit.cover,
+                webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+                errorBuilder: (_, __, ___) => fallback,
+              ),
+            ),
     );
   }
 }

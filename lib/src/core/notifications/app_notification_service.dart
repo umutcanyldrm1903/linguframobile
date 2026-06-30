@@ -317,7 +317,7 @@ class AppNotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
-      payload: jsonEncode({'route': route ?? '/start-speaking'}),
+      payload: jsonEncode({'route': route ?? '/practice'}),
     );
     await _saveDailySentCount(now, sentToday + 1);
   }

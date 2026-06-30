@@ -29,7 +29,7 @@ class AppCurrency {
     ref.read(appCurrencyProvider.notifier).state = next;
     _code = next;
 
-    // Then persist to storage (don't wait for this)
+    // Then persist to storage (dön't wait for this)
     unawaited(SecureStorage.setCurrencyCode(next));
   }
 }

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../shared/content_preview_launcher.dart';
 import 'student_library_repository.dart';
 
@@ -53,131 +54,175 @@ class _StudentLibraryScreenState extends State<StudentLibraryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.t('Library'))),
-      body: FutureBuilder<StudentLibraryPayload?>(
-        future: _future,
-        builder: (context, snapshot) {
-          final payload = snapshot.data;
-          final categories =
-              payload?.categories ?? const <StudentLibraryCategory>[];
-          final items = payload?.items ?? const <StudentLibraryItem>[];
-          final selectedCategory =
-              payload?.selectedCategory ?? _selectedCategory;
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(AppStrings.t('Library')),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: AppGlowBackground(
+        child: FutureBuilder<StudentLibraryPayload?>(
+          future: _future,
+          builder: (context, snapshot) {
+            final payload = snapshot.data;
+            final categories =
+                payload?.categories ?? const <StudentLibraryCategory>[];
+            final items = payload?.items ?? const <StudentLibraryItem>[];
+            final selectedCategory =
+                payload?.selectedCategory ?? _selectedCategory;
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return AppLoader(message: AppStrings.t('Library'));
+            }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            if (snapshot.hasError) {
+              return AppErrorState(
+                message: AppStrings.t('Something went wrong'),
+                onRetry: () => _load(category: selectedCategory),
+                retryLabel: AppStrings.t('Try Again'),
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: () => _load(category: selectedCategory, silent: true),
+              child: ListView(
+                padding: const EdgeInsets.all(AppSpace.xl),
                 children: [
-                  Text(AppStrings.t('Something went wrong')),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () => _load(category: selectedCategory),
-                    child: Text(AppStrings.t('Try Again')),
+                  AnimatedPageEntrance(
+                    child: GradientHero(
+                      gradient: AppGradients.hero,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 46,
+                                height: 46,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                  borderRadius: AppRadius.all(AppRadius.md),
+                                ),
+                                child: const Icon(
+                                  Icons.local_library_rounded,
+                                  color: Colors.white,
+                                  size: 26,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpace.md),
+                              Expanded(
+                                child: Text(
+                                  AppStrings.t('Library'),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleLarge
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpace.md),
+                          Text(
+                            AppStrings.t(
+                              'Access the materials shared directly by your instructor.',
+                            ),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Colors.white.withValues(alpha: 0.92),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
+                  const SizedBox(height: AppSpace.xl),
+                  if (categories.isEmpty)
+                    AppEmptyState(
+                      icon: Icons.folder_open_outlined,
+                      title: AppStrings.t('No materials shared yet.'),
+                    )
+                  else if (selectedCategory.isEmpty) ...[
+                    SectionHeader(
+                      title: AppStrings.t('Library'),
+                      subtitle: AppStrings.t(
+                        'Access the materials shared directly by your instructor.',
+                      ),
+                      icon: Icons.folder_copy_rounded,
+                    ),
+                    _CategoryGrid(
+                      categories: categories,
+                      onSelect: (category) => _load(category: category),
+                    ),
+                  ] else ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AppChip(
+                            label: AppStrings.t('Back to categories'),
+                            selected: false,
+                            icon: Icons.arrow_back_rounded,
+                            onTap: () => _load(category: ''),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.sm),
+                        Flexible(
+                          child: AppChip(
+                            label: _categoryName(categories, selectedCategory),
+                            selected: true,
+                            icon: Icons.folder_rounded,
+                            onTap: () {},
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpace.lg),
+                    if (items.isEmpty)
+                      AppEmptyState(
+                        icon: Icons.search_off_outlined,
+                        title: AppStrings.t('No items in this category.'),
+                      )
+                    else
+                      StaggeredReveal(
+                        children: [
+                          for (final item in items)
+                            Padding(
+                              padding:
+                                  const EdgeInsets.only(bottom: AppSpace.md),
+                              child: _LibraryItemCard(
+                                item: item,
+                                onTap: () => _openFile(item),
+                              ),
+                            ),
+                        ],
+                      ),
+                  ],
                 ],
               ),
             );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => _load(category: selectedCategory, silent: true),
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                Text(
-                  AppStrings.t('Library'),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  AppStrings.t(
-                    'Access the materials shared directly by your instructor.',
-                  ),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 18),
-                if (categories.isEmpty)
-                  _EmptyState(
-                    icon: Icons.folder_open_outlined,
-                    text: AppStrings.t('No materials shared yet.'),
-                  )
-                else if (selectedCategory.isEmpty)
-                  _CategoryGrid(
-                    categories: categories,
-                    onSelect: (category) => _load(category: category),
-                  )
-                else ...[
-                  Row(
-                    children: [
-                      TextButton.icon(
-                        onPressed: () => _load(category: ''),
-                        icon: const Icon(Icons.arrow_back),
-                        label: Text(AppStrings.t('Back to categories')),
-                      ),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.brand.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          categories
-                                  .firstWhere(
-                                    (item) => item.slug == selectedCategory,
-                                    orElse: () => StudentLibraryCategory(
-                                      name: selectedCategory,
-                                      slug: selectedCategory,
-                                    ),
-                                  )
-                                  .name
-                                  .isNotEmpty
-                              ? categories
-                                  .firstWhere(
-                                    (item) => item.slug == selectedCategory,
-                                    orElse: () => StudentLibraryCategory(
-                                      name: selectedCategory,
-                                      slug: selectedCategory,
-                                    ),
-                                  )
-                                  .name
-                              : selectedCategory,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  if (items.isEmpty)
-                    _EmptyState(
-                      icon: Icons.search_off_outlined,
-                      text: AppStrings.t('No items in this category.'),
-                    )
-                  else
-                    ...items.map(
-                      (item) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _LibraryItemCard(
-                          item: item,
-                          onTap: () => _openFile(item),
-                        ),
-                      ),
-                    ),
-                ],
-              ],
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
+  }
+
+  String _categoryName(
+    List<StudentLibraryCategory> categories,
+    String selectedCategory,
+  ) {
+    final match = categories.firstWhere(
+      (item) => item.slug == selectedCategory,
+      orElse: () => StudentLibraryCategory(
+        name: selectedCategory,
+        slug: selectedCategory,
+      ),
+    );
+    return match.name.isNotEmpty ? match.name : selectedCategory;
   }
 }
 
@@ -190,16 +235,13 @@ class _CategoryGrid extends StatelessWidget {
   final List<StudentLibraryCategory> categories;
   final ValueChanged<String> onSelect;
 
-  static const _palette = <Color>[
-    Color(0xFFDbe7F5),
-    Color(0xFFF6E9E2),
-    Color(0xFFF5CFD1),
-    Color(0xFFF2D9AE),
-    Color(0xFFE7F3DD),
-    Color(0xFFF5D6E4),
-    Color(0xFFF6D7D7),
-    Color(0xFFD5E8ED),
-    Color(0xFFD7EAD9),
+  static const _gradients = <LinearGradient>[
+    AppGradients.brand,
+    AppGradients.violet,
+    AppGradients.success,
+    AppGradients.streak,
+    AppGradients.gold,
+    AppGradients.night,
   ];
 
   @override
@@ -210,56 +252,48 @@ class _CategoryGrid extends StatelessWidget {
       itemCount: categories.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 14,
-        mainAxisSpacing: 14,
+        crossAxisSpacing: AppSpace.md,
+        mainAxisSpacing: AppSpace.md,
         childAspectRatio: 1.05,
       ),
       itemBuilder: (context, index) {
         final category = categories[index];
-        final color = _palette[index % _palette.length];
-        return InkWell(
+        final gradient = _gradients[index % _gradients.length];
+        return AppCard(
           onTap: () => onSelect(category.slug),
-          borderRadius: BorderRadius.circular(22),
-          child: Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(22),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 74,
-                  height: 74,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.folder_outlined,
-                    color: AppColors.brandDeep,
-                    size: 34,
+          padding: const EdgeInsets.all(AppSpace.lg),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 72,
+                height: 72,
+                decoration: BoxDecoration(
+                  gradient: gradient,
+                  borderRadius: AppRadius.all(AppRadius.lg),
+                  boxShadow: AppShadows.glow(
+                    AppColors.brand,
+                    opacity: 0.22,
                   ),
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  category.name,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.brandDeep,
-                  ),
+                child: const Icon(
+                  Icons.folder_rounded,
+                  color: Colors.white,
+                  size: 34,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: AppSpace.md),
+              Text(
+                category.name,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.ink,
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -278,78 +312,87 @@ class _LibraryItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    final fileColor = _colorForType(item.fileType);
+    return AppCard(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.brand.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    _iconForType(item.fileType),
-                    color: AppColors.brandDeep,
-                  ),
+      padding: const EdgeInsets.all(AppSpace.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: fileColor.withValues(alpha: 0.14),
+                  borderRadius: AppRadius.all(AppRadius.sm),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        item.title,
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                ),
-                      ),
+                child: Icon(
+                  _iconForType(item.fileType),
+                  color: fileColor,
+                ),
+              ),
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style:
+                          Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.ink,
+                              ),
+                    ),
+                    if (item.description.trim().isNotEmpty) ...[
                       const SizedBox(height: 4),
-                      if (item.description.trim().isNotEmpty)
-                        Text(
-                          item.description.trim(),
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
+                      Text(
+                        item.description.trim(),
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodyMedium
+                            ?.copyWith(color: AppColors.muted),
+                      ),
                     ],
-                  ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, color: AppColors.muted),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                if (item.fileName.isNotEmpty) _MetaPill(label: item.fileName),
-                if (item.instructorName.isNotEmpty)
-                  _MetaPill(
-                    label:
-                        '${AppStrings.t('Instructor')}: ${item.instructorName}',
-                  ),
-                if (item.createdAt != null)
-                  _MetaPill(
-                    label: DateFormat('dd MMM yyyy').format(item.createdAt!),
-                  ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              const SizedBox(width: AppSpace.sm),
+              const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+            ],
+          ),
+          const SizedBox(height: AppSpace.md),
+          Wrap(
+            spacing: AppSpace.sm,
+            runSpacing: AppSpace.sm,
+            children: [
+              if (item.fileName.isNotEmpty)
+                AppStatPill(
+                  icon: Icons.insert_drive_file_outlined,
+                  label: item.fileName,
+                  color: fileColor,
+                  onLight: true,
+                ),
+              if (item.instructorName.isNotEmpty)
+                AppStatPill(
+                  icon: Icons.person_outline_rounded,
+                  label: '${AppStrings.t('Instructor')}: ${item.instructorName}',
+                  color: AppColors.brand,
+                  onLight: true,
+                ),
+              if (item.createdAt != null)
+                AppStatPill(
+                  icon: Icons.calendar_today_outlined,
+                  label: DateFormat('dd MMM yyyy').format(item.createdAt!),
+                  color: AppPalette.violet,
+                  onLight: true,
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -375,67 +418,26 @@ class _LibraryItemCard extends StatelessWidget {
         return Icons.attach_file;
     }
   }
-}
 
-class _MetaPill extends StatelessWidget {
-  const _MetaPill({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: AppColors.muted,
-        ),
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({
-    required this.icon,
-    required this.text,
-  });
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 24),
-      alignment: Alignment.center,
-      child: Column(
-        children: [
-          Container(
-            width: 88,
-            height: 88,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppColors.brand.withValues(alpha: 0.4)),
-            ),
-            child: Icon(icon, color: AppColors.brandDeep, size: 34),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            text,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ],
-      ),
-    );
+  Color _colorForType(String fileType) {
+    switch (fileType.toLowerCase()) {
+      case 'pdf':
+        return AppPalette.danger;
+      case 'doc':
+      case 'docx':
+        return AppPalette.info;
+      case 'ppt':
+      case 'pptx':
+        return AppPalette.streak;
+      case 'xls':
+      case 'xlsx':
+        return AppPalette.success;
+      case 'mp4':
+      case 'mov':
+      case 'webm':
+        return AppPalette.violet;
+      default:
+        return AppColors.brand;
+    }
   }
 }

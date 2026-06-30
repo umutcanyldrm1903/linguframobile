@@ -77,7 +77,7 @@ Future<void> requestTrialLessonWithLoginGate(
 
     final message = result.message.trim().isNotEmpty
         ? result.message.trim()
-        : AppStrings.t('Deneme dersi talebiniz alindi.');
+        : AppStrings.t('Deneme dersi talebiniz alındı.');
 
     ScaffoldMessenger.of(
       context,

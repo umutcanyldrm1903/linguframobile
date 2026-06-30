@@ -26,7 +26,10 @@ import 'package:lingufranca_mobile/src/features/public/corporate_screen.dart';
 import 'package:lingufranca_mobile/src/features/public/placement_test_screen.dart';
 import 'package:lingufranca_mobile/src/features/public/privacy_screen.dart';
 import 'package:lingufranca_mobile/src/features/public/public_theme.dart';
-import 'package:lingufranca_mobile/src/features/public/speak_coach_screen.dart';
+import 'package:lingufranca_mobile/src/features/practice/practice_ad_service.dart';
+import 'package:lingufranca_mobile/src/features/practice/practice_assistant_overlay.dart';
+import 'package:lingufranca_mobile/src/features/practice/practice_screens.dart';
+import 'package:lingufranca_mobile/src/features/practice/practice_theme.dart';
 import 'package:lingufranca_mobile/src/features/public/terms_screen.dart';
 import 'package:lingufranca_mobile/src/features/shell/instructor_shell.dart';
 import 'package:lingufranca_mobile/src/features/shell/student_shell.dart';
@@ -52,6 +55,7 @@ Future<void> _warmUpAppServices() async {
 
   await AppTelemetryService.instance.markAppReady();
   unawaited(AppNotificationService.instance.initialize());
+  unawaited(PracticeAdService().initialize());
 }
 
 class LingufrancaApp extends ConsumerWidget {
@@ -64,15 +68,24 @@ class LingufrancaApp extends ConsumerWidget {
     // Initialize auth token from secure storage
     ref.watch(authTokenInitializationProvider);
     return MaterialApp(
+      navigatorKey: appNavigatorKey,
+      navigatorObservers: [practiceAssistantRouteObserver],
       title: 'Lingufranca',
       theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) => PracticeAssistantOverlay(
+        child: child ?? const SizedBox.shrink(),
+      ),
       initialRoute: '/splash',
       routes: {
         '/': (_) => const PublicTheme(child: HomeScreen()),
         '/home': (_) => const PublicTheme(child: HomeScreen()),
         '/app-home': (_) => const AppHomeScreen(),
         '/splash': (_) => const SplashScreen(),
+        '/taster': (_) => const PracticeTheme(
+            allowGuest: true, child: PracticeTasterScreen()),
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
         '/forgot-password': (_) => const ForgotPasswordScreen(),
@@ -86,9 +99,134 @@ class LingufrancaApp extends ConsumerWidget {
             const PublicTheme(child: PlacementTestScreen()),
         '/terms': (_) => const PublicTheme(child: TermsScreen()),
         '/privacy': (_) => const PublicTheme(child: PrivacyScreen()),
-        '/start-speaking': (_) => const PublicTheme(child: SpeakCoachScreen()),
+        '/start-speaking': (_) =>
+            const PracticeTheme(child: PracticeHomeScreen()),
         '/student': (_) => const StudentShell(),
         '/instructor': (_) => const InstructorShell(),
+        '/practice': (_) => const PracticeTheme(child: PracticeHomeScreen()),
+        '/practice/onboarding': (_) =>
+            const PracticeTheme(child: PracticeOnboardingScreen()),
+        '/practice/path': (_) =>
+            const PracticeTheme(child: PracticePathScreen()),
+        '/practice/placement': (_) =>
+            const PracticeTheme(child: PracticePlacementScreen()),
+        '/practice/leaderboard': (_) =>
+            const PracticeTheme(child: PracticeLeaderboardScreen()),
+        '/practice/shop': (_) =>
+            const PracticeTheme(child: PracticeShopScreen()),
+        '/practice/profile': (_) =>
+            const PracticeTheme(child: PracticeProfileScreen()),
+        '/practice/friends': (_) =>
+            const PracticeTheme(child: PracticeFriendsScreen()),
+        '/practice/streak': (_) =>
+            const PracticeTheme(child: PracticeStreakScreen()),
+        '/practice/streak-repair': (_) =>
+            const PracticeTheme(child: PracticeStreakRepairScreen()),
+        '/practice/hearts': (_) =>
+            const PracticeTheme(child: PracticeHeartsScreen()),
+        '/practice/energy': (_) =>
+            const PracticeTheme(child: PracticeEnergyScreen()),
+        '/practice/xp-boost': (_) =>
+            const PracticeTheme(child: PracticeXpBoostScreen()),
+        '/practice/legendary': (_) =>
+            const PracticeTheme(child: PracticeLegendaryScreen()),
+        '/practice/achievements': (_) =>
+            const PracticeTheme(child: PracticeAchievementsScreen()),
+        '/practice/daily-quests': (_) =>
+            const PracticeTheme(child: PracticeDailyQuestsScreen()),
+        '/practice/quests': (_) =>
+            const PracticeTheme(child: PracticeDailyQuestsScreen()),
+        '/practice/weekly-quests': (_) =>
+            const PracticeTheme(child: PracticeWeeklyQuestsScreen()),
+        '/practice/hub': (_) => const PracticeTheme(child: PracticeHubScreen()),
+        '/practice/guidebook': (_) =>
+            const PracticeTheme(child: PracticeGuidebookScreen()),
+        '/practice/league-result': (_) =>
+            const PracticeTheme(child: PracticeLeagueResultScreen()),
+        '/practice/follow': (_) =>
+            const PracticeTheme(child: PracticeFollowListScreen()),
+        '/practice/treasure-chest': (_) =>
+            const PracticeTheme(child: PracticeTreasureChestScreen()),
+        '/practice/daily-chests': (_) =>
+            const PracticeTheme(child: PracticeDailyChestsScreen()),
+        '/practice/lucky-spin': (_) =>
+            const PracticeTheme(child: PracticeLuckySpinScreen()),
+        '/practice/streak-wager': (_) =>
+            const PracticeTheme(child: PracticeStreakWagerScreen()),
+        '/practice/streak-milestones': (_) =>
+            const PracticeTheme(child: PracticeStreakMilestonesScreen()),
+        '/practice/mistakes': (_) =>
+            const PracticeTheme(child: PracticeMistakesScreen()),
+        '/practice/weak-words': (_) =>
+            const PracticeTheme(child: PracticeWeakWordsScreen()),
+        '/practice/mode': (_) =>
+            const PracticeTheme(child: PracticeModePracticeScreen()),
+        '/practice/inventory': (_) =>
+            const PracticeTheme(child: PracticeInventoryScreen()),
+        '/practice/history': (_) =>
+            const PracticeTheme(child: PracticeHistoryScreen()),
+        '/practice/notifications': (_) =>
+            const PracticeTheme(child: PracticeNotificationsScreen()),
+        '/practice/notification-settings': (_) =>
+            const PracticeTheme(child: PracticeNotificationSettingsScreen()),
+        '/practice/offline': (_) =>
+            const PracticeTheme(child: PracticeOfflineScreen()),
+        '/practice/analytics': (_) =>
+            const PracticeTheme(child: PracticeAnalyticsScreen()),
+        '/practice/premium': (_) =>
+            const PracticeTheme(child: PracticePremiumScreen()),
+        '/practice/premium-compare': (_) =>
+            const PracticeTheme(child: PracticePremiumCompareScreen()),
+        '/practice/purchase-result': (_) =>
+            const PracticeTheme(child: PracticePurchaseResultScreen()),
+        '/practice/radio': (_) =>
+            const PracticeTheme(child: PracticeRadioLessonScreen()),
+        '/practice/story': (_) =>
+            const PracticeTheme(child: PracticeStoryDetailScreen()),
+        '/practice/special': (_) =>
+            const PracticeTheme(child: PracticeSpecialListScreen()),
+        '/practice/special-detail': (_) =>
+            const PracticeTheme(child: PracticeSpecialDetailScreen()),
+        '/practice/adventure': (_) =>
+            const PracticeTheme(child: PracticeAdventurePlayScreen()),
+        '/practice/challenge': (_) =>
+            const PracticeTheme(child: PracticeChallengePlayScreen()),
+        '/practice/ai-coach': (_) =>
+            const PracticeTheme(child: PracticeAiCoachScreen()),
+        '/practice/character-call': (_) =>
+            const PracticeTheme(child: PracticeCharacterCallScreen()),
+        '/practice/characters': (_) =>
+            const PracticeTheme(child: PracticeCharactersScreen()),
+        '/practice/speaking': (_) =>
+            const PracticeTheme(child: PracticeSpeakingPracticeScreen()),
+        '/practice/speaking-result': (_) =>
+            const PracticeTheme(child: PracticeSpeakingResultScreen()),
+        '/practice/reward-focus': (_) =>
+            const PracticeTheme(child: PracticeRewardFocusScreen()),
+        '/practice/match-madness': (_) =>
+            const PracticeTheme(child: PracticeMatchMadnessScreen()),
+        '/practice/cefr': (_) =>
+            const PracticeTheme(child: PracticeCefrScoreScreen()),
+        '/practice/settings': (_) =>
+            const PracticeTheme(child: PracticeSettingsScreen()),
+        '/practice/xp-history': (_) =>
+            const PracticeTheme(child: PracticeXpHistoryScreen()),
+        '/practice/coin-history': (_) =>
+            const PracticeTheme(child: PracticeCoinHistoryScreen()),
+        '/practice/lesson': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is! PracticeLesson) {
+            return const PracticeTheme(child: PracticeHomeScreen());
+          }
+          return PracticeTheme(child: PracticeLessonScreen(lesson: args));
+        },
+        '/practice/result': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is PracticeResultArgs) {
+            return PracticeTheme(child: PracticeResultScreen(args: args));
+          }
+          return const PracticeTheme(child: PracticeHomeScreen());
+        },
       },
     );
   }
@@ -108,6 +246,22 @@ class _SplashScreenState extends State<SplashScreen> {
     '/start-speaking',
     '/student',
     '/instructor',
+    '/practice',
+    '/practice/path',
+    '/practice/mistakes',
+    '/practice/weak-words',
+    '/practice/daily-quests',
+    '/practice/shop',
+    '/practice/friends',
+    '/practice/streak',
+    '/practice/streak-repair',
+    '/practice/hearts',
+    '/practice/xp-boost',
+    '/practice/legendary',
+    '/practice/achievements',
+    '/practice/offline',
+    '/practice/analytics',
+    '/practice/quests',
     '/placement-test',
     '/login',
   };
@@ -144,15 +298,22 @@ class _SplashScreenState extends State<SplashScreen> {
       return;
     }
     if (token != null && token.isNotEmpty) {
-      await AppPreferences.markAppHomeSeen();
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/app-home');
+      // Eğitmen kendi paneline; öğrenci ise hub'a (AppHomeScreen) düşer. Hub'dan
+      // hem gerçek LMS paneline (/student: kurslar/dersler/eğitmenler) hem oyunlu
+      // pratiğe (/practice) tek dokunuşla geçer; ikisi de görünür kalır.
+      Navigator.pushReplacementNamed(
+        context,
+        role == 'instructor' ? '/instructor' : '/app-home',
+      );
     } else {
       final hasSeenAppHome = await AppPreferences.hasSeenAppHome();
       if (!mounted) return;
+      // İlk açılış: misafir tadımlık (Devam → birkaç giriş-siz soru → hub).
+      // Sonraki açılışlarda doğrudan hub gösterilir.
       Navigator.pushReplacementNamed(
         context,
-        hasSeenAppHome ? '/app-home' : '/home',
+        hasSeenAppHome ? '/app-home' : '/taster',
       );
     }
   }

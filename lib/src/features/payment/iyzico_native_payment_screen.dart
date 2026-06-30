@@ -9,6 +9,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/ui/ui.dart';
 import '../student/checkout/student_payment_repository.dart';
 import 'payment_native_service.dart';
 
@@ -148,106 +149,250 @@ class _IyzicoNativePaymentScreenState extends State<IyzicoNativePaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.t('Payment'))),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(
-            AppStrings.t('Pay With Card'),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${widget.planTitle} - ${widget.priceLabel} ${widget.currency}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.muted,
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(AppStrings.t('Payment')),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: AppGlowBackground(
+        accent: AppColors.brand,
+        child: SafeArea(
+          top: false,
+          child: AnimatedPageEntrance(
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpace.xl),
+              children: [
+                GradientHero(
+                  gradient: AppGradients.hero,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.18),
+                              borderRadius: AppRadius.all(AppRadius.sm),
+                            ),
+                            child: const Icon(
+                              Icons.lock_rounded,
+                              color: Colors.white,
+                              size: 22,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.md),
+                          Expanded(
+                            child: Text(
+                              AppStrings.t('Pay With Card'),
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpace.md),
+                      Text(
+                        widget.planTitle,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${widget.priceLabel} ${widget.currency}',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpace.md),
+                      Wrap(
+                        spacing: AppSpace.sm,
+                        runSpacing: AppSpace.sm,
+                        children: const [
+                          AppStatPill(
+                            icon: Icons.credit_card_rounded,
+                            label: 'Visa',
+                          ),
+                          AppStatPill(
+                            icon: Icons.credit_card_rounded,
+                            label: 'Mastercard',
+                          ),
+                          AppStatPill(
+                            icon: Icons.verified_user_rounded,
+                            label: '3D Secure',
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _cardHolderController,
-            decoration: InputDecoration(labelText: AppStrings.t('Card Holder Name')),
-            textInputAction: TextInputAction.next,
-            autofillHints: const [AutofillHints.creditCardName],
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _cardNumberController,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(19),
-            ],
-            decoration: InputDecoration(labelText: AppStrings.t('Card Number')),
-            textInputAction: TextInputAction.next,
-            autofillHints: const [AutofillHints.creditCardNumber],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _monthController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(2),
-                  ],
-                  decoration: InputDecoration(labelText: AppStrings.t('MM')),
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.creditCardExpirationMonth],
+                const SizedBox(height: AppSpace.xl),
+                AppCard(
+                  padding: const EdgeInsets.all(AppSpace.xl),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SectionHeader(
+                        title: AppStrings.t('Card Holder Name'),
+                        icon: Icons.badge_rounded,
+                      ),
+                      TextField(
+                        controller: _cardHolderController,
+                        decoration: _fieldDecoration(
+                          AppStrings.t('Card Holder Name'),
+                          Icons.person_rounded,
+                        ),
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.creditCardName],
+                      ),
+                      const SizedBox(height: AppSpace.md),
+                      TextField(
+                        controller: _cardNumberController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(19),
+                        ],
+                        decoration: _fieldDecoration(
+                          AppStrings.t('Card Number'),
+                          Icons.credit_card_rounded,
+                        ),
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.creditCardNumber],
+                      ),
+                      const SizedBox(height: AppSpace.md),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _monthController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(2),
+                              ],
+                              decoration: _fieldDecoration(
+                                AppStrings.t('MM'),
+                                null,
+                              ),
+                              textInputAction: TextInputAction.next,
+                              autofillHints: const [
+                                AutofillHints.creditCardExpirationMonth,
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.md),
+                          Expanded(
+                            child: TextField(
+                              controller: _yearController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(4),
+                              ],
+                              decoration: _fieldDecoration(
+                                AppStrings.t('YYYY'),
+                                null,
+                              ),
+                              textInputAction: TextInputAction.next,
+                              autofillHints: const [
+                                AutofillHints.creditCardExpirationYear,
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.md),
+                          Expanded(
+                            child: TextField(
+                              controller: _cvcController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(4),
+                              ],
+                              decoration: _fieldDecoration(
+                                AppStrings.t('CVC'),
+                                Icons.lock_rounded,
+                              ),
+                              textInputAction: TextInputAction.done,
+                              obscureText: true,
+                              autofillHints: const [
+                                AutofillHints.creditCardSecurityCode,
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpace.lg),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.shield_rounded,
+                            size: 16,
+                            color: AppPalette.success,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              AppStrings.t(
+                                '3D Secure verification may open a confirmation screen inside the app.',
+                              ),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.muted,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _yearController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(4),
-                  ],
-                  decoration: InputDecoration(labelText: AppStrings.t('YYYY')),
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.creditCardExpirationYear],
+                const SizedBox(height: AppSpace.xl),
+                AppButton(
+                  label: _submitting
+                      ? AppStrings.t('Submitting')
+                      : AppStrings.t('Make Payment'),
+                  onPressed: _submitting ? null : _pay,
+                  loading: _submitting,
+                  tone: AppButtonTone.success,
+                  icon: Icons.lock_rounded,
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _cvcController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(4),
-                  ],
-                  decoration: InputDecoration(labelText: AppStrings.t('CVC')),
-                  textInputAction: TextInputAction.done,
-                  obscureText: true,
-                  autofillHints: const [AutofillHints.creditCardSecurityCode],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _submitting ? null : _pay,
-              child: Text(
-                _submitting ? AppStrings.t('Submitting') : AppStrings.t('Make Payment'),
-              ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          Text(
-            AppStrings.t(
-              '3D Secure verification may open a confirmation screen inside the app.',
-            ),
-            style: const TextStyle(color: AppColors.muted),
-          ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _fieldDecoration(String label, IconData? icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: icon == null
+          ? null
+          : Icon(icon, size: 20, color: AppColors.muted),
+      filled: true,
+      fillColor: AppPalette.cloud,
+      border: OutlineInputBorder(
+        borderRadius: AppRadius.all(AppRadius.sm),
+        borderSide: const BorderSide(color: AppPalette.line),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: AppRadius.all(AppRadius.sm),
+        borderSide: const BorderSide(color: AppPalette.line),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: AppRadius.all(AppRadius.sm),
+        borderSide: const BorderSide(color: AppColors.brand, width: 1.6),
       ),
     );
   }
@@ -275,6 +420,23 @@ class _Iyzico3dsScreenState extends State<Iyzico3dsScreen>
   PaymentStatus? _status;
   bool _checking = false;
   int _progress = 0;
+  bool _celebrated = false;
+
+  /// Gerçek başarı anında (tek seferlik) kutlama overlay'i + geri dönüş.
+  void _completeSuccess() {
+    if (_celebrated) return;
+    _celebrated = true;
+    _timer?.cancel();
+    if (!mounted) return;
+    showCelebration(
+      context,
+      title: AppStrings.t('Ödeme başarılı!'),
+      subtitle: AppStrings.t('Payment Success.'),
+      icon: Icons.verified_rounded,
+      color: AppPalette.success,
+    );
+    Navigator.pop(context, true);
+  }
 
   @override
   void initState() {
@@ -361,7 +523,7 @@ class _Iyzico3dsScreenState extends State<Iyzico3dsScreen>
     }
 
     if (url.contains('payment-success')) {
-      Navigator.pop(context, true);
+      _completeSuccess();
       return true;
     }
     if (url.contains('payment-failed')) {
@@ -400,7 +562,7 @@ class _Iyzico3dsScreenState extends State<Iyzico3dsScreen>
 
       if (status?.isSuccess ?? false) {
         _timer?.cancel();
-        if (mounted) Navigator.pop(context, true);
+        if (mounted) _completeSuccess();
         return;
       }
 
@@ -428,19 +590,32 @@ class _Iyzico3dsScreenState extends State<Iyzico3dsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final web = _controller;
     final status = _status;
+    final bool isSuccess = status?.isSuccess ?? false;
+    final bool isFailed = status?.isFailed ?? false;
     final statusLabel = status == null
         ? AppStrings.t('Processing')
-        : (status.isSuccess
+        : (isSuccess
             ? AppStrings.t('Payment Success.')
-            : (status.isFailed
+            : (isFailed
                 ? AppStrings.t('Payment Fail')
                 : AppStrings.t('Payment is pending.')));
 
+    final Color accent = isSuccess
+        ? AppPalette.success
+        : (isFailed ? AppPalette.danger : AppColors.brand);
+    final IconData statusIcon = isSuccess
+        ? Icons.verified_rounded
+        : (isFailed ? Icons.error_rounded : Icons.shield_rounded);
+
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(AppStrings.t('Payment')),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context, null),
@@ -449,30 +624,72 @@ class _Iyzico3dsScreenState extends State<Iyzico3dsScreen>
       body: Column(
         children: [
           if (_progress < 100)
-            LinearProgressIndicator(value: _progress / 100, minHeight: 3),
+            LinearProgressIndicator(
+              value: _progress / 100,
+              minHeight: 3,
+              backgroundColor: AppPalette.line,
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppColors.brand),
+            ),
           Padding(
-            padding: const EdgeInsets.all(16),
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
+            padding: const EdgeInsets.all(AppSpace.lg),
+            child: AppCard(
+              padding: const EdgeInsets.all(AppSpace.lg),
               child: Row(
                 children: [
-                  const CircularProgressIndicator(strokeWidth: 2.5),
-                  const SizedBox(width: 12),
+                  if (isFailed)
+                    Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(statusIcon, size: 22, color: accent),
+                    )
+                  else
+                    SizedBox(
+                      width: 28,
+                      height: 28,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: AlwaysStoppedAnimation<Color>(accent),
+                      ),
+                    ),
+                  const SizedBox(width: AppSpace.md),
                   Expanded(
-                    child: Text(
-                      statusLabel,
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          statusLabel,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        const AppStatPill(
+                          icon: Icons.lock_rounded,
+                          label: '3D Secure',
+                          color: AppPalette.success,
+                          onLight: true,
+                        ),
+                      ],
                     ),
                   ),
                   TextButton(
                     onPressed:
                         _checking ? null : () => _checkStatus(showToast: true),
-                    child: Text(AppStrings.t('Check Payment Status')),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.brand,
+                    ),
+                    child: Text(
+                      AppStrings.t('Check Payment Status'),
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
                   ),
                 ],
               ),
@@ -480,8 +697,13 @@ class _Iyzico3dsScreenState extends State<Iyzico3dsScreen>
           ),
           Expanded(
             child: web == null
-                ? const Center(child: CircularProgressIndicator())
-                : WebViewWidget(controller: web),
+                ? const AppLoader()
+                : ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(AppRadius.lg),
+                    ),
+                    child: WebViewWidget(controller: web),
+                  ),
           ),
         ],
       ),

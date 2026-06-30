@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../public/public_repository.dart';
 
 class InstructorAgreementScreen extends StatefulWidget {
@@ -33,63 +34,123 @@ class _InstructorAgreementScreenState extends State<InstructorAgreementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: Text(AppStrings.t('Agreement'))),
-      body: FutureBuilder<LegalPage?>(
-        future: _agreementFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: AppGlowBackground(
+        child: FutureBuilder<LegalPage?>(
+          future: _agreementFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return AppLoader(message: AppStrings.t('Agreement'));
+            }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            if (snapshot.hasError) {
+              return AppErrorState(
+                message: AppStrings.t('Something went wrong'),
+                onRetry: _reload,
+                retryLabel: AppStrings.t('Try Again'),
+              );
+            }
+
+            final page = snapshot.data;
+            final title = page?.title.trim().isNotEmpty == true
+                ? page!.title
+                : AppStrings.t('Agreement');
+            final body = _stripHtml(page?.content ?? '');
+
+            if (body.isEmpty) {
+              return AppEmptyState(
+                title: AppStrings.t('No Data Found'),
+                message: AppStrings.t(
+                  'Please review and follow these basic terms while teaching.',
+                ),
+                icon: Icons.gavel_rounded,
+              );
+            }
+
+            return AnimatedPageEntrance(
+              child: ListView(
+                padding: const EdgeInsets.all(AppSpace.xl),
                 children: [
-                  Text(AppStrings.t('Something went wrong')),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: _reload,
-                    child: Text(AppStrings.t('Try Again')),
+                  StaggeredReveal(
+                    children: [
+                      GradientHero(
+                        gradient: AppGradients.hero,
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: AppRadius.all(AppRadius.md),
+                              ),
+                              child: const Icon(
+                                Icons.handshake_rounded,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.lg),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    AppStrings.t(
+                                      'Please review and follow these basic terms while teaching.',
+                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: Colors.white
+                                              .withValues(alpha: 0.88),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpace.xl),
+                      SectionHeader(
+                        title: AppStrings.t('Agreement'),
+                        subtitle: AppStrings.t('Terms and Conditions'),
+                        icon: Icons.gavel_rounded,
+                      ),
+                      AppCard(
+                        child: SelectableText(
+                          body,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: AppColors.ink,
+                                height: 1.55,
+                              ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             );
-          }
-
-          final page = snapshot.data;
-          final title = page?.title.trim().isNotEmpty == true
-              ? page!.title
-              : AppStrings.t('Agreement');
-          final body = _stripHtml(page?.content ?? '');
-
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Text(title, style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 8),
-              Text(
-                AppStrings.t(
-                  'Please review and follow these basic terms while teaching.',
-                ),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: SelectableText(
-                  body.isEmpty ? AppStrings.t('No Data Found') : body,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ),
-            ],
-          );
-        },
+          },
+        ),
       ),
     );
   }

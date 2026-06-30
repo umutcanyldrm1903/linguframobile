@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/localization/app_strings.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../profile/profile_repository.dart';
 import 'support_models.dart';
 import 'support_repository.dart';
@@ -117,9 +119,14 @@ class _SupportRequestScreenState extends State<SupportRequestScreen> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.t('Message sent successfully'))),
+      await showCelebration(
+        context,
+        title: AppStrings.t('Message sent successfully'),
+        subtitle: AppStrings.t('Describe your issue and we will reply by email.'),
+        icon: Icons.mark_email_read_rounded,
+        color: AppPalette.success,
       );
+      if (!mounted) return;
       Navigator.pop(context, true);
     } catch (error) {
       if (!mounted) return;
@@ -139,111 +146,233 @@ class _SupportRequestScreenState extends State<SupportRequestScreen> {
     }
   }
 
+  InputDecoration _fieldDecoration({
+    required String label,
+    String? errorText,
+    IconData? icon,
+    bool alignLabelWithHint = false,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      errorText: errorText,
+      alignLabelWithHint: alignLabelWithHint,
+      prefixIcon: icon == null
+          ? null
+          : Icon(icon, size: 20, color: AppColors.brand),
+      filled: true,
+      fillColor: AppPalette.cloud,
+      labelStyle: const TextStyle(
+        color: AppColors.muted,
+        fontWeight: FontWeight.w600,
+      ),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpace.lg,
+        vertical: AppSpace.lg,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: AppRadius.all(AppRadius.sm),
+        borderSide: const BorderSide(color: AppPalette.line, width: 1.2),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: AppRadius.all(AppRadius.sm),
+        borderSide: const BorderSide(color: AppPalette.line, width: 1.2),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: AppRadius.all(AppRadius.sm),
+        borderSide: const BorderSide(color: AppColors.brand, width: 1.6),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: AppRadius.all(AppRadius.sm),
+        borderSide: const BorderSide(color: AppPalette.danger, width: 1.4),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: AppRadius.all(AppRadius.sm),
+        borderSide: const BorderSide(color: AppPalette.danger, width: 1.6),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final subject = 'Support: ${widget.category.title}';
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.t('New Support Request'))),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Text(
-            AppStrings.t(widget.category.title),
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            AppStrings.t('Describe your issue and we will reply by email.'),
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
-          const SizedBox(height: 16),
-          Form(
-            key: _formKey,
-            autovalidateMode: _autoValidate
-                ? AutovalidateMode.onUserInteraction
-                : AutovalidateMode.disabled,
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: AppStrings.t('Name'),
-                    errorText: _apiErrors['name'],
-                  ),
-                  onChanged: (_) => _clearError('name'),
-                  validator: (value) {
-                    final v = (value ?? '').trim();
-                    if (v.isEmpty) return AppStrings.t('Name is required');
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: AppStrings.t('Email'),
-                    errorText: _apiErrors['email'],
-                  ),
-                  onChanged: (_) => _clearError('email'),
-                  validator: (value) {
-                    final v = (value ?? '').trim();
-                    if (v.isEmpty) return AppStrings.t('Email is required');
-                    if (!v.contains('@')) return AppStrings.t('Invalid email');
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: InputDecoration(
-                    labelText: AppStrings.t('Phone'),
-                    errorText: _apiErrors['phone'],
-                  ),
-                  onChanged: (_) => _clearError('phone'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  enabled: false,
-                  initialValue: subject,
-                  decoration: InputDecoration(
-                    labelText: AppStrings.t('Subject'),
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: Text(AppStrings.t('New Support Request')),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: AppGlowBackground(
+        child: SafeArea(
+          top: false,
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpace.xl),
+            children: [
+              AnimatedPageEntrance(
+                child: GradientHero(
+                  gradient: AppGradients.hero,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          borderRadius: AppRadius.all(AppRadius.md),
+                        ),
+                        child: Icon(
+                          widget.category.icon,
+                          color: Colors.white,
+                          size: 26,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.lg),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppStrings.t(widget.category.title),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              AppStrings.t(
+                                'Describe your issue and we will reply by email.',
+                              ),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _messageController,
-                  maxLines: 5,
-                  decoration: InputDecoration(
-                    labelText: AppStrings.t('Message'),
-                    errorText: _apiErrors['message'],
-                    alignLabelWithHint: true,
-                  ),
-                  onChanged: (_) => _clearError('message'),
-                  validator: (value) {
-                    final v = (value ?? '').trim();
-                    if (v.isEmpty) return AppStrings.t('Message is required');
-                    return null;
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _submitting ? null : _submit,
-              child: Text(
-                _submitting
-                    ? AppStrings.t('Submitting')
-                    : AppStrings.t('Submit'),
               ),
-            ),
+              const SizedBox(height: AppSpace.xl),
+              AnimatedPageEntrance(
+                delay: const Duration(milliseconds: 90),
+                child: AppCard(
+                  child: Form(
+                    key: _formKey,
+                    autovalidateMode: _autoValidate
+                        ? AutovalidateMode.onUserInteraction
+                        : AutovalidateMode.disabled,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SectionHeader(
+                          title: AppStrings.t('New Support Request'),
+                          subtitle: AppStrings.t(
+                            'Describe your issue and we will reply by email.',
+                          ),
+                          icon: Icons.support_agent_rounded,
+                        ),
+                        TextFormField(
+                          controller: _nameController,
+                          decoration: _fieldDecoration(
+                            label: AppStrings.t('Name'),
+                            errorText: _apiErrors['name'],
+                            icon: Icons.person_outline_rounded,
+                          ),
+                          onChanged: (_) => _clearError('name'),
+                          validator: (value) {
+                            final v = (value ?? '').trim();
+                            if (v.isEmpty) {
+                              return AppStrings.t('Name is required');
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: AppSpace.md),
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: _fieldDecoration(
+                            label: AppStrings.t('Email'),
+                            errorText: _apiErrors['email'],
+                            icon: Icons.alternate_email_rounded,
+                          ),
+                          onChanged: (_) => _clearError('email'),
+                          validator: (value) {
+                            final v = (value ?? '').trim();
+                            if (v.isEmpty) {
+                              return AppStrings.t('Email is required');
+                            }
+                            if (!v.contains('@')) {
+                              return AppStrings.t('Invalid email');
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: AppSpace.md),
+                        TextFormField(
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: _fieldDecoration(
+                            label: AppStrings.t('Phone'),
+                            errorText: _apiErrors['phone'],
+                            icon: Icons.phone_outlined,
+                          ),
+                          onChanged: (_) => _clearError('phone'),
+                        ),
+                        const SizedBox(height: AppSpace.md),
+                        TextFormField(
+                          enabled: false,
+                          initialValue: subject,
+                          decoration: _fieldDecoration(
+                            label: AppStrings.t('Subject'),
+                            icon: Icons.subject_rounded,
+                          ),
+                        ),
+                        const SizedBox(height: AppSpace.md),
+                        TextFormField(
+                          controller: _messageController,
+                          maxLines: 5,
+                          decoration: _fieldDecoration(
+                            label: AppStrings.t('Message'),
+                            errorText: _apiErrors['message'],
+                            alignLabelWithHint: true,
+                          ),
+                          onChanged: (_) => _clearError('message'),
+                          validator: (value) {
+                            final v = (value ?? '').trim();
+                            if (v.isEmpty) {
+                              return AppStrings.t('Message is required');
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpace.xl),
+              AnimatedPageEntrance(
+                delay: const Duration(milliseconds: 160),
+                child: AppButton(
+                  label: _submitting
+                      ? AppStrings.t('Submitting')
+                      : AppStrings.t('Submit'),
+                  tone: AppButtonTone.brand,
+                  icon: Icons.send_rounded,
+                  loading: _submitting,
+                  onPressed: _submitting ? null : _submit,
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

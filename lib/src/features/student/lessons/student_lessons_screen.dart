@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
-import '../../../core/motion/app_motion.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import 'student_live_lesson_screen.dart';
 import 'student_lessons_repository.dart';
 
@@ -36,37 +36,81 @@ class _StudentLessonsScreenState extends State<StudentLessonsScreen> {
     return FutureBuilder<LiveLessonsResponse>(
       future: _future,
       builder: (context, snapshot) {
-        final total = (snapshot.data?.upcoming.length ?? 0) +
-            (snapshot.data?.past.length ?? 0);
+        final upcomingCount = snapshot.data?.upcoming.length ?? 0;
+        final pastCount = snapshot.data?.past.length ?? 0;
+        final total = upcomingCount + pastCount;
 
         return DefaultTabController(
           length: 2,
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-                child: Row(
-                  children: [
-                    Text(
-                      AppStrings.t('My Lessons'),
-                      style: Theme.of(context).textTheme.titleLarge,
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpace.xl,
+                  AppSpace.md,
+                  AppSpace.xl,
+                  0,
+                ),
+                child: AnimatedPageEntrance(
+                  child: GradientHero(
+                    gradient: AppGradients.hero,
+                    padding: const EdgeInsets.all(AppSpace.xl),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: AppRadius.all(AppRadius.md),
+                          ),
+                          child: const Icon(
+                            Icons.videocam_rounded,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                AppStrings.t('My Lessons'),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '${AppStrings.t('Total')}: $total',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.85),
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        AppStatPill(
+                          icon: Icons.event_available_rounded,
+                          label: '$upcomingCount',
+                          color: AppPalette.gold,
+                        ),
+                      ],
                     ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.brand.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text('${AppStrings.t('Total')}: $total'),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpace.md),
               TabBar(
                 labelColor: AppColors.ink,
                 indicatorColor: AppColors.brand,
@@ -85,13 +129,11 @@ class _StudentLessonsScreenState extends State<StudentLessonsScreen> {
 
   Widget _buildBody(AsyncSnapshot<LiveLessonsResponse> snapshot) {
     if (snapshot.connectionState == ConnectionState.waiting) {
-      return const Center(
-        child: MascotLoading(message: 'Dersler hazirlaniyor...'),
-      );
+      return AppLoader(message: AppStrings.t('Dersler hazirlaniyor...'));
     }
 
     if (snapshot.hasError) {
-      return _EmptyState(
+      return AppErrorState(
         message: _extractError(snapshot.error),
         onRetry: () => _refresh(),
       );
@@ -99,7 +141,10 @@ class _StudentLessonsScreenState extends State<StudentLessonsScreen> {
 
     final data = snapshot.data;
     if (data == null) {
-      return _EmptyState(message: AppStrings.t('No lessons found!'));
+      return AppEmptyState(
+        title: AppStrings.t('No lessons found!'),
+        icon: Icons.videocam_off_rounded,
+      );
     }
 
     return TabBarView(
@@ -163,15 +208,22 @@ class _LessonList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return _EmptyState(message: emptyMessage, onRetry: onRefresh);
+      return AppEmptyState(
+        title: emptyMessage,
+        icon: isUpcoming
+            ? Icons.event_busy_rounded
+            : Icons.history_rounded,
+        actionLabel: AppStrings.t('Try Again'),
+        onAction: () => onRefresh(),
+      );
     }
 
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView.separated(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpace.xl),
         itemCount: items.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 14),
+        separatorBuilder: (_, __) => const SizedBox(height: AppSpace.md),
         itemBuilder: (context, index) {
           final lesson = items[index];
           final joinable = _canJoinNow(lesson);
@@ -209,92 +261,99 @@ class _LessonCard extends StatelessWidget {
         ? (item.isPending ? AppStrings.t('Pending') : AppStrings.t('Upcoming'))
         : AppStrings.t('Completed');
     final statusColor = isUpcoming
-        ? (item.isPending ? AppColors.muted : AppColors.brand)
-        : Colors.green;
+        ? (item.isPending ? AppPalette.warning : AppColors.brand)
+        : AppPalette.success;
+    final statusIcon = isUpcoming
+        ? (item.isPending
+            ? Icons.hourglass_bottom_rounded
+            : Icons.schedule_rounded)
+        : Icons.check_circle_rounded;
 
     final joinLabel = _joinButtonLabel(item, onJoin != null);
 
-    return PressableScale(
+    return AppCard(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: statusColor.withValues(alpha: 0.2),
-                  child: Icon(Icons.play_circle, color: statusColor),
+      padding: const EdgeInsets.all(AppSpace.lg),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.14),
+                  borderRadius: AppRadius.all(AppRadius.md),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(item.title,
-                          style: Theme.of(context).textTheme.titleLarge),
-                      const SizedBox(height: 4),
-                      Text(
-                        _subtitle(item),
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    statusLabel,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onTap,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.brand,
-                      side: const BorderSide(color: AppColors.brand),
+                child: Icon(Icons.play_circle_rounded, color: statusColor),
+              ),
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
                     ),
-                    child: Text(AppStrings.t('Details')),
+                    const SizedBox(height: 4),
+                    Text(
+                      _subtitle(item),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: AppColors.muted),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpace.sm),
+              AppStatPill(
+                icon: statusIcon,
+                label: statusLabel,
+                color: statusColor,
+                onLight: true,
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.md),
+          Row(
+            children: [
+              Expanded(
+                child: AppGhostButton(
+                  label: AppStrings.t('Details'),
+                  onPressed: onTap,
+                  icon: Icons.info_outline_rounded,
+                ),
+              ),
+              const SizedBox(width: AppSpace.sm),
+              if (isUpcoming)
+                Expanded(
+                  child: AppButton(
+                    label: joinLabel,
+                    onPressed: onJoin,
+                    tone: AppButtonTone.success,
+                    icon: Icons.videocam_rounded,
+                    height: 52,
+                  ),
+                )
+              else
+                Expanded(
+                  child: AppButton(
+                    label: 'Pratik Yap',
+                    onPressed: () =>
+                        Navigator.pushNamed(context, '/practice'),
+                    tone: AppButtonTone.violet,
+                    icon: Icons.auto_awesome_rounded,
+                    height: 52,
                   ),
                 ),
-                if (isUpcoming) ...[
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: onJoin,
-                      child: Text(joinLabel),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -365,30 +424,6 @@ String _joinButtonLabel(LiveLessonItem lesson, bool enabled) {
     return AppStrings.t('Lesson is finished');
   }
   return AppStrings.t('Unavailable');
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.message, this.onRetry});
-
-  final String message;
-  final Future<void> Function()? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
-      children: [
-        Text(message, textAlign: TextAlign.center),
-        if (onRetry != null) ...[
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: () => onRetry!(),
-            child: Text(AppStrings.t('Try Again')),
-          ),
-        ],
-      ],
-    );
-  }
 }
 
 String _extractError(Object? error) {

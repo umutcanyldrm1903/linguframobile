@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
-import '../../../core/motion/app_motion.dart';
+import '../../../core/analytics/app_event_logger.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../auth/auth_repository.dart';
 import '../../public/public_page_scaffold.dart';
 import '../packages/student_packages_screen.dart';
@@ -97,8 +98,47 @@ class _StudentInstructorsScreenState extends State<StudentInstructorsScreen> {
         await _future;
       },
       child: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(AppSpace.xl),
         children: [
+          AnimatedPageEntrance(
+            child: GradientHero(
+              gradient: AppGradients.hero,
+              padding: const EdgeInsets.all(AppSpace.xl),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.school_rounded,
+                          color: Colors.white, size: 26),
+                      const SizedBox(width: AppSpace.sm),
+                      Expanded(
+                        child: Text(
+                          AppStrings.t('Instructors'),
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                              ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    AppStrings.t('Find your instructor'),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white.withValues(alpha: 0.92),
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpace.lg),
           _SearchBar(
             controller: _searchController,
             onSubmitted: (_) => _refresh(),
@@ -107,36 +147,42 @@ class _StudentInstructorsScreenState extends State<StudentInstructorsScreen> {
               _refresh();
             },
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpace.md),
           _FilterRow(
             filters: _filters,
             selectedTags: _selectedTags,
             onToggle: _toggleTag,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpace.lg),
           FutureBuilder<List<InstructorCardData>>(
             future: _future,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 40),
-                  child: Center(
-                    child: MascotLoading(message: 'Ogretmenler yukleniyor...'),
-                  ),
+                  padding: EdgeInsets.symmetric(vertical: AppSpace.huge),
+                  child: AppLoader(message: 'Ogretmenler yükleniyor...'),
                 );
               }
 
               if (snapshot.hasError) {
-                return _EmptyState(
-                  message: _extractError(snapshot.error),
-                  onRetry: _refresh,
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpace.xl),
+                  child: AppErrorState(
+                    message: _extractError(snapshot.error),
+                    onRetry: _refresh,
+                    retryLabel: AppStrings.t('Try Again'),
+                  ),
                 );
               }
 
               final instructors = snapshot.data ?? [];
               if (instructors.isEmpty) {
-                return _EmptyState(
-                  message: AppStrings.t('No instructors found.'),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpace.xl),
+                  child: AppEmptyState(
+                    icon: Icons.person_search_rounded,
+                    title: AppStrings.t('No instructors found.'),
+                  ),
                 );
               }
 
@@ -144,7 +190,7 @@ class _StudentInstructorsScreenState extends State<StudentInstructorsScreen> {
                 children: instructors
                     .map(
                       (instructor) => Padding(
-                        padding: const EdgeInsets.only(bottom: 14),
+                        padding: const EdgeInsets.only(bottom: AppSpace.md),
                         child: _InstructorCard(
                           data: instructor,
                           onTap: () {
@@ -177,7 +223,9 @@ class _StudentInstructorsScreenState extends State<StudentInstructorsScreen> {
       appBar: AppBar(
         title: Text(AppStrings.t('Instructors')),
       ),
-      body: publicAppViewport(context, content, expandHeight: true),
+      body: AppGlowBackground(
+        child: publicAppViewport(context, content, expandHeight: true),
+      ),
     );
   }
 }
@@ -407,6 +455,13 @@ class _StudentInstructorDetailScreenState
     if (!await _canBook()) return;
     setState(() => _booking = true);
     try {
+      await AppEventLogger.instance.log(
+        'reservation_started',
+        properties: {
+          'instructor_id': '${widget.data.id}',
+          'trial_available': _trialLessonAvailable ? '1' : '0',
+        },
+      );
       final response = await _repo.bookSchedule(
         instructorId: widget.data.id,
         slot: _selectedSlot!,
@@ -431,6 +486,19 @@ class _StudentInstructorDetailScreenState
           setState(() => _trialLessonAvailable = false);
         }
       }
+      await AppEventLogger.instance.log(
+        'reservation_completed',
+        properties: {
+          'instructor_id': '${widget.data.id}',
+          'is_trial': isTrial ? '1' : '0',
+        },
+      );
+      if (isTrial) {
+        await AppEventLogger.instance.log(
+          'trial_requested',
+          properties: {'instructor_id': '${widget.data.id}'},
+        );
+      }
       _loadSchedule(start: schedule.weekStart);
     } catch (error) {
       final handled = await _handleBookingError(error);
@@ -454,110 +522,132 @@ class _StudentInstructorDetailScreenState
       appBar: AppBar(
         title: Text(widget.data.name),
       ),
-      body: publicAppViewport(
-        context,
-        FutureBuilder<InstructorSchedule>(
-          future: _scheduleFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: MascotLoading(message: 'Takvim hazirlaniyor...'),
-              );
-            }
-            if (snapshot.hasError) {
-              return _EmptyState(
-                message: _extractError(snapshot.error),
-                onRetry: () => _loadSchedule(),
-              );
-            }
+      body: AppGlowBackground(
+        child: publicAppViewport(
+          context,
+          FutureBuilder<InstructorSchedule>(
+            future: _scheduleFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const AppLoader(message: 'Takvim hazirlaniyor...');
+              }
+              if (snapshot.hasError) {
+                return AppErrorState(
+                  message: _extractError(snapshot.error),
+                  onRetry: () => _loadSchedule(),
+                  retryLabel: AppStrings.t('Try Again'),
+                );
+              }
 
-            final schedule = snapshot.data!;
-            final rangeLabel =
-                _weekRangeLabel(schedule.weekStart, schedule.weekEnd);
+              final schedule = snapshot.data!;
+              final rangeLabel =
+                  _weekRangeLabel(schedule.weekStart, schedule.weekEnd);
 
-            return ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                _InstructorHeader(data: widget.data),
-                const SizedBox(height: 18),
-                Text(
-                  AppStrings.t('Lesson Reservation'),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  AppStrings.t(
-                    'Pick one of the available time slots to create a reservation.',
+              return ListView(
+                padding: const EdgeInsets.all(AppSpace.xl),
+                children: [
+                  AnimatedPageEntrance(
+                    child: _InstructorHeader(data: widget.data),
                   ),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: () => _loadSchedule(start: schedule.prevStart),
-                      child: Text(AppStrings.t('Previous')),
+                  const SizedBox(height: AppSpace.lg),
+                  SectionHeader(
+                    icon: Icons.event_available_rounded,
+                    title: AppStrings.t('Lesson Reservation'),
+                    subtitle: AppStrings.t(
+                      'Pick one of the available time slots to create a reservation.',
                     ),
-                    Text(
-                      rangeLabel,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
+                  ),
+                  AppCard(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.sm,
+                      vertical: AppSpace.xs,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          onPressed: () =>
+                              _loadSchedule(start: schedule.prevStart),
+                          icon: const Icon(Icons.chevron_left_rounded),
+                          color: AppColors.brand,
+                          tooltip: AppStrings.t('Previous'),
+                        ),
+                        Expanded(
+                          child: Text(
+                            rangeLabel,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.ink,
+                                ),
                           ),
+                        ),
+                        IconButton(
+                          onPressed: () =>
+                              _loadSchedule(start: schedule.nextStart),
+                          icon: const Icon(Icons.chevron_right_rounded),
+                          color: AppColors.brand,
+                          tooltip: AppStrings.t('Next'),
+                        ),
+                      ],
                     ),
-                    TextButton(
-                      onPressed: () => _loadSchedule(start: schedule.nextStart),
-                      child: Text(AppStrings.t('Next')),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 360,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemBuilder: (_, index) {
-                      final day = schedule.days[index];
-                      final dayLabel = _dayLabel(day.date);
-                      final dateLabel = _formatDateShort(day.date);
-                      final slots = schedule.slotsByDate[day.date] ?? [];
-                      return _DayColumn(
-                        label: dayLabel,
-                        date: dateLabel,
-                        slots: slots,
-                        selectedSlot: _selectedSlot,
-                        onSelect: (slotValue) {
-                          setState(() => _selectedSlot = slotValue);
-                        },
-                      );
-                    },
-                    separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemCount: schedule.days.length,
                   ),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
+                  const SizedBox(height: AppSpace.md),
+                  SizedBox(
+                    height: 360,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemBuilder: (_, index) {
+                        final day = schedule.days[index];
+                        final dayLabel = _dayLabel(day.date);
+                        final dateLabel = _formatDateShort(day.date);
+                        final slots = schedule.slotsByDate[day.date] ?? [];
+                        return _DayColumn(
+                          label: dayLabel,
+                          date: dateLabel,
+                          slots: slots,
+                          selectedSlot: _selectedSlot,
+                          onSelect: (slotValue) {
+                            setState(() => _selectedSlot = slotValue);
+                          },
+                        );
+                      },
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(width: AppSpace.md),
+                      itemCount: schedule.days.length,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpace.lg),
+                  AppButton(
+                    tone: _trialLessonAvailable
+                        ? AppButtonTone.success
+                        : AppButtonTone.brand,
+                    icon: _selectedSlot == null
+                        ? Icons.touch_app_rounded
+                        : _trialLessonAvailable
+                            ? Icons.card_giftcard_rounded
+                            : Icons.event_available_rounded,
+                    loading: _booking,
                     onPressed: _selectedSlot == null || _booking
                         ? null
                         : () => _bookSlot(schedule),
-                    child: Text(
-                      _selectedSlot == null
-                          ? AppStrings.t('Select Time')
-                          : _booking
-                              ? '${AppStrings.t('Submitting')}...'
-                              : _trialLessonAvailable
-                                  ? AppStrings.t('Book free trial lesson')
-                                  : AppStrings.t('Book Reservation'),
-                    ),
+                    label: _selectedSlot == null
+                        ? AppStrings.t('Select Time')
+                        : _booking
+                            ? '${AppStrings.t('Submitting')}...'
+                            : _trialLessonAvailable
+                                ? AppStrings.t('Book free trial lesson')
+                                : AppStrings.t('Book Reservation'),
                   ),
-                ),
-              ],
-            );
-          },
+                ],
+              );
+            },
+          ),
+          expandHeight: true,
         ),
-        expandHeight: true,
       ),
     );
   }
@@ -570,60 +660,54 @@ class _InstructorHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpace.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _Avatar(imageUrl: data.imageUrl, name: data.name, radius: 32),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(data.name, style: Theme.of(context).textTheme.titleLarge),
-                Text(data.role, style: Theme.of(context).textTheme.bodyMedium),
-                if (data.tags.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: data.tags
-                        .map(
-                          (tag) => Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.brand.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              tag,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ],
-              ],
-            ),
+          Row(
+            children: [
+              _Avatar(imageUrl: data.imageUrl, name: data.name, radius: 32),
+              const SizedBox(width: AppSpace.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(data.name,
+                        style: Theme.of(context).textTheme.titleLarge),
+                    Text(data.role,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppColors.muted,
+                              fontWeight: FontWeight.w600,
+                            )),
+                    const SizedBox(height: AppSpace.sm),
+                    AppStatPill(
+                      icon: Icons.star_rounded,
+                      label: '${data.rating.toStringAsFixed(1)} / 5',
+                      color: AppPalette.gold,
+                      onLight: true,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
+          if (data.tags.isNotEmpty) ...[
+            const SizedBox(height: AppSpace.md),
+            Wrap(
+              spacing: AppSpace.sm,
+              runSpacing: 6,
+              children: data.tags
+                  .map(
+                    (tag) => AppChip(
+                      label: tag,
+                      selected: false,
+                      onTap: () {},
+                    ),
+                  )
+                  .toList(),
+            ),
+          ],
         ],
       ),
     );
@@ -647,45 +731,53 @@ class _DayColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 160,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.titleLarge),
-          Text(date, style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 10),
-          Expanded(
-            child: slots.isEmpty
-                ? Center(
-                    child: Text(
-                      AppStrings.t('No available time slots'),
-                      style: Theme.of(context).textTheme.bodyMedium,
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpace.md),
+        radius: AppRadius.md,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: Theme.of(context).textTheme.titleLarge),
+            Text(date,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.muted,
+                      fontWeight: FontWeight.w600,
+                    )),
+            const SizedBox(height: AppSpace.sm),
+            Expanded(
+              child: slots.isEmpty
+                  ? Center(
+                      child: Text(
+                        AppStrings.t('No available time slots'),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.muted,
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    )
+                  : ListView.separated(
+                      itemCount: slots.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpace.sm),
+                      itemBuilder: (_, index) {
+                        final slot = slots[index];
+                        final isSelected = slot.value == selectedSlot;
+                        return _SlotButton(
+                          label: slot.label,
+                          isSelected: isSelected,
+                          available: slot.available,
+                          onTap: slot.available
+                              ? () => onSelect(slot.value)
+                              : null,
+                        );
+                      },
                     ),
-                  )
-                : ListView.separated(
-                    itemCount: slots.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, index) {
-                      final slot = slots[index];
-                      final isSelected = slot.value == selectedSlot;
-                      return _SlotButton(
-                        label: slot.label,
-                        isSelected: isSelected,
-                        available: slot.available,
-                        onTap:
-                            slot.available ? () => onSelect(slot.value) : null,
-                      );
-                    },
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -706,32 +798,39 @@ class _SlotButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = isSelected
-        ? AppColors.brand
-        : available
-            ? const Color(0xFFF1F5F9)
-            : const Color(0xFFE2E8F0);
     final borderColor = isSelected
-        ? AppColors.brand
+        ? Colors.transparent
         : available
-            ? const Color(0xFFE2E8F0)
+            ? AppPalette.line
             : const Color(0xFFD1D5DB);
 
     return PressableScale(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+      child: AnimatedContainer(
+        duration: AppMotion.fast,
+        padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
         decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: borderColor),
+          gradient: isSelected ? AppGradients.brand : null,
+          color: isSelected
+              ? null
+              : available
+                  ? AppPalette.cloud
+                  : const Color(0xFFE2E8F0),
+          borderRadius: AppRadius.all(AppRadius.sm),
+          border: Border.all(color: borderColor, width: 1.4),
+          boxShadow:
+              isSelected ? AppShadows.glow(AppColors.brand, opacity: 0.28) : null,
         ),
         child: Center(
           child: Text(
             label,
             style: TextStyle(
-              fontWeight: FontWeight.w700,
-              color: available ? AppColors.ink : AppColors.muted,
+              fontWeight: FontWeight.w800,
+              color: isSelected
+                  ? Colors.white
+                  : available
+                      ? AppColors.ink
+                      : AppColors.muted,
               fontSize: 12,
             ),
           ),
@@ -758,14 +857,26 @@ class _SearchBar extends StatelessWidget {
       controller: controller,
       onSubmitted: onSubmitted,
       decoration: InputDecoration(
-        prefixIcon: const Icon(Icons.search),
+        prefixIcon: const Icon(Icons.search_rounded, color: AppColors.brand),
         hintText: AppStrings.t('Find your instructor'),
         filled: true,
         fillColor: AppColors.surface,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.pill,
+          borderSide: const BorderSide(color: AppPalette.line, width: 1.2),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: AppRadius.pill,
+          borderSide: const BorderSide(color: AppColors.brand, width: 1.6),
+        ),
+        border: OutlineInputBorder(
+          borderRadius: AppRadius.pill,
+          borderSide: const BorderSide(color: AppPalette.line, width: 1.2),
+        ),
         suffixIcon: controller.text.isEmpty
             ? null
             : IconButton(
-                icon: const Icon(Icons.close),
+                icon: const Icon(Icons.close_rounded),
                 onPressed: onClear,
               ),
       ),
@@ -792,19 +903,11 @@ class _FilterRow extends StatelessWidget {
         children: filters
             .map(
               (text) => Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: FilterChip(
-                  label: Text(
-                    AppStrings.t(text),
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
+                padding: const EdgeInsets.only(right: AppSpace.sm),
+                child: AppChip(
+                  label: AppStrings.t(text),
                   selected: selectedTags.contains(text),
-                  onSelected: (_) => onToggle(text),
-                  selectedColor: AppColors.brand.withValues(alpha: 0.2),
-                  backgroundColor: AppColors.surface,
-                  shape: const StadiumBorder(
-                    side: BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
+                  onTap: () => onToggle(text),
                 ),
               ),
             )
@@ -822,89 +925,71 @@ class _InstructorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PressableScale(
+    return AppCard(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                _Avatar(imageUrl: data.imageUrl, name: data.name, radius: 28),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(data.name,
-                          style: Theme.of(context).textTheme.titleLarge),
-                      Text(data.role,
-                          style: Theme.of(context).textTheme.bodyMedium),
-                    ],
-                  ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _Avatar(imageUrl: data.imageUrl, name: data.name, radius: 28),
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(data.name,
+                        style: Theme.of(context).textTheme.titleLarge),
+                    Text(data.role,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppColors.muted,
+                              fontWeight: FontWeight.w600,
+                            )),
+                  ],
                 ),
-                const Icon(Icons.favorite_border, color: AppColors.muted),
-              ],
-            ),
-            if (data.tags.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: data.tags
-                    .map(
-                      (tag) => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.brand,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        child: Text(
-                          tag,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ),
-                    )
-                    .toList(),
+              ),
+              AppStatPill(
+                icon: Icons.star_rounded,
+                label: data.rating.toStringAsFixed(1),
+                color: AppPalette.gold,
+                onLight: true,
               ),
             ],
-            const SizedBox(height: 10),
-            Text(data.about, style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                const Icon(Icons.star, size: 16, color: AppColors.brand),
-                const SizedBox(width: 4),
-                Text(
-                  '${data.rating.toStringAsFixed(1)} / 5',
-                ),
-                const Spacer(),
-                ElevatedButton(
-                  onPressed: onTap,
-                  child: Text(AppStrings.t('Book Reservation')),
-                ),
-              ],
+          ),
+          if (data.tags.isNotEmpty) ...[
+            const SizedBox(height: AppSpace.md),
+            Wrap(
+              spacing: AppSpace.sm,
+              runSpacing: 6,
+              children: data.tags
+                  .map(
+                    (tag) => AppChip(
+                      label: tag,
+                      selected: true,
+                      onTap: onTap,
+                    ),
+                  )
+                  .toList(),
             ),
           ],
-        ),
+          if (data.about.trim().isNotEmpty) ...[
+            const SizedBox(height: AppSpace.md),
+            Text(
+              data.about,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.muted,
+                  ),
+            ),
+          ],
+          const SizedBox(height: AppSpace.md),
+          AppButton(
+            label: AppStrings.t('Book Reservation'),
+            onPressed: onTap,
+            icon: Icons.event_available_rounded,
+            expand: false,
+            height: 46,
+          ),
+        ],
       ),
     );
   }
@@ -969,32 +1054,6 @@ class InstructorCardData {
   final String about;
   final double rating;
   final String? imageUrl;
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.message, this.onRetry});
-
-  final String message;
-  final VoidCallback? onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Column(
-        children: [
-          Text(message, textAlign: TextAlign.center),
-          if (onRetry != null) ...[
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: onRetry,
-              child: Text(AppStrings.t('Try Again')),
-            ),
-          ]
-        ],
-      ),
-    );
-  }
 }
 
 String _dayLabel(String dateValue) {

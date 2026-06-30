@@ -7,6 +7,10 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val admobAppId = providers.gradleProperty("ADMOB_APP_ID").orNull
+    ?: System.getenv("ADMOB_APP_ID")
+    ?: "ca-app-pub-3940256099942544~3347511713"
+
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")
 val hasReleaseSigning = keystorePropertiesFile.exists()
@@ -41,6 +45,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["admobAppId"] = admobAppId
     }
 
     signingConfigs {
@@ -64,6 +69,16 @@ android {
                 signingConfigs.getByName("debug")
             }
         }
+    }
+}
+
+gradle.taskGraph.whenReady {
+    val releaseRequested = allTasks.any { it.name.contains("release", ignoreCase = true) }
+    if (releaseRequested && !hasReleaseSigning) {
+        throw GradleException("Release build requires mobile/android/key.properties and a release keystore.")
+    }
+    if (releaseRequested && admobAppId == "ca-app-pub-3940256099942544~3347511713") {
+        throw GradleException("Release build requires ADMOB_APP_ID Gradle property or environment variable.")
     }
 }
 

@@ -41,7 +41,7 @@ class TopBar extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleLarge),
               Text(
                 AppStrings.code == 'tr'
-                    ? 'Gunluk ders akisi'
+                    ? 'Günlük ders akışı'
                     : 'Daily lesson flow',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
@@ -54,7 +54,7 @@ class TopBar extends StatelessWidget {
         ),
         TextButton(
           onPressed: onLogin,
-          child: Text(AppStrings.code == 'tr' ? 'Giris' : 'Login'),
+          child: Text(AppStrings.code == 'tr' ? 'Giriş' : 'Login'),
         ),
       ],
     );

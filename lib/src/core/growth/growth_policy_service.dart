@@ -52,8 +52,8 @@ class GrowthPolicyService {
         : (experimentId == 'trial_cta_v1_a' ? 'Free trial' : 'Lock trial now');
     final paywallMessage = isTurkish
         ? (segmentId == 'engaged'
-            ? 'Ilerlemeyi korumak icin canli ders adimina gec.'
-            : 'Akisi kaybetmeden deneme dersini simdi al.')
+            ? 'Ilerlemeyi korumak için canlı ders adımına geç.'
+            : 'Akisi kaybetmeden deneme dersini şimdi al.')
         : (segmentId == 'engaged'
             ? 'Move to the live lesson step to protect momentum.'
             : 'Grab your trial now before the flow drops.');

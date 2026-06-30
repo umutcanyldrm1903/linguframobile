@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_colors.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+
+import '../../core/ui/ui.dart';
+import '../auth/auth_visuals.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
@@ -7,63 +10,120 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [AppColors.brand, Color(0xFFFBBF24)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0x33000000),
-                      blurRadius: 16,
-                      offset: Offset(0, 6),
+      backgroundColor: const Color(0xFF2138D9),
+      body: AuthBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 26),
+            child: Column(
+              children: [
+                const Spacer(flex: 2),
+
+                // Maskot — elastik zıplama ile girer
+                const AuthMascot(size: 150, mood: AuthMascotMood.cheer)
+                    .animate()
+                    .fadeIn(duration: const Duration(milliseconds: 500))
+                    .scale(
+                      begin: const Offset(0.5, 0.5),
+                      end: const Offset(1, 1),
+                      curve: Curves.elasticOut,
+                      duration: const Duration(milliseconds: 1000),
                     ),
-                  ],
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(10),
-                  child: ClipOval(
-                    child: Image(
-                      image: AssetImage('assets/icon/app_icon_source.png'),
-                      width: 52,
-                      height: 52,
-                      fit: BoxFit.cover,
-                      filterQuality: FilterQuality.high,
+                const SizedBox(height: 18),
+
+                // Marka adı
+                const Text(
+                  'LinguFranca',
+                  style: TextStyle(
+                    fontSize: 34,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                )
+                    .animate()
+                    .fadeIn(
+                        delay: const Duration(milliseconds: 250),
+                        duration: const Duration(milliseconds: 500))
+                    .slideY(begin: 0.4, end: 0),
+                const SizedBox(height: 8),
+                const Text(
+                  'Konuşarak İngilizce öğren',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white70,
+                  ),
+                ).animate().fadeIn(
+                    delay: const Duration(milliseconds: 450),
+                    duration: const Duration(milliseconds: 500)),
+                const SizedBox(height: 22),
+
+                // Canlı sosyal kanıt sayacı
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 330),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.16),
+                      borderRadius: AppRadius.pill,
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.local_fire_department_rounded,
+                            color: AppPalette.gold, size: 18),
+                        const SizedBox(width: 8),
+                        const AnimatedCounter(
+                          value: 500,
+                          suffix: '+',
+                          duration: Duration(milliseconds: 1400),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 15,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Flexible(
+                          child: Text(
+                            'öğrenci bugün burada',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'LinguFranca',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+                ).animate().fadeIn(
+                    delay: const Duration(milliseconds: 700),
+                    duration: const Duration(milliseconds: 600)),
+
+                const Spacer(flex: 3),
+
+                // Başla
+                AppButton(
+                  label: 'BAŞLA',
+                  tone: AppButtonTone.gold,
+                  icon: Icons.arrow_forward_rounded,
+                  onPressed: () =>
+                      Navigator.pushReplacementNamed(context, '/home'),
+                ).animate().fadeIn(
+                    delay: const Duration(milliseconds: 900),
+                    duration: const Duration(milliseconds: 500)),
+              ],
+            ),
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.pushReplacementNamed(context, '/home'),
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.ink,
-        label: const Text('Ba?la'),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

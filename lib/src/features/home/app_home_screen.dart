@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../core/localization/app_strings.dart';
-import '../../core/motion/app_motion.dart';
 import '../../core/storage/app_preferences.dart';
 import '../../core/storage/secure_storage.dart';
 import '../../core/theme/app_colors.dart';
-import '../public/public_theme.dart';
-import '../public/speak_coach_screen.dart';
+import '../../core/ui/ui.dart';
+import '../practice/practice_repository.dart';
 
 class AppHomeScreen extends StatefulWidget {
   const AppHomeScreen({super.key});
@@ -18,39 +17,15 @@ class AppHomeScreen extends StatefulWidget {
 class _AppHomeScreenState extends State<AppHomeScreen> {
   int _index = 0;
 
+  // Pratik istatistikleri (seri/XP/can) tek sefer çekilir; hub kartları bu
+  // canlı veriyle dolar. Misafirde fallback (0/0/5), girişte gerçek değerler.
+  late final Future<PracticeStats> _statsFuture =
+      const PracticeRepository().fetchStats();
+
   @override
   void initState() {
     super.initState();
     AppPreferences.markAppHomeSeen();
-  }
-
-  void _openSpeakingTask(int step) {
-    Navigator.of(context).push(
-      PageRouteBuilder<void>(
-        transitionDuration: const Duration(milliseconds: 520),
-        reverseTransitionDuration: const Duration(milliseconds: 320),
-        pageBuilder: (_, __, ___) => PublicTheme(
-          child: SpeakCoachScreen(initialMissionStep: step),
-        ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final fade = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-          );
-          final slide = Tween<Offset>(
-            begin: const Offset(0, 0.06),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-          ));
-          return FadeTransition(
-            opacity: fade,
-            child: SlideTransition(position: slide, child: child),
-          );
-        },
-      ),
-    );
   }
 
   @override
@@ -58,12 +33,12 @@ class _AppHomeScreenState extends State<AppHomeScreen> {
     final isTr = AppStrings.code == 'tr';
     final pages = [
       _NativeHomePage(
-        onStartTasks: () => setState(() => _index = 1),
-        onOpenTeachers: () => setState(() => _index = 2),
+        statsFuture: _statsFuture,
+        onStartTasks: () => Navigator.pushNamed(context, '/practice'),
+        onOpenTeachers: () => setState(() => _index = 1),
       ),
-      _TasksPage(onTaskTap: _openSpeakingTask),
-      const _TeachersPage(),
-      const _AboutMiniPage(),
+      const _LmsEntryPage(),
+      _PracticeHubEntryPage(statsFuture: _statsFuture),
       const _ProfileEntryPage(),
     ];
 
@@ -109,27 +84,21 @@ class _AppHomeScreenState extends State<AppHomeScreen> {
               ),
               _DockItem(
                 selected: _index == 1,
-                icon: Icons.flag_rounded,
-                label: isTr ? 'Gorev' : 'Tasks',
+                icon: Icons.video_camera_front_rounded,
+                label: isTr ? 'Dersler' : 'Lessons',
                 onTap: () => setState(() => _index = 1),
               ),
               _DockItem(
                 selected: _index == 2,
-                icon: Icons.groups_rounded,
-                label: isTr ? 'Hocalar' : 'Teachers',
+                icon: Icons.auto_awesome_rounded,
+                label: isTr ? 'Pratik' : 'Practice',
                 onTap: () => setState(() => _index = 2),
               ),
               _DockItem(
                 selected: _index == 3,
-                icon: Icons.info_rounded,
-                label: isTr ? 'Biz' : 'About',
-                onTap: () => setState(() => _index = 3),
-              ),
-              _DockItem(
-                selected: _index == 4,
                 icon: Icons.person_rounded,
                 label: isTr ? 'Profil' : 'Profile',
-                onTap: () => setState(() => _index = 4),
+                onTap: () => setState(() => _index = 3),
               ),
             ],
           ),
@@ -141,10 +110,12 @@ class _AppHomeScreenState extends State<AppHomeScreen> {
 
 class _NativeHomePage extends StatelessWidget {
   const _NativeHomePage({
+    required this.statsFuture,
     required this.onStartTasks,
     required this.onOpenTeachers,
   });
 
+  final Future<PracticeStats> statsFuture;
   final VoidCallback onStartTasks;
   final VoidCallback onOpenTeachers;
 
@@ -157,23 +128,38 @@ class _NativeHomePage extends StatelessWidget {
         _PageHeader(
           title: isTr ? 'LinguFranca ana sayfa' : 'LinguFranca home',
           subtitle: isTr
-              ? 'Speaking hedefini sec, ucretsiz gorevlerle basla ve sana uygun ogretmeni bul.'
-              : 'Choose your speaking goal, start free tasks, and find your matched teacher.',
+              ? 'Pratik hedefini seç, oyunlu mini derslerle ilerle ve sana uygun öğretmeni bul.'
+              : 'Choose your practice goal, progress with gamified mini lessons, and find your matched teacher.',
           icon: Icons.language_rounded,
         ),
         const SizedBox(height: 16),
         _HeroActionCard(
-          title: isTr ? 'Ucretsiz speaking rutini' : 'Free speaking routine',
+          title: isTr ? 'Günlük pratik rutini' : 'Daily practice routine',
           subtitle: isTr
-              ? 'Dinleme, anlama ve konusma gorevleriyle seviyeni olcelim.'
-              : 'Measure your level with listening, meaning, and speaking tasks.',
-          button: isTr ? 'Gorevlere basla' : 'Start tasks',
+              ? 'Kısa oyunlu derslerle XP kazan, serini koru ve eksiklerini tekrar et.'
+              : 'Earn XP with quick gamified lessons, keep your streak, and review weak points.',
+          button: isTr ? 'Pratiğe başla' : 'Start practice',
           onPressed: onStartTasks,
         ),
+        const SizedBox(height: 12),
+        _PracticeProgressSummary(
+          statsFuture: statsFuture,
+          onTap: onStartTasks,
+        ),
+        const SizedBox(height: 12),
+        _PracticeLiveStats(statsFuture: statsFuture, onTap: onStartTasks),
         const SizedBox(height: 14),
         _DailyFocusCard(
           onStartTasks: onStartTasks,
           onOpenTeachers: onOpenTeachers,
+        ),
+        const SizedBox(height: 14),
+        _PracticeModeTile(
+          title: isTr ? 'Pratik Yap' : 'Practice',
+          detail: isTr
+              ? 'XP kazan, serini koru ve mini ders yolunda ilerle.'
+              : 'Earn XP, keep your streak, and progress on the mini lesson path.',
+          onTap: () => Navigator.pushNamed(context, '/practice'),
         ),
         const SizedBox(height: 14),
         _SkillPathPreview(onStartTasks: onStartTasks),
@@ -190,14 +176,14 @@ class _NativeHomePage extends StatelessWidget {
             Expanded(
               child: _MetricCard(
                 value: '5',
-                label: isTr ? 'mini gorev' : 'mini tasks',
+                label: isTr ? 'mini pratik' : 'mini practices',
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _MetricCard(
                 value: '3',
-                label: isTr ? 'ogretmen onerisi' : 'teacher picks',
+                label: isTr ? 'öğretmen önerisi' : 'teacher picks',
               ),
             ),
           ],
@@ -205,18 +191,18 @@ class _NativeHomePage extends StatelessWidget {
         const SizedBox(height: 14),
         _InfoTile(
           icon: Icons.groups_rounded,
-          title: isTr ? 'Ogretmenleri incele' : 'Browse teachers',
+          title: isTr ? 'Öğretmenleri incele' : 'Browse teachers',
           detail: isTr
-              ? 'Speaking, is Ingilizcesi ve sinav hedeflerine gore egitmen sec.'
+              ? 'Speaking, iş İngilizcesi ve sınav hedeflerine göre eğitmen seç.'
               : 'Pick teachers by speaking, business, or exam goals.',
           onTap: onOpenTeachers,
         ),
         _InfoTile(
           icon: Icons.verified_rounded,
-          title: isTr ? 'Deneme dersi akisi' : 'Trial lesson flow',
+          title: isTr ? 'Deneme dersi akışı' : 'Trial lesson flow',
           detail: isTr
-              ? 'Test sonucundan sonra sana uygun deneme dersi yonlendirmesi gelir.'
-              : 'After the test, continue with a matched trial lesson.',
+              ? 'Pratikten sonra seviyene uygun deneme dersi yönlendirmesi gelir.'
+              : 'After practice, continue with a matched trial lesson.',
           onTap: onStartTasks,
         ),
       ],
@@ -236,23 +222,9 @@ class _DailyFocusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTr = AppStrings.code == 'tr';
-    return Container(
+    return GradientHero(
+      gradient: AppGradients.night,
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF122B72), Color(0xFF1D7CFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(26),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1D7CFF).withValues(alpha: 0.2),
-            blurRadius: 24,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -273,7 +245,7 @@ class _DailyFocusCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isTr ? 'Bugunku hedefin hazir' : 'Your goal is ready',
+                      isTr ? 'Bugünkü hedefin hazır' : 'Your goal is ready',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w900,
@@ -282,8 +254,8 @@ class _DailyFocusCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       isTr
-                          ? '3 mini gorev yap, seviyeni gor ve sana uygun hocayi sec.'
-                          : 'Complete 3 mini tasks, see your level, and pick a matched teacher.',
+                          ? '1 mini pratik yap, XP kazan ve serini bugün başlat.'
+                          : 'Complete 1 mini practice, earn XP, and start your streak today.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.white.withValues(alpha: 0.84),
                             height: 1.3,
@@ -299,7 +271,7 @@ class _DailyFocusCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _LightActionButton(
-                  label: isTr ? 'Gorev yap' : 'Practice',
+                  label: isTr ? 'Pratik yap' : 'Practice',
                   icon: Icons.play_arrow_rounded,
                   onTap: onStartTasks,
                 ),
@@ -307,7 +279,7 @@ class _DailyFocusCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: _LightActionButton(
-                  label: isTr ? 'Hoca sec' : 'Pick teacher',
+                  label: isTr ? 'Hoca seç' : 'Pick teacher',
                   icon: Icons.groups_rounded,
                   onTap: onOpenTeachers,
                 ),
@@ -377,35 +349,22 @@ class _SkillPathPreview extends StatelessWidget {
     final steps = [
       (Icons.volume_up_rounded, isTr ? 'Dinle' : 'Listen'),
       (Icons.translate_rounded, isTr ? 'Anla' : 'Meaning'),
-      (Icons.image_rounded, isTr ? 'Sec' : 'Image'),
-      (Icons.mic_rounded, isTr ? 'Konus' : 'Speak'),
-      (Icons.emoji_events_rounded, isTr ? 'Odul' : 'Reward'),
+      (Icons.image_rounded, isTr ? 'Seç' : 'Image'),
+      (Icons.mic_rounded, isTr ? 'Konuş' : 'Speak'),
+      (Icons.emoji_events_rounded, isTr ? 'Ödül' : 'Reward'),
     ];
 
-    return Container(
+    return AppCard(
       padding: const EdgeInsets.all(16),
-      decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  isTr ? 'Speaking yolu' : 'Speaking path',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.brandNight,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-              ),
-              TextButton(
-                onPressed: onStartTasks,
-                child: Text(isTr ? 'Basla' : 'Start'),
-              ),
-            ],
+          SectionHeader(
+            title: isTr ? 'Pratik yolu' : 'Practice path',
+            icon: Icons.route_rounded,
+            actionLabel: isTr ? 'Başla' : 'Start',
+            onAction: onStartTasks,
           ),
-          const SizedBox(height: 8),
           Row(
             children: [
               for (var i = 0; i < steps.length; i++) ...[
@@ -473,8 +432,8 @@ class _SkillPathPreview extends StatelessWidget {
                 Expanded(
                   child: Text(
                     isTr
-                        ? 'Bitirince ucretsiz mini speaking seansi acilir.'
-                        : 'Finish to unlock a free mini speaking session.',
+                        ? 'Bitirince günlük görev ve XP ödülü açılır.'
+                        : 'Finish to unlock daily quests and XP rewards.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: const Color(0xFF2E7D14),
                           fontWeight: FontWeight.w800,
@@ -510,8 +469,8 @@ class _HomeInsightGrid extends StatelessWidget {
               child: _InsightCard(
                 icon: Icons.local_fire_department_rounded,
                 value: '1',
-                label: isTr ? 'gunluk seri' : 'day streak',
-                detail: isTr ? 'Bugun baslat' : 'Start today',
+                label: isTr ? 'günlük seri' : 'day streak',
+                detail: isTr ? 'Bugün başlat' : 'Start today',
                 color: const Color(0xFFFF8A00),
                 onTap: onStartTasks,
               ),
@@ -521,8 +480,8 @@ class _HomeInsightGrid extends StatelessWidget {
               child: _InsightCard(
                 icon: Icons.schedule_rounded,
                 value: '19:00',
-                label: isTr ? 'musait ders' : 'open slot',
-                detail: isTr ? 'Bugun uygun' : 'Available today',
+                label: isTr ? 'müsait ders' : 'open slot',
+                detail: isTr ? 'Bugün uygun' : 'Available today',
                 color: const Color(0xFF1D7CFF),
                 onTap: onOpenTeachers,
               ),
@@ -547,7 +506,7 @@ class _HomeInsightGrid extends StatelessWidget {
               child: _InsightCard(
                 icon: Icons.groups_rounded,
                 value: '42',
-                label: isTr ? 'bugun pratik' : 'practiced today',
+                label: isTr ? 'bugün pratik' : 'practiced today',
                 detail: isTr ? 'Topluluk aktif' : 'Community active',
                 color: const Color(0xFF10B981),
                 onTap: onStartTasks,
@@ -579,60 +538,52 @@ class _InsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(22),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(22),
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: _cardDecoration(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 21),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.brandNight,
-                      fontWeight: FontWeight.w900,
-                    ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.brandNight,
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                detail,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.muted,
-                      fontSize: 11,
-                    ),
-              ),
-            ],
+    return AppCard(
+      onTap: onTap,
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 21),
           ),
-        ),
+          const SizedBox(height: 12),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: AppColors.brandNight,
+                  fontWeight: FontWeight.w900,
+                ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.brandNight,
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            detail,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.muted,
+                  fontSize: 11,
+                ),
+          ),
+        ],
       ),
     );
   }
@@ -656,31 +607,19 @@ class _TeacherMatchStrip extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  isTr ? 'Sana en uygun 3 hoca' : 'Top 3 matched teachers',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: AppColors.brandNight,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-              ),
-              TextButton(
-                onPressed: onOpenTeachers,
-                child: Text(isTr ? 'Gor' : 'View'),
-              ),
-            ],
+          SectionHeader(
+            title: isTr ? 'Sana en uygun 3 hoca' : 'Top 3 matched teachers',
+            icon: Icons.groups_rounded,
+            actionLabel: isTr ? 'Gor' : 'View',
+            onAction: onOpenTeachers,
           ),
-          const SizedBox(height: 10),
           Row(
             children: [
               _MiniTeacherAvatar(name: 'G', label: isTr ? 'En uygun' : 'Best'),
               const SizedBox(width: 10),
               _MiniTeacherAvatar(
                 name: 'M',
-                label: isTr ? 'Erken musait' : 'Soonest',
+                label: isTr ? 'Erken müsait' : 'Soönest',
                 color: const Color(0xFF63D60F),
               ),
               const SizedBox(width: 10),
@@ -751,247 +690,370 @@ class _MiniTeacherAvatar extends StatelessWidget {
   }
 }
 
-class _TasksPage extends StatelessWidget {
-  const _TasksPage({required this.onTaskTap});
+/// Hub'ın "Kurslar" sekmesi: GERÇEK LMS girişi. Sahte öğretmen kartı değil;
+/// öğrenci paneline (/student), kurs kataloğuna ve eğitmen/paketlere bağlanır.
+class _LmsEntryPage extends StatelessWidget {
+  const _LmsEntryPage();
 
-  final ValueChanged<int> onTaskTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final isTr = AppStrings.code == 'tr';
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
-      children: [
-        _PageHeader(
-          title: isTr ? 'Ucretsiz gorevler' : 'Free tasks',
-          subtitle: isTr
-              ? 'Her gorev tek bir beceriyi olcer. Istedigin gorevden baslayabilirsin.'
-              : 'Each task measures one skill. Start from any task.',
-          icon: Icons.flag_rounded,
-        ),
-        const SizedBox(height: 16),
-        _TaskTile(
-          icon: Icons.volume_up_rounded,
-          title: isTr ? 'Dinleme gorevi' : 'Listening task',
-          detail: isTr
-              ? 'Kelimeyi duy ve dogru Turkce anlami sec.'
-              : 'Hear the word and choose the correct meaning.',
-          onTap: () => onTaskTap(0),
-        ),
-        _TaskTile(
-          icon: Icons.translate_rounded,
-          title: isTr ? 'Cumle anlama' : 'Sentence meaning',
-          detail: isTr
-              ? 'Ingilizce cumlenin Turkcesini bul.'
-              : 'Find the Turkish meaning of the English sentence.',
-          onTap: () => onTaskTap(1),
-        ),
-        _TaskTile(
-          icon: Icons.image_search_rounded,
-          title: isTr ? 'Resim sec' : 'Choose image',
-          detail: isTr
-              ? 'Duydugun kelimeye uygun resmi sec.'
-              : 'Choose the image that matches the word.',
-          onTap: () => onTaskTap(2),
-        ),
-        _TaskTile(
-          icon: Icons.mic_rounded,
-          title: isTr ? 'Konusma testi' : 'Speaking test',
-          detail: isTr
-              ? 'Cumleyi sesli tekrar et ve speaking skorunu gor.'
-              : 'Repeat the sentence aloud and see your speaking score.',
-          onTap: () => onTaskTap(3),
-        ),
-      ],
-    );
+  Future<bool> _signedIn() async {
+    final token = (await SecureStorage.getToken() ?? '').trim();
+    return token.isNotEmpty;
   }
-}
-
-class _TeachersPage extends StatelessWidget {
-  const _TeachersPage();
 
   @override
   Widget build(BuildContext context) {
     final isTr = AppStrings.code == 'tr';
-    final teachers = [
-      (
-        'Gizem',
-        isTr ? 'Speaking ve gunluk konusma' : 'Speaking and daily conversation',
-        isTr
-            ? 'A2-B1 seviyesinde akici konusma rutini kurar.'
-            : 'Builds fluency routines for A2-B1 learners.',
-        Icons.record_voice_over_rounded,
-      ),
-      (
-        'Merve',
-        isTr ? 'Is Ingilizcesi' : 'Business English',
-        isTr
-            ? 'Toplanti, sunum ve is gorusmesi pratigi yaptirir.'
-            : 'Practices meetings, presentations, and interviews.',
-        Icons.work_rounded,
-      ),
-      (
-        'Daniel',
-        isTr ? 'Sinav ve telaffuz' : 'Exam and pronunciation',
-        isTr
-            ? 'IELTS/TOEFL hedefi ve telaffuz netligi icin uygundur.'
-            : 'Good fit for IELTS/TOEFL goals and clearer pronunciation.',
-        Icons.school_rounded,
-      ),
-    ];
-
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
-      children: [
-        _PageHeader(
-          title: isTr ? 'Ogretmenler' : 'Teachers',
-          subtitle: isTr
-              ? 'Public tanitim kartlari. Rezervasyon icin giris yaptirir, otomatik panele atmaz.'
-              : 'Public teacher cards. Booking requires sign-in, but this page does not auto-open the student panel.',
-          icon: Icons.groups_rounded,
-        ),
-        const SizedBox(height: 16),
-        for (final teacher in teachers)
-          _TeacherPreviewCard(
-            name: teacher.$1,
-            role: teacher.$2,
-            detail: teacher.$3,
-            icon: teacher.$4,
-          ),
-      ],
-    );
-  }
-}
-
-class _TeacherPreviewCard extends StatelessWidget {
-  const _TeacherPreviewCard({
-    required this.name,
-    required this.role,
-    required this.detail,
-    required this.icon,
-  });
-
-  final String name;
-  final String role;
-  final String detail;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    final isTr = AppStrings.code == 'tr';
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: _cardDecoration(),
-        child: Row(
+    return FutureBuilder<bool>(
+      future: _signedIn(),
+      builder: (context, snapshot) {
+        final signedIn = snapshot.data == true;
+        final lmsRoute = signedIn ? '/student' : '/login';
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
           children: [
-            Container(
-              width: 58,
-              height: 58,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF1D7CFF), Color(0xFF5CB6FF)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: Colors.white, size: 28),
+            _PageHeader(
+              title: isTr ? 'Canlı dersler' : 'Live lessons',
+              subtitle: isTr
+                  ? 'Öğretmenli canlı dersler, paketler ve mesajların tümü burada.'
+                  : 'Live teacher lessons, packages, and messages — all here.',
+              icon: Icons.video_camera_front_rounded,
             ),
-            const SizedBox(width: 13),
+            const SizedBox(height: 16),
+            _HeroActionCard(
+              title: signedIn
+                  ? (isTr ? 'Öğrenci paneline git' : 'Open your student panel')
+                  : (isTr ? 'Canlı derslere başla' : 'Start live lessons'),
+              subtitle: signedIn
+                  ? (isTr
+                      ? 'Canlı derslerin, eğitmenlerin, ödevlerin ve mesajların tam panelini aç.'
+                      : 'Open your full panel: live lessons, teachers, homework, and messages.')
+                  : (isTr
+                      ? 'Giriş yap; öğretmen seç, deneme dersi al ve derslerine başla.'
+                      : 'Sign in to pick a teacher, book a trial, and start your lessons.'),
+              button: signedIn
+                  ? (isTr ? 'Panelime git' : 'Go to panel')
+                  : (isTr ? 'Giriş yap' : 'Sign in'),
+              onPressed: () => Navigator.pushNamed(context, lmsRoute),
+            ),
+            const SizedBox(height: 4),
+            _InfoTile(
+              icon: Icons.groups_rounded,
+              title: isTr ? 'Eğitmenler' : 'Teachers',
+              detail: isTr
+                  ? 'Speaking, iş İngilizcesi ve sınav hedeflerine göre eğitmen seç.'
+                  : 'Pick teachers by speaking, business, or exam goals.',
+              onTap: () => Navigator.pushNamed(context, lmsRoute),
+            ),
+            _InfoTile(
+              icon: Icons.card_membership,
+              title: isTr ? 'Paketler' : 'Packages',
+              detail: isTr
+                  ? 'Ders kredisi paketlerini incele ve satın al.'
+                  : 'Review and buy lesson credit packages.',
+              onTap: () => Navigator.pushNamed(context, lmsRoute),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PracticeHubEntryPage extends StatelessWidget {
+  const _PracticeHubEntryPage({required this.statsFuture});
+
+  final Future<PracticeStats> statsFuture;
+
+  Future<bool> _signedIn() async {
+    final token = (await SecureStorage.getToken() ?? '').trim();
+    return token.isNotEmpty;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isTr = AppStrings.code == 'tr';
+
+    return FutureBuilder<bool>(
+      future: _signedIn(),
+      builder: (context, snapshot) {
+        final signedIn = snapshot.data == true;
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
+          children: [
+            _PageHeader(
+              title: isTr ? 'Pratik merkezi' : 'Practice hub',
+              subtitle: signedIn
+                  ? (isTr
+                      ? 'Ders yoluna dön, XP kazan ve günlük serini koru.'
+                      : 'Return to the lesson path, earn XP, and protect your streak.')
+                  : (isTr
+                      ? 'Pratik ilerlemesi hesaba bağlanır. Giriş yapinca ders yolu açılır.'
+                      : 'Practice progress is account-based. Sign in to open the lesson path.'),
+              icon: Icons.auto_awesome_rounded,
+            ),
+            const SizedBox(height: 16),
+            _PracticeModeTile(
+              title: isTr ? 'Pratik Yap' : 'Start practice',
+              detail: isTr
+                  ? 'XP kazan, serini koru, canlarını takip et ve mini dersleri bitir.'
+                  : 'Earn XP, keep your streak, track hearts, and finish mini lessons.',
+              onTap: () => Navigator.pushNamed(context, '/practice'),
+            ),
+            const SizedBox(height: 2),
+            _PracticeProgressSummary(statsFuture: statsFuture),
+            const SizedBox(height: 12),
+            _PracticeLiveStats(statsFuture: statsFuture),
+            const SizedBox(height: 14),
+            _InfoTile(
+              icon: Icons.route_rounded,
+              title: isTr ? 'Ders yolu' : 'Lesson path',
+              detail: isTr
+                  ? 'Üniteleri ve kilitli dersleri oyun yolu gibi gör.'
+                  : 'See units and locked lessons in a game-like path.',
+              onTap: () => Navigator.pushNamed(context, '/practice/path'),
+            ),
+            _InfoTile(
+              icon: Icons.task_alt_rounded,
+              title: isTr ? 'Günlük görevler' : 'Daily quests',
+              detail: isTr
+                  ? 'Bugünün XP ve ödül hedeflerini tamamla.'
+                  : 'Complete today\'s XP and reward goals.',
+              onTap: () =>
+                  Navigator.pushNamed(context, '/practice/daily-quests'),
+            ),
+            _InfoTile(
+              icon: Icons.replay_rounded,
+              title: isTr ? 'Hatalarımı çalış' : 'Practice mistakes',
+              detail: isTr
+                  ? 'Yanlış yaptığın soruları tekrar çöz.'
+                  : 'Redo the questions you missed.',
+              onTap: () => Navigator.pushNamed(context, '/practice/mistakes'),
+            ),
+            _InfoTile(
+              icon: Icons.emoji_events_rounded,
+              title: isTr ? 'Lig ve rozetler' : 'Leagues and badges',
+              detail: isTr
+                  ? 'Sıralama, rozet ve ödül ekranlarina geç.'
+                  : 'Open leaderboard, badges, and reward screens.',
+              onTap: () =>
+                  Navigator.pushNamed(context, '/practice/leaderboard'),
+            ),
+            if (!signedIn) ...[
+              const SizedBox(height: 6),
+              AppGhostButton(
+                label: isTr
+                    ? 'Giriş yapmadan önce tanitimi gor'
+                    : 'Preview sign-in gate',
+                onPressed: () => Navigator.pushNamed(context, '/practice'),
+                icon: Icons.visibility_rounded,
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Hub'da canlı pratik istatistikleri: 🔥 seri · ⚡ XP · ❤️ can.
+/// Tek seferlik fetchStats sonucunu gösterir (misafirde 0/0/5 fallback).
+class _PracticeLiveStats extends StatelessWidget {
+  const _PracticeLiveStats({required this.statsFuture, this.onTap});
+
+  final Future<PracticeStats> statsFuture;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isTr = AppStrings.code == 'tr';
+    return FutureBuilder<PracticeStats>(
+      future: statsFuture,
+      builder: (context, snapshot) {
+        final stats = snapshot.data;
+        final loading = snapshot.connectionState != ConnectionState.done;
+        String v(int? n) => loading ? '…' : '${n ?? 0}';
+        final row = Row(
+          children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: AppColors.brandNight,
-                          fontWeight: FontWeight.w900,
-                        ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    role,
-                    style: const TextStyle(
-                      color: Color(0xFF1D7CFF),
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    detail,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.muted,
-                          height: 1.3,
-                        ),
-                  ),
-                  const SizedBox(height: 10),
-                  OutlinedButton(
-                    onPressed: () => Navigator.pushNamed(context, '/register'),
-                    child: Text(isTr ? 'Deneme dersi sec' : 'Choose trial'),
-                  ),
-                ],
+              child: _PracticeStatChip(
+                icon: Icons.local_fire_department_rounded,
+                label: isTr ? 'Seri' : 'Streak',
+                value: v(stats?.streak),
+                color: const Color(0xFFFF9600),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _PracticeStatChip(
+                icon: Icons.bolt_rounded,
+                label: 'XP',
+                value: v(stats?.xp),
+                color: const Color(0xFFFFC800),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _PracticeStatChip(
+                icon: Icons.favorite_rounded,
+                label: isTr ? 'Can' : 'Hearts',
+                value: v(stats?.hearts),
+                color: const Color(0xFFFF4B4B),
               ),
             ),
           ],
-        ),
+        );
+        if (onTap == null) return row;
+        return InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: row,
+        );
+      },
+    );
+  }
+}
+
+/// Canlı pratik özetini kit rozetleriyle (StreakBadge/XpPill/AppStatPill) ve
+/// GERÇEK seviye ilerlemesini bir ProgressRing ile gösterir. Veriler tek
+/// seferlik [statsFuture]'dan gelir; yüklenirken nazik bir iskelet görünür.
+class _PracticeProgressSummary extends StatelessWidget {
+  const _PracticeProgressSummary({required this.statsFuture, this.onTap});
+
+  final Future<PracticeStats> statsFuture;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isTr = AppStrings.code == 'tr';
+    return FutureBuilder<PracticeStats>(
+      future: statsFuture,
+      builder: (context, snapshot) {
+        final stats = snapshot.data;
+        final loading = snapshot.connectionState != ConnectionState.done;
+        final progress = stats == null
+            ? 0.0
+            : stats.levelProgress.clamp(0.0, 1.0).toDouble();
+        return AppCard(
+          onTap: onTap,
+          child: Row(
+            children: [
+              ProgressRing(
+                value: loading ? 0 : progress,
+                size: 72,
+                stroke: 8,
+                gradient: AppGradients.brand,
+                center: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isTr ? 'Seviye' : 'Level',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.muted,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 10,
+                          ),
+                    ),
+                    Text(
+                      loading ? '…' : '${stats?.level ?? 1}',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: AppColors.brandNight,
+                            fontWeight: FontWeight.w900,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isTr ? 'Pratik ilerlemen' : 'Your practice progress',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: AppColors.brandNight,
+                            fontWeight: FontWeight.w900,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        StreakBadge(days: loading ? 0 : (stats?.streak ?? 0)),
+                        XpPill(xp: loading ? 0 : (stats?.xp ?? 0)),
+                        AppStatPill(
+                          icon: Icons.favorite_rounded,
+                          label: '${loading ? '…' : (stats?.hearts ?? 0)}',
+                          color: AppPalette.heart,
+                          onLight: true,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PracticeStatChip extends StatelessWidget {
+  const _PracticeStatChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE3ECF7)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.brandNight,
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.muted,
+              fontWeight: FontWeight.w800,
+              fontSize: 11,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _AboutMiniPage extends StatelessWidget {
-  const _AboutMiniPage();
-
-  @override
-  Widget build(BuildContext context) {
-    final isTr = AppStrings.code == 'tr';
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 22),
-      children: [
-        _PageHeader(
-          title: isTr ? 'Biz kimiz?' : 'About us',
-          subtitle: isTr
-              ? 'LinguFranca, speaking odakli online dil egitimi icin tasarlandi.'
-              : 'LinguFranca is built for speaking-first online language learning.',
-          icon: Icons.info_rounded,
-        ),
-        const SizedBox(height: 16),
-        _AboutPoint(
-          icon: Icons.record_voice_over_rounded,
-          title: isTr ? 'Speaking odakli' : 'Speaking-first',
-          detail: isTr
-              ? 'Kullanici pasif izlemek yerine dinler, cevaplar ve konusur.'
-              : 'Learners listen, answer, and speak instead of passively watching.',
-        ),
-        _AboutPoint(
-          icon: Icons.school_rounded,
-          title: isTr ? 'Ogretmen eslesmesi' : 'Teacher matching',
-          detail: isTr
-              ? 'Test sonucu hedefe ve seviyeye uygun ogretmen onerisine baglanir.'
-              : 'Test results connect directly to level and goal-based teacher picks.',
-        ),
-        _AboutPoint(
-          icon: Icons.support_agent_rounded,
-          title: isTr ? 'Canli destek' : 'Live support',
-          detail: isTr
-              ? 'Deneme dersi ve rezervasyon akisi sade tutulur.'
-              : 'Trial lesson and booking flow stays simple.',
-        ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 52,
-          child: OutlinedButton(
-            onPressed: () => Navigator.pushNamed(context, '/about'),
-            child: Text(isTr ? 'Detayli tanitim sayfasi' : 'Full about page'),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 class _ProfileEntryPage extends StatelessWidget {
   const _ProfileEntryPage();
@@ -1019,10 +1081,10 @@ class _ProfileEntryPage extends StatelessWidget {
               title: isTr ? 'Profil' : 'Profile',
               subtitle: session.signedIn
                   ? (isTr
-                      ? 'Oturumun acik. Hesaptan cikmadan paneline donebilirsin.'
+                      ? 'Oturumun açık. Hesaptan çıkmadan paneline dönebilirsin.'
                       : 'You are signed in. Return to your panel without logging out.')
                   : (isTr
-                      ? 'Derslerini, ogretmenlerini ve rezervasyonlarini yonetmek icin giris yap.'
+                      ? 'Derslerini, öğretmenlerini ve rezervasyonlarini yönetmek için giriş yap.'
                       : 'Sign in to manage lessons, teachers, and bookings.'),
               icon: Icons.person_rounded,
             ),
@@ -1033,20 +1095,20 @@ class _ProfileEntryPage extends StatelessWidget {
                   : (isTr ? 'Hesabina devam et' : 'Continue to your account'),
               subtitle: session.signedIn
                   ? (isTr
-                      ? 'Ana sayfadan cikmadan mevcut oturumla panelini ac.'
+                      ? 'Ana sayfadan çıkmadan mevcut oturumla panelini aç.'
                       : 'Open your panel with the current signed-in session.')
                   : (isTr
-                      ? 'Kayitli kullaniciysan ogrenci paneline giris yap.'
+                      ? 'Kayıtlı kullanıcıysan öğrenci paneline giriş yap.'
                       : 'If you already have an account, open your student panel.'),
               button: session.signedIn
                   ? (isInstructor
                       ? (isTr
-                          ? 'Egitmen paneline don'
+                          ? 'Eğitmen paneline dön'
                           : 'Back to instructor panel')
                       : (isTr
-                          ? 'Ogrenci paneline don'
+                          ? 'Öğrenci paneline dön'
                           : 'Back to student panel'))
-                  : (isTr ? 'Giris yap' : 'Sign in'),
+                  : (isTr ? 'Giriş yap' : 'Sign in'),
               onPressed: () {
                 if (session.signedIn) {
                   Navigator.pushNamedAndRemoveUntil(
@@ -1061,12 +1123,10 @@ class _ProfileEntryPage extends StatelessWidget {
             ),
             if (!session.signedIn) ...[
               const SizedBox(height: 12),
-              SizedBox(
-                height: 54,
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pushNamed(context, '/register'),
-                  child: Text(isTr ? 'Yeni hesap olustur' : 'Create account'),
-                ),
+              AppGhostButton(
+                label: isTr ? 'Yeni hesap oluştur' : 'Create account',
+                onPressed: () => Navigator.pushNamed(context, '/register'),
+                icon: Icons.person_add_alt_1_rounded,
               ),
             ],
           ],
@@ -1089,23 +1149,9 @@ class _PageHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GradientHero(
+      gradient: AppGradients.hero,
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1D7CFF), Color(0xFF55B3FF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1D7CFF).withValues(alpha: 0.22),
-            blurRadius: 26,
-            offset: const Offset(0, 14),
-          ),
-        ],
-      ),
       child: Row(
         children: [
           Container(
@@ -1161,9 +1207,8 @@ class _HeroActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppCard(
       padding: const EdgeInsets.all(18),
-      decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1183,27 +1228,11 @@ class _HeroActionCard extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
+          AppButton(
+            label: button,
+            onPressed: onPressed,
+            tone: AppButtonTone.success,
             height: 52,
-            child: PressableScale(
-              onTap: onPressed,
-              child: ElevatedButton(
-                onPressed: onPressed,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF63D60F),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: Text(
-                  button,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
-                ),
-              ),
-            ),
           ),
         ],
       ),
@@ -1219,9 +1248,8 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return AppCard(
       padding: const EdgeInsets.all(16),
-      decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1269,47 +1297,131 @@ class _InfoTile extends StatelessWidget {
   }
 }
 
-class _TaskTile extends StatelessWidget {
-  const _TaskTile({
-    required this.icon,
+class _PracticeModeTile extends StatelessWidget {
+  const _PracticeModeTile({
     required this.title,
     required this.detail,
     required this.onTap,
   });
 
-  final IconData icon;
   final String title;
   final String detail;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return _BaseTile(
-      icon: icon,
-      title: title,
-      detail: detail,
-      onTap: onTap,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: PressableScale(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF58CC02),
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0xFF46A302),
+                offset: Offset(0, 5),
+                blurRadius: 0,
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 58,
+                height: 58,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: .18),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Colors.white,
+                  size: 31,
+                ),
+              ),
+              const SizedBox(width: 13),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                          ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      detail,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.white.withValues(alpha: .92),
+                            fontWeight: FontWeight.w700,
+                            height: 1.25,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: const [
+                        _PracticeMiniBadge(
+                          icon: Icons.local_fire_department_rounded,
+                          label: 'Seri',
+                        ),
+                        SizedBox(width: 8),
+                        _PracticeMiniBadge(
+                          icon: Icons.bolt_rounded,
+                          label: 'XP',
+                        ),
+                        SizedBox(width: 8),
+                        _PracticeMiniBadge(
+                          icon: Icons.favorite_rounded,
+                          label: 'Can',
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
 
-class _AboutPoint extends StatelessWidget {
-  const _AboutPoint({
-    required this.icon,
-    required this.title,
-    required this.detail,
-  });
+class _PracticeMiniBadge extends StatelessWidget {
+  const _PracticeMiniBadge({required this.icon, required this.label});
 
   final IconData icon;
-  final String title;
-  final String detail;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    return _BaseTile(
-      icon: icon,
-      title: title,
-      detail: detail,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFF58CC02), size: 16),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF2E7D14),
+              fontSize: 11,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1331,52 +1443,49 @@ class _BaseTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: PressableScale(
+      child: AppCard(
         onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.all(15),
-          decoration: _cardDecoration(),
-          child: Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEAF4FF),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: const Color(0xFF1D7CFF)),
+        padding: const EdgeInsets.all(15),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: const BoxDecoration(
+                color: Color(0xFFEAF4FF),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: AppColors.brandNight,
-                            fontWeight: FontWeight.w900,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      detail,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.muted,
-                            height: 1.3,
-                          ),
-                    ),
-                  ],
-                ),
+              child: Icon(icon, color: const Color(0xFF1D7CFF)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: AppColors.brandNight,
+                          fontWeight: FontWeight.w900,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    detail,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.muted,
+                          height: 1.3,
+                        ),
+                  ),
+                ],
               ),
-              if (onTap != null)
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Color(0xFF1D7CFF),
-                ),
-            ],
-          ),
+            ),
+            if (onTap != null)
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: Color(0xFF1D7CFF),
+              ),
+          ],
         ),
       ),
     );
@@ -1454,19 +1563,4 @@ class _DockItem extends StatelessWidget {
       ),
     );
   }
-}
-
-BoxDecoration _cardDecoration() {
-  return BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(22),
-    border: Border.all(color: const Color(0xFFE3ECF7)),
-    boxShadow: [
-      BoxShadow(
-        color: AppColors.brandNight.withValues(alpha: 0.05),
-        blurRadius: 20,
-        offset: const Offset(0, 10),
-      ),
-    ],
-  );
 }

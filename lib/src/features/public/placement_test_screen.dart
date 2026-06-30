@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/ui/ui.dart';
 import '../shared/trial_lesson_gate.dart';
 import '../student/instructors/instructor_repository.dart';
 import 'public_repository.dart';
@@ -103,6 +104,17 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
       setState(() {
         _result = result;
       });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        showCelebration(
+          context,
+          title: '${AppStrings.t('Your Level')}: ${result.level}',
+          subtitle:
+              '${AppStrings.t('Score')}: ${result.score} / ${result.maxScore}',
+          icon: Icons.military_tech_rounded,
+          color: AppPalette.gold,
+        );
+      });
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -118,165 +130,280 @@ class _PlacementTestScreenState extends State<PlacementTestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(AppStrings.t('2-Minute English Level Test'))),
-      body: SafeArea(
-        child: FutureBuilder<List<PlacementQuestion>>(
-          future: _future,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (snapshot.hasError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Text(
-                    _placementError(snapshot.error!),
-                    textAlign: TextAlign.center,
-                  ),
+      body: AppGlowBackground(
+        accent: AppColors.brand,
+        child: SafeArea(
+          child: FutureBuilder<List<PlacementQuestion>>(
+            future: _future,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return AppLoader(message: AppStrings.t('Loading'));
+              }
+              if (snapshot.hasError) {
+                return AppErrorState(
+                  message: _placementError(snapshot.error!),
+                );
+              }
+
+              final questions = snapshot.data ?? const <PlacementQuestion>[];
+              if (questions.isEmpty) {
+                return AppEmptyState(
+                  title: AppStrings.t('No Data Found'),
+                  icon: Icons.quiz_rounded,
+                );
+              }
+
+              if (_result != null) {
+                return FutureBuilder<List<dynamic>>(
+                  future:
+                      Future.wait<dynamic>([_plansFuture, _instructorsFuture]),
+                  builder: (context, conversionSnapshot) {
+                    final planPayload = conversionSnapshot.data != null &&
+                            conversionSnapshot.data!.isNotEmpty
+                        ? conversionSnapshot.data![0] as PlanPayload?
+                        : null;
+                    final instructors = conversionSnapshot.data != null &&
+                            conversionSnapshot.data!.length > 1
+                        ? conversionSnapshot.data![1] as List<InstructorSummary>
+                        : const <InstructorSummary>[];
+                    return _PlacementResultView(
+                      result: _result!,
+                      planPayload: planPayload,
+                      instructors: instructors,
+                      loadingConversion: conversionSnapshot.connectionState ==
+                          ConnectionState.waiting,
+                      onRetry: () {
+                        setState(() {
+                          _result = null;
+                          _answers.clear();
+                          _step = 0;
+                          _submitError = null;
+                        });
+                      },
+                      onOpenSchedule: _requestTrialLesson,
+                      requestingTrial: _requestingTrial,
+                    );
+                  },
+                );
+              }
+
+              final totalSteps = questions.length + 1;
+              final isContactStep = _step == questions.length;
+              final progress = (_step + 1) / totalSteps;
+
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpace.lg,
+                  AppSpace.lg,
+                  AppSpace.lg,
+                  AppSpace.lg,
                 ),
-              );
-            }
-
-            final questions = snapshot.data ?? const <PlacementQuestion>[];
-            if (questions.isEmpty) {
-              return Center(child: Text(AppStrings.t('No Data Found')));
-            }
-
-            if (_result != null) {
-              return FutureBuilder<List<dynamic>>(
-                future:
-                    Future.wait<dynamic>([_plansFuture, _instructorsFuture]),
-                builder: (context, conversionSnapshot) {
-                  final planPayload = conversionSnapshot.data != null &&
-                          conversionSnapshot.data!.isNotEmpty
-                      ? conversionSnapshot.data![0] as PlanPayload?
-                      : null;
-                  final instructors = conversionSnapshot.data != null &&
-                          conversionSnapshot.data!.length > 1
-                      ? conversionSnapshot.data![1] as List<InstructorSummary>
-                      : const <InstructorSummary>[];
-                  return _PlacementResultView(
-                    result: _result!,
-                    planPayload: planPayload,
-                    instructors: instructors,
-                    loadingConversion: conversionSnapshot.connectionState ==
-                        ConnectionState.waiting,
-                    onRetry: () {
-                      setState(() {
-                        _result = null;
-                        _answers.clear();
-                        _step = 0;
-                        _submitError = null;
-                      });
-                    },
-                    onOpenSchedule: _requestTrialLesson,
-                    requestingTrial: _requestingTrial,
-                  );
-                },
-              );
-            }
-
-            final totalSteps = questions.length + 1;
-            final isContactStep = _step == questions.length;
-            final progress = (_step + 1) / totalSteps;
-
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    '${_step + 1} / $totalSteps',
-                    style: const TextStyle(
-                      color: AppColors.muted,
-                      fontWeight: FontWeight.w700,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _QuestProgress(
+                      step: _step,
+                      totalSteps: totalSteps,
+                      progress: progress,
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 8,
-                      backgroundColor: const Color(0xFFE3EBF7),
-                      color: AppColors.brand,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Expanded(
-                    child: isContactStep
-                        ? _ContactStep(
-                            nameCtrl: _nameCtrl,
-                            emailCtrl: _emailCtrl,
-                            phoneCtrl: _phoneCtrl,
-                          )
-                        : _QuestionStep(
-                            question: questions[_step],
-                            selected: _answers[questions[_step].id],
-                            onSelect: (option) {
-                              setState(() {
-                                _answers[questions[_step].id] = option;
-                              });
-                            },
-                          ),
-                  ),
-                  if (_submitError != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      _submitError!,
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.w600,
+                    const SizedBox(height: AppSpace.xl),
+                    Expanded(
+                      child: AnimatedPageEntrance(
+                        key: ValueKey<int>(_step),
+                        child: isContactStep
+                            ? _ContactStep(
+                                nameCtrl: _nameCtrl,
+                                emailCtrl: _emailCtrl,
+                                phoneCtrl: _phoneCtrl,
+                              )
+                            : _QuestionStep(
+                                question: questions[_step],
+                                selected: _answers[questions[_step].id],
+                                onSelect: (option) {
+                                  setState(() {
+                                    _answers[questions[_step].id] = option;
+                                  });
+                                },
+                              ),
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      if (_step > 0)
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _submitting
-                                ? null
-                                : () => setState(() => _step = _step - 1),
-                            child: Text(AppStrings.t('Back')),
-                          ),
+                    if (_submitError != null) ...[
+                      const SizedBox(height: AppSpace.sm),
+                      AppCard(
+                        color: AppPalette.danger.withValues(alpha: 0.08),
+                        border: false,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpace.md,
+                          vertical: AppSpace.md,
                         ),
-                      if (_step > 0) const SizedBox(width: 10),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: _submitting
-                              ? null
-                              : isContactStep
-                                  ? _submit
-                                  : _answers[questions[_step].id] == null
-                                      ? null
-                                      : () => setState(() => _step = _step + 1),
-                          child: _submitting
-                              ? const SizedBox(
-                                  height: 18,
-                                  width: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Text(
-                                  isContactStep
-                                      ? AppStrings.t('Get My Result')
-                                      : AppStrings.t('Next'),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.error_outline_rounded,
+                              color: AppPalette.danger,
+                              size: 20,
+                            ),
+                            const SizedBox(width: AppSpace.sm),
+                            Expanded(
+                              child: Text(
+                                _submitError!,
+                                style: const TextStyle(
+                                  color: AppPalette.danger,
+                                  fontWeight: FontWeight.w700,
                                 ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
-                  ),
-                ],
-              ),
-            );
-          },
+                    const SizedBox(height: AppSpace.md),
+                    Row(
+                      children: [
+                        if (_step > 0)
+                          Expanded(
+                            child: AppGhostButton(
+                              label: AppStrings.t('Back'),
+                              icon: Icons.arrow_back_rounded,
+                              onPressed: _submitting
+                                  ? null
+                                  : () => setState(() => _step = _step - 1),
+                            ),
+                          ),
+                        if (_step > 0) const SizedBox(width: AppSpace.md),
+                        Expanded(
+                          child: AppButton(
+                            label: isContactStep
+                                ? AppStrings.t('Get My Result')
+                                : AppStrings.t('Next'),
+                            icon: isContactStep
+                                ? Icons.auto_awesome_rounded
+                                : Icons.arrow_forward_rounded,
+                            tone: isContactStep
+                                ? AppButtonTone.success
+                                : AppButtonTone.brand,
+                            loading: _submitting,
+                            onPressed: _submitting
+                                ? null
+                                : isContactStep
+                                    ? _submit
+                                    : _answers[questions[_step].id] == null
+                                        ? null
+                                        : () =>
+                                            setState(() => _step = _step + 1),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// Quest-style segmented gradient progress bar + ring badge showing step X/N.
+class _QuestProgress extends StatelessWidget {
+  const _QuestProgress({
+    required this.step,
+    required this.totalSteps,
+    required this.progress,
+  });
+
+  final int step;
+  final int totalSteps;
+  final double progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpace.lg),
+      child: Row(
+        children: [
+          ProgressRing(
+            value: progress,
+            size: 58,
+            stroke: 7,
+            gradient: AppGradients.brand,
+            center: Text(
+              '${step + 1}/$totalSteps',
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 14,
+                color: AppColors.ink,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpace.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.flag_rounded,
+                      size: 16,
+                      color: AppColors.brand,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${AppStrings.t('Step')} ${step + 1} / $totalSteps',
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpace.sm),
+                _SegmentedBar(total: totalSteps, current: step),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Segmented gradient bar: filled segments are gradient, the rest are tracks.
+class _SegmentedBar extends StatelessWidget {
+  const _SegmentedBar({required this.total, required this.current});
+
+  final int total;
+  final int current;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List<Widget>.generate(total, (index) {
+        final filled = index <= current;
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(right: index == total - 1 ? 0 : 4),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 280),
+              height: 8,
+              decoration: BoxDecoration(
+                gradient: filled ? AppGradients.brand : null,
+                color: filled ? null : AppPalette.line,
+                borderRadius: AppRadius.pill,
+                boxShadow: filled
+                    ? AppShadows.glow(AppColors.brand, opacity: 0.22)
+                    : null,
+              ),
+            ),
+          ),
+        );
+      }),
     );
   }
 }
@@ -297,59 +424,108 @@ class _QuestionStep extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          question.prompt,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: AppColors.ink,
+        GradientHero(
+          gradient: AppGradients.hero,
+          padding: const EdgeInsets.all(AppSpace.xl),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.20),
+                  borderRadius: AppRadius.all(AppRadius.sm),
+                ),
+                child: const Icon(
+                  Icons.help_outline_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: Text(
+                  question.prompt,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpace.lg),
         Expanded(
           child: ListView.separated(
             itemCount: question.options.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            separatorBuilder: (_, __) => const SizedBox(height: AppSpace.md),
             itemBuilder: (context, index) {
               final option = question.options[index];
               final isSelected = selected == option.id;
-              return InkWell(
-                borderRadius: BorderRadius.circular(14),
+              return AppCard(
                 onTap: () => onSelect(option.id),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected ? const Color(0xFFE9F6FF) : Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isSelected
-                          ? AppColors.brand
-                          : const Color(0xFFD9E3F2),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isSelected
-                            ? Icons.radio_button_checked
-                            : Icons.radio_button_off,
-                        color: isSelected
-                            ? AppColors.brand
-                            : const Color(0xFF94A3B8),
-                      ),
-                      Expanded(
-                        child: Text(
-                          option.label,
-                          style: const TextStyle(
-                            color: AppColors.ink,
-                            fontWeight: FontWeight.w600,
-                          ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.lg,
+                  vertical: AppSpace.lg,
+                ),
+                border: !isSelected,
+                color: isSelected ? null : Colors.white,
+                gradient: isSelected
+                    ? LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          AppColors.brand.withValues(alpha: 0.14),
+                          AppColors.brand.withValues(alpha: 0.06),
+                        ],
+                      )
+                    : null,
+                shadow: isSelected
+                    ? AppShadows.glow(AppColors.brand, opacity: 0.20)
+                    : null,
+                child: Row(
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient:
+                            isSelected ? AppGradients.brand : null,
+                        color: isSelected ? null : Colors.transparent,
+                        border: Border.all(
+                          color: isSelected
+                              ? Colors.transparent
+                              : AppPalette.line,
+                          width: 2,
                         ),
                       ),
-                    ],
-                  ),
+                      child: Icon(
+                        isSelected
+                            ? Icons.check_rounded
+                            : Icons.circle_outlined,
+                        size: isSelected ? 16 : 14,
+                        color: isSelected
+                            ? Colors.white
+                            : const Color(0xFF94A3B8),
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.md),
+                    Expanded(
+                      child: Text(
+                        option.label,
+                        style: TextStyle(
+                          color: isSelected
+                              ? AppColors.brandDeep
+                              : AppColors.ink,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               );
             },
@@ -375,39 +551,80 @@ class _ContactStep extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       children: [
-        Text(
-          AppStrings.t(
-            'Leave contact info to get a matching trial lesson plan.',
-          ),
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: AppColors.ink,
+        GradientHero(
+          gradient: AppGradients.success,
+          glowColor: AppPalette.success,
+          padding: const EdgeInsets.all(AppSpace.xl),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.20),
+                  borderRadius: AppRadius.all(AppRadius.sm),
+                ),
+                child: const Icon(
+                  Icons.card_giftcard_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: nameCtrl,
-          decoration: InputDecoration(
-            labelText: AppStrings.t('Full name'),
-            border: const OutlineInputBorder(),
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: Text(
+                  AppStrings.t(
+                    'Leave contact info to get a matching trial lesson plan.',
+                  ),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 10),
-        TextField(
-          controller: emailCtrl,
-          keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
-            labelText: AppStrings.t('Email'),
-            border: const OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 10),
-        TextField(
-          controller: phoneCtrl,
-          keyboardType: TextInputType.phone,
-          decoration: InputDecoration(
-            labelText: AppStrings.t('Phone (WhatsApp)'),
-            border: const OutlineInputBorder(),
+        const SizedBox(height: AppSpace.lg),
+        AppCard(
+          child: Column(
+            children: [
+              TextField(
+                controller: nameCtrl,
+                decoration: InputDecoration(
+                  labelText: AppStrings.t('Full name'),
+                  prefixIcon: const Icon(Icons.person_outline_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: AppRadius.all(AppRadius.sm),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpace.md),
+              TextField(
+                controller: emailCtrl,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: AppStrings.t('Email'),
+                  prefixIcon: const Icon(Icons.mail_outline_rounded),
+                  border: OutlineInputBorder(
+                    borderRadius: AppRadius.all(AppRadius.sm),
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpace.md),
+              TextField(
+                controller: phoneCtrl,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  labelText: AppStrings.t('Phone (WhatsApp)'),
+                  prefixIcon: const Icon(Icons.chat_outlined),
+                  border: OutlineInputBorder(
+                    borderRadius: AppRadius.all(AppRadius.sm),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -449,11 +666,11 @@ class _PlacementResultView extends StatelessWidget {
     }
     if (summary.contains('fluency') || summary.contains('speaking')) {
       return AppStrings.code == 'tr'
-          ? 'Akicilik ve cevap uzatma'
+          ? 'Akıcılık ve cevap uzatma'
           : 'Fluency and answer expansion';
     }
     return AppStrings.code == 'tr'
-        ? 'Gundelik speaking ritmi'
+        ? 'Gündelik speaking ritmi'
         : 'Everyday speaking rhythm';
   }
 
@@ -523,108 +740,151 @@ class _PlacementResultView extends StatelessWidget {
     final plan = _recommendedPlan();
     final tutors = _matchedTutors();
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-      child: ListView(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpace.lg,
+        AppSpace.xl,
+        AppSpace.lg,
+        AppSpace.xxl,
+      ),
+      child: StaggeredReveal(
         children: [
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFD9E4F4)),
-            ),
+          // Hero level card.
+          GradientHero(
+            gradient: AppGradients.hero,
+            padding: const EdgeInsets.all(AppSpace.xl),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  AppStrings.t('Your Level'),
-                  style: const TextStyle(
-                    color: AppColors.muted,
-                    fontWeight: FontWeight.w700,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppStrings.t('Your Level').toUpperCase(),
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 1.2,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          result.level,
+                          style: const TextStyle(
+                            fontSize: 44,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            height: 1.05,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Icon(
+                      Icons.military_tech_rounded,
+                      color: Colors.white,
+                      size: 48,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpace.md),
+                AppStatPill(
+                  icon: Icons.stars_rounded,
+                  label:
+                      '${AppStrings.t('Score')}: ${result.score} / ${result.maxScore}',
+                ),
+                const SizedBox(height: AppSpace.lg),
+                Container(
+                  padding: const EdgeInsets.all(AppSpace.md),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: AppRadius.all(AppRadius.md),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.route_rounded,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              '${AppStrings.t('Recommended Track')}: ${result.recommendedTrack}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpace.sm),
+                      Text(
+                        result.summary,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.92),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        result.nextStep,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.92),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  result.level,
-                  style: const TextStyle(
-                    fontSize: 42,
-                    color: AppColors.brandDeep,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                Text(
-                  '${AppStrings.t('Score')}: ${result.score} / ${result.maxScore}',
-                  style: const TextStyle(color: AppColors.muted),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  '${AppStrings.t('Recommended Track')}: ${result.recommendedTrack}',
-                  style: const TextStyle(
-                    color: AppColors.ink,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(result.summary),
-                const SizedBox(height: 4),
-                Text(result.nextStep),
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFF),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFD9E4F4)),
-            ),
+          const SizedBox(height: AppSpace.lg),
+          // Primary weak area.
+          AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  AppStrings.code == 'tr'
-                      ? 'Ana zayif alan'
+                SectionHeader(
+                  icon: Icons.center_focus_strong_rounded,
+                  title: AppStrings.code == 'tr'
+                      ? 'Ana zayıf alan'
                       : 'Primary weak area',
-                  style: const TextStyle(
-                    color: AppColors.muted,
-                    fontWeight: FontWeight.w700,
-                  ),
                 ),
-                const SizedBox(height: 6),
                 Text(
                   weakArea,
                   style: const TextStyle(
                     color: AppColors.ink,
                     fontWeight: FontWeight.w800,
+                    fontSize: 16,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFF),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFD9E4F4)),
-            ),
+          const SizedBox(height: AppSpace.lg),
+          // Matching plan.
+          AppCard(
             child: loadingConversion
-                ? const Center(child: CircularProgressIndicator())
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpace.lg),
+                    child: AppLoader(),
+                  )
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        AppStrings.code == 'tr'
+                      SectionHeader(
+                        icon: Icons.workspace_premium_rounded,
+                        title: AppStrings.code == 'tr'
                             ? 'Sana uygun plan'
                             : 'Plan that fits you',
-                        style: const TextStyle(
-                          color: AppColors.muted,
-                          fontWeight: FontWeight.w700,
-                        ),
                       ),
-                      const SizedBox(height: 6),
                       Text(
                         plan?.displayTitle.isNotEmpty == true
                             ? plan!.displayTitle
@@ -633,7 +893,7 @@ class _PlacementResultView extends StatelessWidget {
                                 : AppStrings.t('Plan will appear here')),
                         style: const TextStyle(
                           color: AppColors.ink,
-                          fontWeight: FontWeight.w800,
+                          fontWeight: FontWeight.w900,
                           fontSize: 18,
                         ),
                       ),
@@ -641,78 +901,115 @@ class _PlacementResultView extends StatelessWidget {
                       Text(
                         plan == null
                             ? AppStrings.code == 'tr'
-                                ? 'Plan verisi hazir oldugunda burada gozukur.'
-                                : 'The matching plan will appear here once plan data is available.'
+                                ? 'Plan verisi hazır olduğunda burada gözükür.'
+                                : 'The matching plan will appear here önce plan data is available.'
                             : '${plan.lessonsTotal} ${AppStrings.code == 'tr' ? 'ders' : 'lessons'} • ${plan.lessonDuration}${AppStrings.code == 'tr' ? ' dk' : ' min'} • ${planPayload?.currency ?? ''} ${plan.price.toStringAsFixed(0)}',
+                        style: const TextStyle(color: AppColors.muted),
                       ),
                       if (plan?.tagline.isNotEmpty == true) ...[
                         const SizedBox(height: 6),
-                        Text(plan!.tagline),
+                        Text(
+                          plan!.tagline,
+                          style: const TextStyle(color: AppColors.muted),
+                        ),
                       ],
                     ],
                   ),
           ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFF),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFD9E4F4)),
-            ),
+          const SizedBox(height: AppSpace.lg),
+          // Matched tutors.
+          AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  AppStrings.code == 'tr'
+                SectionHeader(
+                  icon: Icons.groups_rounded,
+                  title: AppStrings.code == 'tr'
                       ? 'Sana uygun 3 tutor'
                       : '3 tutors that fit this result',
-                  style: const TextStyle(
-                    color: AppColors.muted,
-                    fontWeight: FontWeight.w700,
-                  ),
                 ),
-                const SizedBox(height: 10),
                 if (loadingConversion)
-                  const Center(child: CircularProgressIndicator())
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSpace.lg),
+                    child: AppLoader(),
+                  )
                 else if (tutors.isEmpty)
                   Text(
                     AppStrings.code == 'tr'
-                        ? 'Tutor listesi hazir oldugunda burada gozukur.'
-                        : 'Tutor picks will appear here once the list is available.',
+                        ? 'Tutor listesi hazır olduğunda burada gözükür.'
+                        : 'Tutor picks will appear here önce the list is available.',
+                    style: const TextStyle(color: AppColors.muted),
                   )
                 else
                   ...tutors.map((tutor) {
                     final tags = tutor.tags.take(2).join(' • ');
                     return Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: const Color(0xFFD9E4F4)),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      padding: const EdgeInsets.only(bottom: AppSpace.md),
+                      child: AppCard(
+                        color: AppPalette.cloud,
+                        padding: const EdgeInsets.all(AppSpace.md),
+                        child: Row(
                           children: [
-                            Text(
-                              tutor.name,
-                              style: const TextStyle(
-                                color: AppColors.ink,
-                                fontWeight: FontWeight.w800,
+                            Container(
+                              width: 44,
+                              height: 44,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                gradient: AppGradients.violet,
+                                borderRadius: AppRadius.all(AppRadius.sm),
+                                boxShadow: AppShadows.glow(
+                                  AppPalette.violet,
+                                  opacity: 0.26,
+                                ),
+                              ),
+                              child: Text(
+                                tutor.name.isNotEmpty
+                                    ? tutor.name
+                                        .substring(0, 1)
+                                        .toUpperCase()
+                                    : '?',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 18,
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              tutor.jobTitle.isNotEmpty
-                                  ? tutor.jobTitle
-                                  : AppStrings.t('Instructor'),
+                            const SizedBox(width: AppSpace.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    tutor.name,
+                                    style: const TextStyle(
+                                      color: AppColors.ink,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    tutor.jobTitle.isNotEmpty
+                                        ? tutor.jobTitle
+                                        : AppStrings.t('Instructor'),
+                                    style: const TextStyle(
+                                      color: AppColors.muted,
+                                    ),
+                                  ),
+                                  if (tags.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      tags,
+                                      style: const TextStyle(
+                                        color: AppColors.brand,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12.5,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ),
-                            if (tags.isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(tags),
-                            ],
                           ],
                         ),
                       ),
@@ -721,21 +1018,19 @@ class _PlacementResultView extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 14),
-          ElevatedButton(
+          const SizedBox(height: AppSpace.lg),
+          AppButton(
+            label: AppStrings.t('Schedule Trial Lesson'),
+            icon: Icons.event_available_rounded,
+            tone: AppButtonTone.success,
+            loading: requestingTrial,
             onPressed: requestingTrial ? null : onOpenSchedule,
-            child: requestingTrial
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Text(AppStrings.t('Schedule Trial Lesson')),
           ),
-          const SizedBox(height: 10),
-          TextButton(
+          const SizedBox(height: AppSpace.md),
+          AppGhostButton(
+            label: AppStrings.t('Try Again'),
+            icon: Icons.refresh_rounded,
             onPressed: onRetry,
-            child: Text(AppStrings.t('Try Again')),
           ),
         ],
       ),

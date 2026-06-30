@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../zoom/live_lesson_launcher.dart';
 import 'instructor_lessons_repository.dart';
 
@@ -14,25 +15,17 @@ class InstructorLessonsScreen extends StatelessWidget {
       future: InstructorLessonsRepository().fetchLessons(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return AppLoader(message: AppStrings.t('Lessons'));
         }
 
         if (snapshot.hasError) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(AppStrings.t('Something went wrong')),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () => Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const InstructorLessonsScreen()),
-                  ),
-                  child: Text(AppStrings.t('Try Again')),
-                ),
-              ],
+          return AppErrorState(
+            message: AppStrings.t('Something went wrong'),
+            retryLabel: AppStrings.t('Try Again'),
+            onRetry: () => Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const InstructorLessonsScreen()),
             ),
           );
         }
@@ -42,39 +35,104 @@ class InstructorLessonsScreen extends StatelessWidget {
         final past = payload?.past ?? const <InstructorLessonItem>[];
 
         if (upcoming.isEmpty && past.isEmpty) {
-          return Center(child: Text(AppStrings.t('No lessons found!')));
+          return AppEmptyState(
+            icon: Icons.video_camera_front_rounded,
+            title: AppStrings.t('No lessons found!'),
+          );
         }
 
-        return ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Text(AppStrings.t('Lessons'),
-                style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 12),
-            if (upcoming.isNotEmpty) ...[
-              Text(AppStrings.t('Upcoming'),
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 10),
-              ...upcoming.map(
-                (lesson) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _LessonCard(lesson: lesson, isUpcoming: true),
+        return AppGlowBackground(
+          child: AnimatedPageEntrance(
+            child: ListView(
+              padding: const EdgeInsets.all(AppSpace.xl),
+              children: [
+                GradientHero(
+                  gradient: AppGradients.hero,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.20),
+                          borderRadius: AppRadius.all(AppRadius.md),
+                        ),
+                        child: const Icon(Icons.cast_for_education_rounded,
+                            color: Colors.white, size: 26),
+                      ),
+                      const SizedBox(width: AppSpace.lg),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppStrings.t('Lessons'),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineSmall
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                            ),
+                            const SizedBox(height: 6),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                AppStatPill(
+                                  icon: Icons.upcoming_rounded,
+                                  label:
+                                      '${upcoming.length} ${AppStrings.t('Upcoming')}',
+                                ),
+                                AppStatPill(
+                                  icon: Icons.history_rounded,
+                                  label:
+                                      '${past.length} ${AppStrings.t('Past')}',
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-            if (past.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(AppStrings.t('Past'),
-                  style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 10),
-              ...past.map(
-                (lesson) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _LessonCard(lesson: lesson, isUpcoming: false),
-                ),
-              ),
-            ],
-          ],
+                const SizedBox(height: AppSpace.xl),
+                if (upcoming.isNotEmpty) ...[
+                  SectionHeader(
+                    title: AppStrings.t('Upcoming'),
+                    icon: Icons.event_available_rounded,
+                  ),
+                  StaggeredReveal(
+                    children: [
+                      for (final lesson in upcoming)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.md),
+                          child: _LessonCard(lesson: lesson, isUpcoming: true),
+                        ),
+                    ],
+                  ),
+                ],
+                if (past.isNotEmpty) ...[
+                  const SizedBox(height: AppSpace.lg),
+                  SectionHeader(
+                    title: AppStrings.t('Past'),
+                    icon: Icons.history_rounded,
+                  ),
+                  StaggeredReveal(
+                    children: [
+                      for (final lesson in past)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.md),
+                          child: _LessonCard(lesson: lesson, isUpcoming: false),
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
         );
       },
     );
@@ -89,7 +147,7 @@ class _LessonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = isUpcoming ? AppColors.brand : Colors.green;
+    final statusColor = isUpcoming ? AppColors.brand : AppPalette.success;
     final canJoin =
         isUpcoming && lesson.status == 'started' && _canJoinNow(lesson);
     final canStart = isUpcoming &&
@@ -99,45 +157,112 @@ class _LessonCard extends StatelessWidget {
     final startLabel = lesson.startTime != null
         ? DateFormat('dd MMM yyyy · HH:mm').format(lesson.startTime!.toLocal())
         : '';
-    final subtitle = '${lesson.studentName} · $startLabel';
+    final title =
+        lesson.title.isNotEmpty ? lesson.title : AppStrings.t('Lesson');
+    final actionEnabled = canJoin || canStart;
+    final actionLabel = canJoin
+        ? AppStrings.t('Join My Class')
+        : (lesson.isPending
+            ? AppStrings.t('Reservation is pending.')
+            : (canStart
+                ? AppStrings.t('Start Lesson')
+                : AppStrings.t('Lesson is not started yet')));
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Row(
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: statusColor.withValues(alpha: 0.2),
-            child: Icon(Icons.play_circle, color: statusColor),
+          Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.14),
+                  borderRadius: AppRadius.all(AppRadius.md),
+                ),
+                child: Icon(Icons.play_circle_rounded, color: statusColor),
+              ),
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
+                          ),
+                    ),
+                    if (lesson.studentName.isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          const Icon(Icons.person_rounded,
+                              size: 14, color: AppColors.muted),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              lesson.studentName,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: AppColors.muted,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              AppStatPill(
+                icon: isUpcoming
+                    ? Icons.upcoming_rounded
+                    : Icons.check_circle_rounded,
+                label: isUpcoming
+                    ? AppStrings.t('Upcoming')
+                    : AppStrings.t('Past'),
+                color: isUpcoming ? AppColors.brand : AppPalette.success,
+                onLight: true,
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          if (startLabel.isNotEmpty) ...[
+            const SizedBox(height: AppSpace.md),
+            Row(
               children: [
+                const Icon(Icons.schedule_rounded,
+                    size: 15, color: AppColors.muted),
+                const SizedBox(width: 5),
                 Text(
-                    lesson.title.isNotEmpty
-                        ? lesson.title
-                        : AppStrings.t('Lesson'),
-                    style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 4),
-                Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+                  startLabel,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.muted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
               ],
             ),
-          ),
-          ElevatedButton(
-            onPressed: (canJoin || canStart)
+          ],
+          const SizedBox(height: AppSpace.md),
+          AppButton(
+            label: actionLabel,
+            tone: canJoin
+                ? AppButtonTone.success
+                : (canStart ? AppButtonTone.brand : AppButtonTone.neutral),
+            icon: canJoin
+                ? Icons.videocam_rounded
+                : (canStart ? Icons.play_arrow_rounded : null),
+            onPressed: actionEnabled
                 ? () async {
                     try {
                       String meetingId = lesson.meetingId.trim();
@@ -174,15 +299,6 @@ class _LessonCard extends StatelessWidget {
                     }
                   }
                 : null,
-            child: Text(
-              canJoin
-                  ? AppStrings.t('Join My Class')
-                  : (lesson.isPending
-                      ? AppStrings.t('Reservation is pending.')
-                      : (canStart
-                          ? AppStrings.t('Start Lesson')
-                          : AppStrings.t('Lesson is not started yet'))),
-            ),
           ),
         ],
       ),

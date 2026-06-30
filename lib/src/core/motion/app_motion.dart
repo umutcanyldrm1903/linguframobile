@@ -2,16 +2,18 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../features/practice/screens/practice_visuals.dart';
 import '../localization/app_strings.dart';
 import '../theme/app_colors.dart';
 
 class AppMotion {
   const AppMotion._();
 
-  static const fast = Duration(milliseconds: 180);
-  static const normal = Duration(milliseconds: 360);
-  static const page = Duration(milliseconds: 520);
-  static const slow = Duration(milliseconds: 760);
+  // Daha snappy his için süreler kısaltıldı (sayfa girişleri/geçişler hızlandı).
+  static const fast = Duration(milliseconds: 130);
+  static const normal = Duration(milliseconds: 230);
+  static const page = Duration(milliseconds: 300);
+  static const slow = Duration(milliseconds: 380);
 
   static const curve = Curves.easeOutCubic;
   static const spring = Curves.easeOutBack;
@@ -61,7 +63,7 @@ class AnimatedPageEntrance extends StatefulWidget {
     required this.child,
     super.key,
     this.delay = Duration.zero,
-    this.duration = AppMotion.slow,
+    this.duration = AppMotion.normal,
     this.offset = const Offset(0, 0.035),
   });
 
@@ -252,13 +254,10 @@ class _MascotLoadingState extends State<MascotLoading>
                       ],
                     ),
                   ),
-                  ClipOval(
-                    child: Image.asset(
-                      'assets/icon/app_icon_source.png',
-                      width: widget.size,
-                      height: widget.size,
-                      fit: BoxFit.cover,
-                    ),
+                  // Marka maskotu: akıllı kalem (mezuniyet şapkası değil).
+                  PracticeMascot(
+                    size: widget.size,
+                    mood: PracticeMascotMood.happy,
                   ),
                 ],
               ),

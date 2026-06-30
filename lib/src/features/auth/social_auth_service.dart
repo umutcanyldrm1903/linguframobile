@@ -112,7 +112,7 @@ class SocialAuthService {
       final detail = error.message.trim();
       final suffix = detail.isNotEmpty ? ' Detay: $detail' : '';
       throw SocialAuthException(
-        'Apple ile giris tamamlanamadi. Kod: ${error.code.name}.$suffix',
+        'Apple ile giriş tamamlanamadı. Kod: ${error.code.name}.$suffix',
       );
     } on SignInWithAppleCredentialsException catch (error) {
       final detail = error.message.trim();

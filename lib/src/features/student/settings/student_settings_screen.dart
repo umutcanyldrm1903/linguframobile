@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../profile/profile_repository.dart';
 
 class StudentSettingsScreen extends StatefulWidget {
@@ -287,25 +288,19 @@ class _StudentSettingsScreenState extends State<StudentSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: AppLoader(message: AppStrings.t('Profile Settings')),
       );
     }
 
     if (_loadError != null) {
       return Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(_loadError!),
-              const SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: _loadProfile,
-                child: Text(AppStrings.t('Try Again')),
-              ),
-            ],
-          ),
+        backgroundColor: AppColors.background,
+        body: AppErrorState(
+          message: _loadError!,
+          onRetry: _loadProfile,
+          retryLabel: AppStrings.t('Try Again'),
         ),
       );
     }
@@ -313,6 +308,7 @@ class _StudentSettingsScreenState extends State<StudentSettingsScreen> {
     return DefaultTabController(
       length: 7,
       child: Scaffold(
+        backgroundColor: AppColors.background,
         appBar: AppBar(
           title: Text(AppStrings.t('Profile Settings')),
           bottom: TabBar(
@@ -330,53 +326,55 @@ class _StudentSettingsScreenState extends State<StudentSettingsScreen> {
             ],
           ),
         ),
-        body: TabBarView(
-          children: [
-            _ProfileTab(
-              profile: _profile,
-              pickedImageBytes: _pickedImageBytes,
-              nameCtrl: _nameCtrl,
-              emailCtrl: _emailCtrl,
-              phoneCtrl: _phoneCtrl,
-              genderCtrl: _genderCtrl,
-              ageCtrl: _ageCtrl,
-              onPickImage: _pickProfileImage,
-              onSubmit: _submitProfile,
-            ),
-            _BioTab(
-              jobTitleCtrl: _jobTitleCtrl,
-              shortBioCtrl: _shortBioCtrl,
-              bioCtrl: _bioCtrl,
-              onSubmit: _submitBio,
-            ),
-            const _EducationTab(),
-            _LocationTab(
-              countryCtrl: _countryCtrl,
-              stateCtrl: _stateCtrl,
-              cityCtrl: _cityCtrl,
-              addressCtrl: _addressCtrl,
-              onSubmit: _submitLocation,
-            ),
-            _SocialTab(
-              facebookCtrl: _facebookCtrl,
-              twitterCtrl: _twitterCtrl,
-              linkedinCtrl: _linkedinCtrl,
-              websiteCtrl: _websiteCtrl,
-              githubCtrl: _githubCtrl,
-              onSubmit: _submitSocials,
-            ),
-            _PasswordTab(
-              currentCtrl: _currentPasswordCtrl,
-              newCtrl: _newPasswordCtrl,
-              confirmCtrl: _confirmPasswordCtrl,
-              onSubmit: _submitPassword,
-            ),
-            _DeleteAccountTab(
-              passwordCtrl: _deletePasswordCtrl,
-              deleting: _deletingAccount,
-              onSubmit: _submitDeleteAccount,
-            ),
-          ],
+        body: AppGlowBackground(
+          child: TabBarView(
+            children: [
+              _ProfileTab(
+                profile: _profile,
+                pickedImageBytes: _pickedImageBytes,
+                nameCtrl: _nameCtrl,
+                emailCtrl: _emailCtrl,
+                phoneCtrl: _phoneCtrl,
+                genderCtrl: _genderCtrl,
+                ageCtrl: _ageCtrl,
+                onPickImage: _pickProfileImage,
+                onSubmit: _submitProfile,
+              ),
+              _BioTab(
+                jobTitleCtrl: _jobTitleCtrl,
+                shortBioCtrl: _shortBioCtrl,
+                bioCtrl: _bioCtrl,
+                onSubmit: _submitBio,
+              ),
+              const _EducationTab(),
+              _LocationTab(
+                countryCtrl: _countryCtrl,
+                stateCtrl: _stateCtrl,
+                cityCtrl: _cityCtrl,
+                addressCtrl: _addressCtrl,
+                onSubmit: _submitLocation,
+              ),
+              _SocialTab(
+                facebookCtrl: _facebookCtrl,
+                twitterCtrl: _twitterCtrl,
+                linkedinCtrl: _linkedinCtrl,
+                websiteCtrl: _websiteCtrl,
+                githubCtrl: _githubCtrl,
+                onSubmit: _submitSocials,
+              ),
+              _PasswordTab(
+                currentCtrl: _currentPasswordCtrl,
+                newCtrl: _newPasswordCtrl,
+                confirmCtrl: _confirmPasswordCtrl,
+                onSubmit: _submitPassword,
+              ),
+              _DeleteAccountTab(
+                passwordCtrl: _deletePasswordCtrl,
+                deleting: _deletingAccount,
+                onSubmit: _submitDeleteAccount,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -410,103 +408,126 @@ class _ProfileTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final imageUrl = profile?.image ?? '';
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.xl, AppSpace.lg, AppSpace.xl, AppSpace.xxl),
       children: [
-        _SectionCard(
-          child: Column(
-            children: [
-              Container(
-                height: 140,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Center(child: Text(AppStrings.t('Edit Cover Photo'))),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 34,
-                    backgroundColor: AppColors.brand.withValues(alpha: 0.2),
-                    child: ClipOval(
-                      child: (() {
-                        if (pickedImageBytes != null) {
-                          return Image.memory(
-                            pickedImageBytes!,
-                            width: 68,
-                            height: 68,
-                            fit: BoxFit.cover,
-                          );
-                        }
-                        if (imageUrl.isNotEmpty) {
-                          return Image.network(
-                            imageUrl,
-                            width: 68,
-                            height: 68,
-                            fit: BoxFit.cover,
-                            webHtmlElementStrategy:
-                                WebHtmlElementStrategy.prefer,
-                            errorBuilder: (_, __, ___) => const SizedBox(
-                              width: 68,
-                              height: 68,
-                              child: Icon(Icons.person, color: AppColors.brand),
-                            ),
-                          );
-                        }
-                        return const SizedBox(
-                          width: 68,
-                          height: 68,
-                          child: Icon(Icons.person, color: AppColors.brand),
+        AnimatedPageEntrance(
+          child: GradientHero(
+            gradient: AppGradients.hero,
+            child: Row(
+              children: [
+                Container(
+                  height: 72,
+                  width: 72,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.22),
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: ClipOval(
+                    child: (() {
+                      if (pickedImageBytes != null) {
+                        return Image.memory(
+                          pickedImageBytes!,
+                          width: 72,
+                          height: 72,
+                          fit: BoxFit.cover,
                         );
-                      })(),
-                    ),
+                      }
+                      if (imageUrl.isNotEmpty) {
+                        return Image.network(
+                          imageUrl,
+                          width: 72,
+                          height: 72,
+                          fit: BoxFit.cover,
+                          webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+                          errorBuilder: (_, __, ___) => const SizedBox(
+                            width: 72,
+                            height: 72,
+                            child: Icon(Icons.person, color: Colors.white),
+                          ),
+                        );
+                      }
+                      return const SizedBox(
+                        width: 72,
+                        height: 72,
+                        child: Icon(Icons.person, color: Colors.white),
+                      );
+                    })(),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(AppStrings.t('User Name'),
-                            style: Theme.of(context).textTheme.titleLarge),
-                        Text(AppStrings.t('User Email'),
-                            style: Theme.of(context).textTheme.bodyMedium),
-                      ],
-                    ),
+                ),
+                const SizedBox(width: AppSpace.lg),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        AppStrings.t('User Name'),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                      Text(
+                        AppStrings.t('User Email'),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.85),
+                            ),
+                      ),
+                    ],
                   ),
-                  ElevatedButton(
-                    onPressed: onPickImage,
-                    child: Text(AppStrings.t('New Image')),
-                  )
-                ],
-              ),
-            ],
+                ),
+                AppGhostButton(
+                  label: AppStrings.t('New Image'),
+                  onPressed: onPickImage,
+                  expand: false,
+                  color: Colors.white,
+                  icon: Icons.photo_camera_outlined,
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 16),
-        _InputField(label: AppStrings.t('Full Name'), controller: nameCtrl),
-        const SizedBox(height: 12),
-        _InputField(
-            label: AppStrings.t('Email Address'), controller: emailCtrl),
-        const SizedBox(height: 12),
-        _InputField(label: AppStrings.t('Phone Number'), controller: phoneCtrl),
-        const SizedBox(height: 12),
-        _InputField(label: AppStrings.t('Gender'), controller: genderCtrl),
-        const SizedBox(height: 12),
-        _InputField(
-          label: AppStrings.t('Age'),
-          controller: ageCtrl,
-          keyboardType: TextInputType.number,
-        ),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: onSubmit,
-            child: Text(AppStrings.t('Update Info')),
+        const SizedBox(height: AppSpace.lg),
+        AnimatedPageEntrance(
+          delay: const Duration(milliseconds: 80),
+          child: AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SectionHeader(
+                  title: AppStrings.t('Profile'),
+                  icon: Icons.badge_outlined,
+                ),
+                _InputField(
+                    label: AppStrings.t('Full Name'), controller: nameCtrl),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                    label: AppStrings.t('Email Address'),
+                    controller: emailCtrl),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                    label: AppStrings.t('Phone Number'),
+                    controller: phoneCtrl),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                    label: AppStrings.t('Gender'), controller: genderCtrl),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                  label: AppStrings.t('Age'),
+                  controller: ageCtrl,
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: AppSpace.xl),
+                AppButton(
+                  label: AppStrings.t('Update Info'),
+                  onPressed: onSubmit,
+                  icon: Icons.save_outlined,
+                ),
+              ],
+            ),
           ),
-        )
+        ),
       ],
     );
   }
@@ -528,27 +549,42 @@ class _BioTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.xl, AppSpace.lg, AppSpace.xl, AppSpace.xxl),
       children: [
-        _InputField(
-            label: AppStrings.t('Designation'), controller: jobTitleCtrl),
-        const SizedBox(height: 12),
-        _InputField(
-          label: AppStrings.t('Short Bio'),
-          controller: shortBioCtrl,
-          maxLines: 4,
-        ),
-        const SizedBox(height: 12),
-        _InputField(
-            label: AppStrings.t('Bio'), controller: bioCtrl, maxLines: 6),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: onSubmit,
-            child: Text(AppStrings.t('Update Info')),
+        AnimatedPageEntrance(
+          child: AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SectionHeader(
+                  title: AppStrings.t('Bio'),
+                  icon: Icons.person_outline,
+                ),
+                _InputField(
+                    label: AppStrings.t('Designation'),
+                    controller: jobTitleCtrl),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                  label: AppStrings.t('Short Bio'),
+                  controller: shortBioCtrl,
+                  maxLines: 4,
+                ),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                    label: AppStrings.t('Bio'),
+                    controller: bioCtrl,
+                    maxLines: 6),
+                const SizedBox(height: AppSpace.xl),
+                AppButton(
+                  label: AppStrings.t('Update Info'),
+                  onPressed: onSubmit,
+                  icon: Icons.save_outlined,
+                ),
+              ],
+            ),
           ),
-        )
+        ),
       ],
     );
   }
@@ -622,49 +658,55 @@ class _EducationTabState extends State<_EducationTab> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return Padding(
           padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            left: AppSpace.xl,
+            right: AppSpace.xl,
+            top: AppSpace.lg,
+            bottom: MediaQuery.of(context).viewInsets.bottom + AppSpace.lg,
           ),
           child: StatefulBuilder(
             builder: (context, setModalState) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    item == null
-                        ? AppStrings.t('Add Experience')
-                        : AppStrings.t('Update'),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 12),
-                  _InputField(
-                      label: AppStrings.t('Company'), controller: companyCtrl),
-                  const SizedBox(height: 10),
-                  _InputField(
-                      label: AppStrings.t('Position'),
-                      controller: positionCtrl),
-                  const SizedBox(height: 10),
-                  _InputField(
-                      label: AppStrings.t('Start Date'), controller: startCtrl),
-                  const SizedBox(height: 10),
-                  _InputField(
-                      label: AppStrings.t('End Date'), controller: endCtrl),
-                  const SizedBox(height: 10),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: current,
-                    onChanged: (value) => setModalState(() => current = value),
-                    title: Text(AppStrings.t('Current')),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
+              return _SheetCard(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SectionHeader(
+                      title: item == null
+                          ? AppStrings.t('Add Experience')
+                          : AppStrings.t('Update'),
+                      icon: Icons.work_outline,
+                    ),
+                    _InputField(
+                        label: AppStrings.t('Company'),
+                        controller: companyCtrl),
+                    const SizedBox(height: AppSpace.sm),
+                    _InputField(
+                        label: AppStrings.t('Position'),
+                        controller: positionCtrl),
+                    const SizedBox(height: AppSpace.sm),
+                    _InputField(
+                        label: AppStrings.t('Start Date'),
+                        controller: startCtrl),
+                    const SizedBox(height: AppSpace.sm),
+                    _InputField(
+                        label: AppStrings.t('End Date'), controller: endCtrl),
+                    const SizedBox(height: AppSpace.sm),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      activeThumbColor: AppColors.brand,
+                      value: current,
+                      onChanged: (value) =>
+                          setModalState(() => current = value),
+                      title: Text(AppStrings.t('Current')),
+                    ),
+                    const SizedBox(height: AppSpace.sm),
+                    AppButton(
+                      label: AppStrings.t('Save'),
+                      icon: Icons.save_outlined,
                       onPressed: () async {
                         final navigator = Navigator.of(context);
                         try {
@@ -697,10 +739,9 @@ class _EducationTabState extends State<_EducationTab> {
                           _showSnack(_errorMessage(e));
                         }
                       },
-                      child: Text(AppStrings.t('Save')),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               );
             },
           ),
@@ -719,48 +760,54 @@ class _EducationTabState extends State<_EducationTab> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) {
         return Padding(
           padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            left: AppSpace.xl,
+            right: AppSpace.xl,
+            top: AppSpace.lg,
+            bottom: MediaQuery.of(context).viewInsets.bottom + AppSpace.lg,
           ),
           child: StatefulBuilder(
             builder: (context, setModalState) {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    item == null
-                        ? AppStrings.t('Add Education')
-                        : AppStrings.t('Update'),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: 12),
-                  _InputField(
-                      label: AppStrings.t('Organization'), controller: orgCtrl),
-                  const SizedBox(height: 10),
-                  _InputField(
-                      label: AppStrings.t('Degree'), controller: degreeCtrl),
-                  const SizedBox(height: 10),
-                  _InputField(
-                      label: AppStrings.t('Start Date'), controller: startCtrl),
-                  const SizedBox(height: 10),
-                  _InputField(
-                      label: AppStrings.t('End Date'), controller: endCtrl),
-                  const SizedBox(height: 10),
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: current,
-                    onChanged: (value) => setModalState(() => current = value),
-                    title: Text(AppStrings.t('Current')),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
+              return _SheetCard(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SectionHeader(
+                      title: item == null
+                          ? AppStrings.t('Add Education')
+                          : AppStrings.t('Update'),
+                      icon: Icons.school_outlined,
+                    ),
+                    _InputField(
+                        label: AppStrings.t('Organization'),
+                        controller: orgCtrl),
+                    const SizedBox(height: AppSpace.sm),
+                    _InputField(
+                        label: AppStrings.t('Degree'), controller: degreeCtrl),
+                    const SizedBox(height: AppSpace.sm),
+                    _InputField(
+                        label: AppStrings.t('Start Date'),
+                        controller: startCtrl),
+                    const SizedBox(height: AppSpace.sm),
+                    _InputField(
+                        label: AppStrings.t('End Date'), controller: endCtrl),
+                    const SizedBox(height: AppSpace.sm),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      activeThumbColor: AppColors.brand,
+                      value: current,
+                      onChanged: (value) =>
+                          setModalState(() => current = value),
+                      title: Text(AppStrings.t('Current')),
+                    ),
+                    const SizedBox(height: AppSpace.sm),
+                    AppButton(
+                      label: AppStrings.t('Save'),
+                      icon: Icons.save_outlined,
                       onPressed: () async {
                         final navigator = Navigator.of(context);
                         try {
@@ -793,10 +840,9 @@ class _EducationTabState extends State<_EducationTab> {
                           _showSnack(_errorMessage(e));
                         }
                       },
-                      child: Text(AppStrings.t('Save')),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               );
             },
           ),
@@ -828,74 +874,86 @@ class _EducationTabState extends State<_EducationTab> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return AppLoader(message: AppStrings.t('Education'));
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.xl, AppSpace.lg, AppSpace.xl, AppSpace.xxl),
       children: [
-        _SectionCard(
-          title: AppStrings.t('Experience'),
-          child: Column(
-            children: _experiences.isEmpty
-                ? [
-                    Text(AppStrings.t('No Data!'),
-                        style: const TextStyle(color: AppColors.muted)),
-                  ]
-                : _experiences
-                    .map((item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _ListRow(
-                            title: item.company,
-                            subtitle:
-                                '${item.position} · ${item.startDate}${item.current ? '' : ' - ${item.endDate}'}',
-                            onEdit: () => _openExperienceForm(item: item),
-                            onDelete: () => _deleteExperience(item),
-                          ),
-                        ))
-                    .toList(),
+        AnimatedPageEntrance(
+          child: AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SectionHeader(
+                  title: AppStrings.t('Experience'),
+                  icon: Icons.work_outline,
+                ),
+                if (_experiences.isEmpty)
+                  AppEmptyState(
+                    title: AppStrings.t('No Data!'),
+                    icon: Icons.work_outline,
+                  )
+                else
+                  ..._experiences.map((item) => Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.md),
+                        child: _ListRow(
+                          icon: Icons.work_outline,
+                          title: item.company,
+                          subtitle:
+                              '${item.position} · ${item.startDate}${item.current ? '' : ' - ${item.endDate}'}',
+                          onEdit: () => _openExperienceForm(item: item),
+                          onDelete: () => _deleteExperience(item),
+                        ),
+                      )),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => _openExperienceForm(),
-            icon: const Icon(Icons.add),
-            label: Text(AppStrings.t('Add Experience')),
+        const SizedBox(height: AppSpace.md),
+        AppGhostButton(
+          label: AppStrings.t('Add Experience'),
+          onPressed: () => _openExperienceForm(),
+          icon: Icons.add,
+        ),
+        const SizedBox(height: AppSpace.lg),
+        AnimatedPageEntrance(
+          delay: const Duration(milliseconds: 80),
+          child: AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SectionHeader(
+                  title: AppStrings.t('Education'),
+                  icon: Icons.school_outlined,
+                ),
+                if (_educations.isEmpty)
+                  AppEmptyState(
+                    title: AppStrings.t('No Data!'),
+                    icon: Icons.school_outlined,
+                  )
+                else
+                  ..._educations.map((item) => Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.md),
+                        child: _ListRow(
+                          icon: Icons.school_outlined,
+                          title: item.degree,
+                          subtitle:
+                              '${item.organization} · ${item.startDate}${item.current ? '' : ' - ${item.endDate}'}',
+                          onEdit: () => _openEducationForm(item: item),
+                          onDelete: () => _deleteEducation(item),
+                        ),
+                      )),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 16),
-        _SectionCard(
-          title: AppStrings.t('Education'),
-          child: Column(
-            children: _educations.isEmpty
-                ? [
-                    Text(AppStrings.t('No Data!'),
-                        style: const TextStyle(color: AppColors.muted)),
-                  ]
-                : _educations
-                    .map((item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _ListRow(
-                            title: item.degree,
-                            subtitle:
-                                '${item.organization} · ${item.startDate}${item.current ? '' : ' - ${item.endDate}'}',
-                            onEdit: () => _openEducationForm(item: item),
-                            onDelete: () => _deleteEducation(item),
-                          ),
-                        ))
-                    .toList(),
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: () => _openEducationForm(),
-            icon: const Icon(Icons.add),
-            label: Text(AppStrings.t('Add Education')),
-          ),
+        const SizedBox(height: AppSpace.md),
+        AppGhostButton(
+          label: AppStrings.t('Add Education'),
+          onPressed: () => _openEducationForm(),
+          icon: Icons.add,
         ),
       ],
     );
@@ -920,31 +978,44 @@ class _LocationTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.xl, AppSpace.lg, AppSpace.xl, AppSpace.xxl),
       children: [
-        _InputField(
-          label: AppStrings.t('Country'),
-          controller: countryCtrl,
-          keyboardType: TextInputType.number,
-        ),
-        const SizedBox(height: 12),
-        _InputField(label: AppStrings.t('State'), controller: stateCtrl),
-        const SizedBox(height: 12),
-        _InputField(label: AppStrings.t('City'), controller: cityCtrl),
-        const SizedBox(height: 12),
-        _InputField(
-          label: AppStrings.t('Address'),
-          controller: addressCtrl,
-          maxLines: 3,
-        ),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: onSubmit,
-            child: Text(AppStrings.t('Update Location')),
+        AnimatedPageEntrance(
+          child: AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SectionHeader(
+                  title: AppStrings.t('Location'),
+                  icon: Icons.location_on_outlined,
+                ),
+                _InputField(
+                  label: AppStrings.t('Country'),
+                  controller: countryCtrl,
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                    label: AppStrings.t('State'), controller: stateCtrl),
+                const SizedBox(height: AppSpace.md),
+                _InputField(label: AppStrings.t('City'), controller: cityCtrl),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                  label: AppStrings.t('Address'),
+                  controller: addressCtrl,
+                  maxLines: 3,
+                ),
+                const SizedBox(height: AppSpace.xl),
+                AppButton(
+                  label: AppStrings.t('Update Location'),
+                  onPressed: onSubmit,
+                  icon: Icons.save_outlined,
+                ),
+              ],
+            ),
           ),
-        )
+        ),
       ],
     );
   }
@@ -970,25 +1041,44 @@ class _SocialTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.xl, AppSpace.lg, AppSpace.xl, AppSpace.xxl),
       children: [
-        _InputField(label: AppStrings.t('Facebook'), controller: facebookCtrl),
-        const SizedBox(height: 12),
-        _InputField(label: AppStrings.t('Twitter'), controller: twitterCtrl),
-        const SizedBox(height: 12),
-        _InputField(label: AppStrings.t('Linkedin'), controller: linkedinCtrl),
-        const SizedBox(height: 12),
-        _InputField(label: AppStrings.t('Website'), controller: websiteCtrl),
-        const SizedBox(height: 12),
-        _InputField(label: AppStrings.t('Github'), controller: githubCtrl),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: onSubmit,
-            child: Text(AppStrings.t('Update Social')),
+        AnimatedPageEntrance(
+          child: AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SectionHeader(
+                  title: AppStrings.t('Social'),
+                  icon: Icons.public_outlined,
+                ),
+                _InputField(
+                    label: AppStrings.t('Facebook'),
+                    controller: facebookCtrl),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                    label: AppStrings.t('Twitter'), controller: twitterCtrl),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                    label: AppStrings.t('Linkedin'),
+                    controller: linkedinCtrl),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                    label: AppStrings.t('Website'), controller: websiteCtrl),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                    label: AppStrings.t('Github'), controller: githubCtrl),
+                const SizedBox(height: AppSpace.xl),
+                AppButton(
+                  label: AppStrings.t('Update Social'),
+                  onPressed: onSubmit,
+                  icon: Icons.save_outlined,
+                ),
+              ],
+            ),
           ),
-        )
+        ),
       ],
     );
   }
@@ -1010,33 +1100,45 @@ class _PasswordTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.xl, AppSpace.lg, AppSpace.xl, AppSpace.xxl),
       children: [
-        _InputField(
-          label: AppStrings.t('Current Password'),
-          controller: currentCtrl,
-          obscure: true,
-        ),
-        const SizedBox(height: 12),
-        _InputField(
-          label: AppStrings.t('New Password'),
-          controller: newCtrl,
-          obscure: true,
-        ),
-        const SizedBox(height: 12),
-        _InputField(
-          label: AppStrings.t('Re-Type New Password'),
-          controller: confirmCtrl,
-          obscure: true,
-        ),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: onSubmit,
-            child: Text(AppStrings.t('Update Password')),
+        AnimatedPageEntrance(
+          child: AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SectionHeader(
+                  title: AppStrings.t('Password'),
+                  icon: Icons.lock_outline,
+                ),
+                _InputField(
+                  label: AppStrings.t('Current Password'),
+                  controller: currentCtrl,
+                  obscure: true,
+                ),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                  label: AppStrings.t('New Password'),
+                  controller: newCtrl,
+                  obscure: true,
+                ),
+                const SizedBox(height: AppSpace.md),
+                _InputField(
+                  label: AppStrings.t('Re-Type New Password'),
+                  controller: confirmCtrl,
+                  obscure: true,
+                ),
+                const SizedBox(height: AppSpace.xl),
+                AppButton(
+                  label: AppStrings.t('Update Password'),
+                  onPressed: onSubmit,
+                  icon: Icons.save_outlined,
+                ),
+              ],
+            ),
           ),
-        )
+        ),
       ],
     );
   }
@@ -1056,43 +1158,68 @@ class _DeleteAccountTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: const EdgeInsets.fromLTRB(
+          AppSpace.xl, AppSpace.lg, AppSpace.xl, AppSpace.xxl),
       children: [
-        _SectionCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppStrings.t('Delete Account'),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.red.shade700,
+        AnimatedPageEntrance(
+          child: AppCard(
+            color: AppPalette.danger.withValues(alpha: 0.05),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: AppPalette.danger.withValues(alpha: 0.14),
+                        borderRadius: AppRadius.all(AppRadius.sm),
+                      ),
+                      child: const Icon(Icons.warning_amber_rounded,
+                          size: 19, color: AppPalette.danger),
                     ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                AppStrings.t('This action cannot be undone.'),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              _InputField(
-                label: AppStrings.t('Current Password'),
-                controller: passwordCtrl,
-                obscure: true,
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                  onPressed: deleting ? null : onSubmit,
-                  child: Text(
-                    deleting
-                        ? AppStrings.t('Submitting')
-                        : AppStrings.t('Delete Account'),
-                  ),
+                    const SizedBox(width: AppSpace.md),
+                    Expanded(
+                      child: Text(
+                        AppStrings.t('Delete Account'),
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(
+                              color: AppPalette.danger,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpace.sm),
+                Text(
+                  AppStrings.t('This action cannot be undone.'),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.muted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: AppSpace.lg),
+                _InputField(
+                  label: AppStrings.t('Current Password'),
+                  controller: passwordCtrl,
+                  obscure: true,
+                ),
+                const SizedBox(height: AppSpace.lg),
+                AppButton(
+                  label: deleting
+                      ? AppStrings.t('Submitting')
+                      : AppStrings.t('Delete Account'),
+                  tone: AppButtonTone.danger,
+                  loading: deleting,
+                  icon: Icons.delete_outline,
+                  onPressed: deleting ? null : onSubmit,
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -1100,36 +1227,21 @@ class _DeleteAccountTab extends StatelessWidget {
   }
 }
 
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({this.title, required this.child});
+class _SheetCard extends StatelessWidget {
+  const _SheetCard({required this.child});
 
-  final String? title;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpace.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: Colors.white,
+        borderRadius: AppRadius.hero,
+        boxShadow: AppShadows.pop,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (title != null)
-            Text(title!, style: Theme.of(context).textTheme.titleLarge),
-          if (title != null) const SizedBox(height: 12),
-          child,
-        ],
-      ),
+      child: child,
     );
   }
 }
@@ -1158,6 +1270,20 @@ class _InputField extends StatelessWidget {
       obscureText: obscure,
       decoration: InputDecoration(
         labelText: label,
+        filled: true,
+        fillColor: AppPalette.cloud,
+        border: OutlineInputBorder(
+          borderRadius: AppRadius.all(AppRadius.sm),
+          borderSide: const BorderSide(color: AppPalette.line),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.all(AppRadius.sm),
+          borderSide: const BorderSide(color: AppPalette.line),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: AppRadius.all(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.brand, width: 1.6),
+        ),
       ),
     );
   }
@@ -1167,33 +1293,56 @@ class _ListRow extends StatelessWidget {
   const _ListRow({
     required this.title,
     required this.subtitle,
+    this.icon = Icons.work_outline,
     this.onEdit,
     this.onDelete,
   });
 
   final String title;
   final String subtitle;
+  final IconData icon;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpace.md),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        color: AppPalette.cloud,
+        borderRadius: AppRadius.all(AppRadius.md),
+        border: Border.all(color: AppPalette.line),
       ),
       child: Row(
         children: [
-          const Icon(Icons.work_outline, color: AppColors.brand),
-          const SizedBox(width: 10),
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.brand.withValues(alpha: 0.12),
+              borderRadius: AppRadius.all(AppRadius.sm),
+            ),
+            child: Icon(icon, color: AppColors.brand, size: 20),
+          ),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: Theme.of(context).textTheme.titleLarge),
-                Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
+                ),
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.muted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
               ],
             ),
           ),
@@ -1203,7 +1352,7 @@ class _ListRow extends StatelessWidget {
           ),
           IconButton(
             onPressed: onDelete,
-            icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+            icon: const Icon(Icons.delete_outline, color: AppPalette.danger),
           ),
         ],
       ),

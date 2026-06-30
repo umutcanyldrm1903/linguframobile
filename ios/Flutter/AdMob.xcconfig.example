@@ -1,0 +1,3 @@
+// Copy this file to AdMob.xcconfig and enter the real iOS AdMob app id.
+// Do not use the Google test app id for App Store release builds.
+GAD_APPLICATION_IDENTIFIER=ca-app-pub-1394938073298367~2060618325

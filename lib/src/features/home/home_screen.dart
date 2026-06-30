@@ -2,41 +2,14 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 import '../../core/localization/app_strings.dart';
-import '../../core/motion/app_motion.dart';
 import '../../core/theme/app_colors.dart';
-import '../public/public_theme.dart';
-import '../public/speak_coach_screen.dart';
+import '../../core/ui/ui.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static void _openSpeakingTask(BuildContext context, int step) {
-    Navigator.of(context).push(
-      PageRouteBuilder<void>(
-        transitionDuration: const Duration(milliseconds: 620),
-        reverseTransitionDuration: const Duration(milliseconds: 360),
-        pageBuilder: (_, __, ___) => PublicTheme(
-          child: SpeakCoachScreen(initialMissionStep: step),
-        ),
-        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final fade = CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutCubic,
-          );
-          final slide = Tween<Offset>(
-            begin: const Offset(0, 0.08),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(
-            parent: animation,
-            curve: Curves.easeOutBack,
-          ));
-          return FadeTransition(
-            opacity: fade,
-            child: SlideTransition(position: slide, child: child),
-          );
-        },
-      ),
-    );
+  static void _openPractice(BuildContext context) {
+    Navigator.pushNamed(context, '/practice');
   }
 
   @override
@@ -94,14 +67,12 @@ class HomeScreen extends StatelessWidget {
                           _HomeLogoGuide(
                             size: veryShort ? 118 : (short ? 142 : 182),
                             bubbleText: isTr
-                                ? '5 dakikada speaking seviyeni olcelim.'
-                                : 'Measure your speaking level in 5 minutes.',
+                                ? '5 dakikada pratik seviyeni görelim.'
+                                : 'Check your practice level in 5 minutes.',
                           ),
                           SizedBox(height: veryShort ? 10 : 18),
                           Text(
-                            isTr
-                                ? 'Ucretsiz Speaking Testi'
-                                : 'Free Speaking Test',
+                            isTr ? 'Ücretsiz Pratik' : 'Free Practice',
                             textAlign: TextAlign.center,
                             style: Theme.of(context)
                                 .textTheme
@@ -118,8 +89,8 @@ class HomeScreen extends StatelessWidget {
                             constraints: const BoxConstraints(maxWidth: 320),
                             child: Text(
                               isTr
-                                  ? 'Dinle, anla, resim sec ve konus. Sonunda seviyeni, zayif alanini ve sana uygun ogretmeni goreceksin.'
-                                  : 'Listen, understand, choose an image, and speak. See your level, weak area, and matched teacher at the end.',
+                                  ? 'Dinle, anla, kelime seç ve konuş. XP kazan, zayıf alanlarını gör ve uygun öğretmene geç.'
+                                  : 'Listen, understand, choose words, and speak. Earn XP, see weak areas, and continue with a matched teacher.',
                               textAlign: TextAlign.center,
                               style: Theme.of(context)
                                   .textTheme
@@ -134,19 +105,31 @@ class HomeScreen extends StatelessWidget {
                           SizedBox(height: veryShort ? 10 : 18),
                           _TodayPlanCard(
                             compact: veryShort,
-                            onStart: () => _openSpeakingTask(context, 0),
+                            onStart: () => _openPractice(context),
                           ),
                           SizedBox(height: veryShort ? 10 : 14),
-                          Container(
-                            padding: EdgeInsets.all(veryShort ? 10 : 12),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF7FAFF),
-                              borderRadius: BorderRadius.circular(22),
-                              border:
-                                  Border.all(color: const Color(0xFFE5ECF6)),
-                            ),
+                          _PracticeEntryCard(
+                            compact: veryShort,
+                            onTap: () =>
+                                Navigator.pushNamed(context, '/practice'),
+                          ),
+                          SizedBox(height: veryShort ? 10 : 14),
+                          AppCard(
+                            color: const Color(0xFFF7FAFF),
+                            radius: 22,
+                            padding: EdgeInsets.all(veryShort ? 12 : 16),
                             child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                SectionHeader(
+                                  icon: Icons.route_rounded,
+                                  title: isTr
+                                      ? '5 adımda pratik'
+                                      : 'Practice in 5 steps',
+                                  subtitle: isTr
+                                      ? 'Dinle, anla, seç, konuş, sonuç al.'
+                                      : 'Listen, understand, choose, speak, results.',
+                                ),
                                 _HomePathStep(
                                   number: '1',
                                   label: isTr ? 'Dinle' : 'Listen',
@@ -159,12 +142,12 @@ class HomeScreen extends StatelessWidget {
                                 ),
                                 _HomePathStep(
                                   number: '3',
-                                  label: isTr ? 'Resim sec' : 'Choose image',
+                                  label: isTr ? 'Resim seç' : 'Choose image',
                                   compact: veryShort,
                                 ),
                                 _HomePathStep(
                                   number: '4',
-                                  label: isTr ? 'Konus' : 'Speak',
+                                  label: isTr ? 'Konuş' : 'Speak',
                                   compact: veryShort,
                                 ),
                                 _HomePathStep(
@@ -183,68 +166,34 @@ class HomeScreen extends StatelessWidget {
                           SizedBox(height: veryShort ? 10 : 14),
                           _MiniTaskGrid(
                             compact: veryShort,
-                            onListen: () => _openSpeakingTask(context, 0),
-                            onUnderstand: () => _openSpeakingTask(context, 1),
-                            onSpeak: () => _openSpeakingTask(context, 3),
+                            onListen: () => _openPractice(context),
+                            onUnderstand: () => _openPractice(context),
+                            onSpeak: () => _openPractice(context),
                           ),
                           SizedBox(height: veryShort ? 10 : 14),
                           _LevelPromiseCard(compact: veryShort),
                           SizedBox(height: veryShort ? 10 : 14),
                           _TeacherMatchPreview(
                             compact: veryShort,
-                            onStart: () => _openSpeakingTask(context, 0),
+                            onStart: () => _openPractice(context),
                           ),
                           SizedBox(height: veryShort ? 14 : (short ? 18 : 28)),
-                          SizedBox(
-                            width: double.infinity,
+                          AppButton(
+                            label: isTr ? 'Pratiğe başla' : 'Start practice',
+                            tone: AppButtonTone.success,
+                            icon: Icons.play_arrow_rounded,
                             height: 58,
-                            child: ElevatedButton(
-                              onPressed: () => _openSpeakingTask(context, 0),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF63D60F),
-                                foregroundColor: Colors.white,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: Text(
-                                isTr
-                                    ? 'Speaking seviyemi olc'
-                                    : 'Measure my speaking level',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
+                            onPressed: () => _openPractice(context),
                           ),
                           const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
+                          AppGhostButton(
+                            label: isTr
+                                ? 'Zaten hesabım var'
+                                : 'I already have an account',
+                            color: AppPalette.success,
                             height: 56,
-                            child: OutlinedButton(
-                              onPressed: () =>
-                                  Navigator.pushNamed(context, '/login'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: const Color(0xFF63D60F),
-                                side:
-                                    const BorderSide(color: Color(0xFFE2E8F0)),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                backgroundColor: Colors.white,
-                              ),
-                              child: Text(
-                                isTr
-                                    ? 'Zaten hesabim var'
-                                    : 'I already have an account',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 15,
-                                ),
-                              ),
-                            ),
+                            onPressed: () =>
+                                Navigator.pushNamed(context, '/login'),
                           ),
                         ],
                       ),
@@ -255,6 +204,69 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _PracticeEntryCard extends StatelessWidget {
+  const _PracticeEntryCard({
+    required this.compact,
+    required this.onTap,
+  });
+
+  final bool compact;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final isTr = AppStrings.code == 'tr';
+    return GradientHero(
+      gradient: AppGradients.success,
+      glowColor: const Color(0xFF8CF0C9),
+      padding: EdgeInsets.all(compact ? 14 : 16),
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: compact ? 46 : 52,
+            height: compact ? 46 : 52,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.extension_rounded,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isTr ? 'Pratik modu' : 'Practice mode',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isTr
+                      ? 'XP, seri, lig ve mini derslerle günlük çalışma yap.'
+                      : 'Train daily with XP, streaks, leagues, and mini lessons.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        height: 1.25,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.arrow_forward_rounded, color: Colors.white),
+        ],
       ),
     );
   }
@@ -272,24 +284,10 @@ class _TodayPlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTr = AppStrings.code == 'tr';
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(compact ? 12 : 14),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0F5FD7), Color(0xFF1D7CFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1D7CFF).withValues(alpha: 0.18),
-            blurRadius: 22,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
+    return GradientHero(
+      gradient: AppGradients.hero,
+      glowColor: const Color(0xFF8FB8FF),
+      padding: EdgeInsets.all(compact ? 14 : 16),
       child: Row(
         children: [
           Container(
@@ -310,7 +308,7 @@ class _TodayPlanCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isTr ? 'Bugunun speaking plani' : 'Today\'s speaking plan',
+                  isTr ? 'Bugünün pratik planı' : 'Today\'s practice plan',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -319,8 +317,8 @@ class _TodayPlanCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   isTr
-                      ? '1 dinleme, 1 anlam, 1 konusma gorevi. Sonunda seviye raporu.'
-                      : '1 listening, 1 meaning, 1 speaking task. Level report at the end.',
+                      ? '1 dinleme, 1 anlam, 1 konuşma pratiği. Sonunda XP ve seviye özeti.'
+                      : '1 listening, 1 meaning, 1 speaking practice. XP and level summary at the end.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Colors.white.withValues(alpha: 0.86),
                         height: 1.25,
@@ -366,8 +364,8 @@ class _RewardStrip extends StatelessWidget {
           Expanded(
             child: Text(
               isTr
-                  ? 'Testi bitir, 1 ucretsiz mini speaking seansi hakkini ac.'
-                  : 'Finish the test and unlock 1 free mini speaking session.',
+                  ? 'Pratiği bitir, ücretsiz deneme dersi yönlendirmesini aç.'
+                  : 'Finish practice and unlock a free trial lesson prompt.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: const Color(0xFF2E7D14),
                     fontWeight: FontWeight.w800,
@@ -421,7 +419,7 @@ class _MiniTaskGrid extends StatelessWidget {
               child: _MiniTaskCard(
                 icon: Icons.volume_up_rounded,
                 title: isTr ? 'Kelime dinle' : 'Listen',
-                detail: isTr ? '10 sn' : '10 sec',
+                detail: isTr ? '10 sn' : '10 seç',
                 compact: compact,
                 onTap: onListen,
               ),
@@ -430,7 +428,7 @@ class _MiniTaskGrid extends StatelessWidget {
             Expanded(
               child: _MiniTaskCard(
                 icon: Icons.translate_rounded,
-                title: isTr ? 'Cumle anla' : 'Meaning',
+                title: isTr ? 'Cümle anla' : 'Meaning',
                 detail: isTr ? '1 soru' : '1 task',
                 compact: compact,
                 onTap: onUnderstand,
@@ -442,7 +440,7 @@ class _MiniTaskGrid extends StatelessWidget {
         _MiniTaskCard(
           icon: Icons.mic_rounded,
           title: isTr ? 'Mikrofonda tekrar et' : 'Repeat with mic',
-          detail: isTr ? 'Telaffuz skorunu gor' : 'See pronunciation score',
+          detail: isTr ? 'Telaffuz skorunu gör' : 'See pronunciation score',
           compact: compact,
           onTap: onSpeak,
         ),
@@ -458,8 +456,8 @@ class _MiniTaskGrid extends StatelessWidget {
             const SizedBox(width: 7),
             Text(
               isTr
-                  ? 'Bugun 42 kisi speaking gorevi yapti'
-                  : '42 learners practiced speaking today',
+                  ? 'Bugün 42 kişi pratik yaptı'
+                  : '42 learners practiced today',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.muted,
                     fontWeight: FontWeight.w800,
@@ -489,73 +487,55 @@ class _MiniTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          padding: EdgeInsets.all(compact ? 11 : 13),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE3ECF7)),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.brandNight.withValues(alpha: 0.04),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
-              ),
-            ],
+    return AppCard(
+      onTap: onTap,
+      radius: 20,
+      padding: EdgeInsets.all(compact ? 11 : 13),
+      child: Row(
+        children: [
+          Container(
+            width: compact ? 34 : 40,
+            height: compact ? 34 : 40,
+            decoration: const BoxDecoration(
+              color: Color(0xFFEAF4FF),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: const Color(0xFF1D7CFF), size: 20),
           ),
-          child: Row(
-            children: [
-              Container(
-                width: compact ? 34 : 40,
-                height: compact ? 34 : 40,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFEAF4FF),
-                  shape: BoxShape.circle,
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.brandNight,
+                        fontWeight: FontWeight.w900,
+                        fontSize: compact ? 12 : null,
+                      ),
                 ),
-                child: Icon(icon, color: const Color(0xFF1D7CFF), size: 20),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.brandNight,
-                            fontWeight: FontWeight.w900,
-                            fontSize: compact ? 12 : null,
-                          ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      detail,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.muted,
-                            fontSize: compact ? 10 : null,
-                          ),
-                    ),
-                  ],
+                const SizedBox(height: 2),
+                Text(
+                  detail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.muted,
+                        fontSize: compact ? 10 : null,
+                      ),
                 ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: Color(0xFF1D7CFF),
-                size: 18,
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: Color(0xFF1D7CFF),
+            size: 18,
+          ),
+        ],
       ),
     );
   }
@@ -569,14 +549,10 @@ class _LevelPromiseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTr = AppStrings.code == 'tr';
-    return Container(
-      width: double.infinity,
+    return AppCard(
+      color: const Color(0xFFF7FAFF),
+      radius: 22,
       padding: EdgeInsets.all(compact ? 12 : 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7FAFF),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE3ECF7)),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -604,9 +580,9 @@ class _LevelPromiseCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               _PromisePill(label: isTr ? 'Seviye: A2-B1' : 'Level: A2-B1'),
-              _PromisePill(label: isTr ? 'Zayif alan' : 'Weak area'),
+              _PromisePill(label: isTr ? 'Zayıf alan' : 'Weak area'),
               _PromisePill(label: isTr ? 'Hedef plan' : 'Goal plan'),
-              _PromisePill(label: isTr ? '3 hoca onerisi' : '3 teachers'),
+              _PromisePill(label: isTr ? '3 hoca önerisi' : '3 teachers'),
             ],
           ),
         ],
@@ -653,21 +629,9 @@ class _TeacherMatchPreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTr = AppStrings.code == 'tr';
-    return Container(
-      width: double.infinity,
+    return AppCard(
+      radius: 22,
       padding: EdgeInsets.all(compact ? 12 : 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE3ECF7)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.brandNight.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
       child: Row(
         children: [
           Stack(
@@ -701,7 +665,7 @@ class _TeacherMatchPreview extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   isTr
-                      ? 'Sonuca gore en uygun, en erken musait ve speaking uzmani hocalari gosteririz.'
+                      ? 'Sonuca göre en uygun, en erken müsait ve speaking uzmanı hocaları gösteririz.'
                       : 'We show best match, earliest available, and speaking specialist.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.muted,
@@ -712,7 +676,7 @@ class _TeacherMatchPreview extends StatelessWidget {
                 GestureDetector(
                   onTap: onStart,
                   child: Text(
-                    isTr ? 'Testi baslat' : 'Start test',
+                    isTr ? 'Testi başlat' : 'Start test',
                     style: const TextStyle(
                       color: Color(0xFF1D7CFF),
                       fontWeight: FontWeight.w900,
@@ -838,11 +802,19 @@ class _HomePathStep extends StatelessWidget {
                   ),
             ),
           ),
-          Icon(
-            isLast ? Icons.flag_rounded : Icons.chevron_right_rounded,
-            color: const Color(0xFF1D7CFF),
-            size: 18,
-          ),
+          if (isLast)
+            AppStatPill(
+              icon: Icons.emoji_events_rounded,
+              label: AppStrings.code == 'tr' ? 'Ödül' : 'Reward',
+              color: AppPalette.goldDeep,
+              onLight: true,
+            )
+          else
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: Color(0xFF1D7CFF),
+              size: 18,
+            ),
         ],
       ),
     );

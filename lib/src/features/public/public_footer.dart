@@ -129,7 +129,7 @@ class _PublicFooterState extends State<PublicFooter> {
               ),
               _FooterLink(
                 label: AppStrings.code == 'tr'
-                    ? 'Konusmaya Basla'
+                    ? 'Konusmaya Başla'
                     : 'Start Speaking',
                 onTap: () => _handleNav(context, 'start-speaking'),
               ),

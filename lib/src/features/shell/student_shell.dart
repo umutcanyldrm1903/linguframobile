@@ -27,6 +27,7 @@ class _StudentShellState extends State<StudentShell> {
     StudentDashboardScreen(),
     StudentInstructorsScreen(),
     StudentLessonsScreen(),
+    SizedBox.shrink(),
     StudentMessagesScreen(),
     StudentProfileScreen(),
   ];
@@ -73,6 +74,12 @@ class _StudentShellState extends State<StudentShell> {
           selectedIcon: Icons.play_lesson_rounded,
         ),
         AppShellDestination(
+          title: AppStrings.t('Practice'),
+          label: AppStrings.t('Practice'),
+          icon: Icons.auto_awesome_outlined,
+          selectedIcon: Icons.auto_awesome_rounded,
+        ),
+        AppShellDestination(
           title: AppStrings.t('Messages'),
           label: AppStrings.t('Messages'),
           icon: Icons.chat_bubble_outline_rounded,
@@ -105,7 +112,13 @@ class _StudentShellState extends State<StudentShell> {
         pages: _pages,
         roleLabel: AppStrings.t('Student'),
         accentColor: AppColors.brand,
-        onDestinationSelected: (value) => setState(() => _index = value),
+        onDestinationSelected: (value) {
+          if (value == 3) {
+            Navigator.pushNamed(context, '/practice');
+            return;
+          }
+          setState(() => _index = value);
+        },
         onOpenAppHome: () => Navigator.pushNamed(context, '/app-home'),
         onLogout: _logout,
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
+import '../../practice/practice_entry_invite.dart';
 import 'student_course_repository.dart';
 
 class StudentQuizScreen extends StatefulWidget {
@@ -37,63 +39,71 @@ class _StudentQuizScreenState extends State<StudentQuizScreen> {
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: AppLoader(),
           );
         }
         if (snapshot.hasError || snapshot.data == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('Quiz')),
-            body: Center(
-              child: Text(
-                _errorMessage(snapshot.error),
-                textAlign: TextAlign.center,
-              ),
-            ),
+            body: AppErrorState(message: _errorMessage(snapshot.error)),
           );
         }
 
         final quiz = snapshot.data!;
+        final answered = quiz.questions
+            .where((q) => _answers.containsKey(q.id))
+            .length;
         return Scaffold(
-          appBar: AppBar(title: Text(quiz.title.isNotEmpty ? quiz.title : 'Quiz')),
-          body: Column(
-            children: [
-              _QuizHeader(quiz: quiz),
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                  itemCount: quiz.questions.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final question = quiz.questions[index];
-                    return _QuestionCard(
-                      index: index + 1,
-                      question: question,
-                      selectedAnswerId: _answers[question.id],
-                      onChanged: (answerId) {
-                        setState(() {
-                          _answers[question.id] = answerId;
-                        });
-                      },
-                    );
-                  },
+          appBar:
+              AppBar(title: Text(quiz.title.isNotEmpty ? quiz.title : 'Quiz')),
+          body: AppGlowBackground(
+            child: Column(
+              children: [
+                AnimatedPageEntrance(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpace.xl, AppSpace.lg, AppSpace.xl, 0),
+                    child: _QuizHeader(quiz: quiz, answered: answered),
+                  ),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSpace.xl, AppSpace.md, AppSpace.xl, AppSpace.xl),
+                    itemCount: quiz.questions.length,
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(height: AppSpace.md),
+                    itemBuilder: (context, index) {
+                      final question = quiz.questions[index];
+                      return AnimatedPageEntrance(
+                        delay: Duration(milliseconds: 60 * index),
+                        child: _QuestionCard(
+                          index: index + 1,
+                          question: question,
+                          selectedAnswerId: _answers[question.id],
+                          onChanged: (answerId) {
+                            setState(() {
+                              _answers[question.id] = answerId;
+                            });
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
           bottomNavigationBar: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: ElevatedButton(
+              padding: const EdgeInsets.all(AppSpace.lg),
+              child: AppButton(
+                label: 'Quiz Gönder',
+                icon: Icons.send_rounded,
+                loading: _submitting,
                 onPressed: !_canSubmit(quiz) || _submitting
                     ? null
                     : () => _submit(quiz),
-                child: _submitting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Quiz Gönder'),
               ),
             ),
           ),
@@ -103,7 +113,8 @@ class _StudentQuizScreenState extends State<StudentQuizScreen> {
   }
 
   bool _canSubmit(QuizDetail quiz) {
-    return quiz.questions.every((question) => _answers.containsKey(question.id));
+    return quiz.questions
+        .every((question) => _answers.containsKey(question.id));
   }
 
   Future<void> _submit(QuizDetail quiz) async {
@@ -145,61 +156,77 @@ class _StudentQuizScreenState extends State<StudentQuizScreen> {
 }
 
 class _QuizHeader extends StatelessWidget {
-  const _QuizHeader({required this.quiz});
+  const _QuizHeader({required this.quiz, required this.answered});
 
   final QuizDetail quiz;
+  final int answered;
 
   @override
   Widget build(BuildContext context) {
     final attemptText = '${quiz.attemptUsed}/${quiz.attempt}';
-    return Container(
-      padding: const EdgeInsets.all(18),
-      margin: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
+    final total = quiz.totalQuestions > 0
+        ? quiz.totalQuestions
+        : quiz.questions.length;
+    final progress = total > 0 ? answered / total : 0.0;
+    return GradientHero(
+      glowColor: Colors.white,
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            quiz.title,
-            style: Theme.of(context).textTheme.titleLarge,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  quiz.title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                ),
+                const SizedBox(height: AppSpace.md),
+                Wrap(
+                  spacing: AppSpace.sm,
+                  runSpacing: AppSpace.sm,
+                  children: [
+                    AppStatPill(
+                      icon: Icons.help_outline_rounded,
+                      label: 'Soru $total',
+                    ),
+                    AppStatPill(
+                      icon: Icons.timer_outlined,
+                      label: '${quiz.time} dk',
+                    ),
+                    AppStatPill(
+                      icon: Icons.refresh_rounded,
+                      label: 'Deneme $attemptText',
+                    ),
+                    AppStatPill(
+                      icon: Icons.flag_outlined,
+                      label: 'Geçme ${quiz.passMark}',
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              _InfoChip(label: 'Soru', value: quiz.totalQuestions.toString()),
-              _InfoChip(label: 'Süre', value: '${quiz.time} dk'),
-              _InfoChip(label: 'Deneme', value: attemptText),
-              _InfoChip(label: 'Geçme', value: quiz.passMark.toString()),
-            ],
+          const SizedBox(width: AppSpace.lg),
+          ProgressRing(
+            value: progress,
+            size: 78,
+            color: Colors.white,
+            trackColor: Colors.white.withValues(alpha: 0.28),
+            center: Text(
+              '$answered/$total',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 15,
+              ),
+            ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppColors.brand.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text('$label: $value',
-          style: const TextStyle(fontWeight: FontWeight.w700)),
     );
   }
 }
@@ -219,58 +246,115 @@ class _QuestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '$index. ${question.title}',
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 12),
-          ...question.answers.map(
-            (answer) => InkWell(
-              onTap: () => onChanged(answer.id),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: selectedAnswerId == answer.id
-                      ? const Color(0xFFE9F6FF)
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: selectedAnswerId == answer.id
-                        ? AppColors.brand
-                        : const Color(0xFFD9E3F2),
+                  gradient: AppGradients.brand,
+                  borderRadius: AppRadius.all(AppRadius.sm),
+                ),
+                child: Text(
+                  '$index',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      selectedAnswerId == answer.id
-                          ? Icons.radio_button_checked
-                          : Icons.radio_button_off,
-                      color: selectedAnswerId == answer.id
-                          ? AppColors.brand
-                          : const Color(0xFF94A3B8),
+              ),
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 3),
+                  child: Text(
+                    question.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                      height: 1.3,
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(child: Text(answer.title)),
-                  ],
+                  ),
                 ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.md),
+          ...question.answers.map(
+            (answer) => Padding(
+              padding: const EdgeInsets.only(bottom: AppSpace.sm),
+              child: _AnswerOption(
+                label: answer.title,
+                selected: selectedAnswerId == answer.id,
+                onTap: () => onChanged(answer.id),
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AnswerOption extends StatelessWidget {
+  const _AnswerOption({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: AppMotion.fast,
+        padding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.md, vertical: AppSpace.md),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.brand.withValues(alpha: 0.10)
+              : Colors.white,
+          borderRadius: AppRadius.all(AppRadius.sm),
+          border: Border.all(
+            color: selected ? AppColors.brand : AppPalette.line,
+            width: selected ? 1.6 : 1.2,
+          ),
+          boxShadow:
+              selected ? AppShadows.glow(AppColors.brand, opacity: 0.18) : null,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              selected
+                  ? Icons.radio_button_checked
+                  : Icons.radio_button_off,
+              color: selected ? AppColors.brand : AppColors.muted,
+              size: 22,
+            ),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: selected ? AppColors.ink : AppColors.muted,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -289,57 +373,164 @@ class StudentQuizResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final passed = result.status.toLowerCase() == 'pass';
+    final scoreRatio = result.totalMarks > 0
+        ? (result.yourMarks / result.totalMarks).clamp(0.0, 1.0)
+        : 0.0;
     return Scaffold(
       appBar: AppBar(title: const Text('Quiz Sonucu')),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+      body: AppGlowBackground(
+        accent: passed ? AppPalette.success : AppPalette.danger,
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpace.xl),
+          children: [
+            if (passed)
+              _PassCelebrationTrigger(title: quizTitle),
+            AnimatedPageEntrance(
+              child: GradientHero(
+                gradient:
+                    passed ? AppGradients.success : AppGradients.pair(
+                        const Color(0xFFFF6B6B), const Color(0xFFE23B3B)),
+                glowColor: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          passed
+                              ? Icons.emoji_events_rounded
+                              : Icons.sentiment_dissatisfied_rounded,
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                        const SizedBox(width: AppSpace.sm),
+                        Expanded(
+                          child: Text(
+                            passed ? 'Başarılı' : 'Başarısız',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 22,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpace.xs),
+                    Text(
+                      quizTitle,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpace.lg),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        ProgressRing(
+                          value: scoreRatio.toDouble(),
+                          size: 88,
+                          color: Colors.white,
+                          trackColor: Colors.white.withValues(alpha: 0.28),
+                          center: AnimatedCounter(
+                            value: result.yourMarks,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 26,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpace.xl),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _HeroStatRow(
+                                label: 'Puanın',
+                                value: result.yourMarks.toString(),
+                              ),
+                              _HeroStatRow(
+                                label: 'Toplam',
+                                value: result.totalMarks.toString(),
+                              ),
+                              _HeroStatRow(
+                                label: 'Geçme',
+                                value: result.passMarks.toString(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(quizTitle,
-                    style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 8),
-                Text(
-                  passed ? 'Başarılı' : 'Başarısız',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    color: passed ? Colors.green : Colors.redAccent,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                _ResultRow(label: 'Puan', value: result.yourMarks.toString()),
-                _ResultRow(
-                  label: 'Toplam',
-                  value: result.totalMarks.toString(),
-                ),
-                _ResultRow(
-                  label: 'Geçme',
-                  value: result.passMarks.toString(),
-                ),
-              ],
+            const SizedBox(height: AppSpace.lg),
+            PracticeEntryInvite(
+              title: passed
+                  ? 'Harika, şimdi pratikle güçlendir'
+                  : 'Yanlışlarını pratikte toparla',
+              subtitle: passed
+                  ? 'Quiz bitti. Aynı konudan kısa pratik yaparak serini koru ve bonus XP kazan.'
+                  : 'Zorlandığın noktaları oyun modunda tekrar et, canlarını kullanmadan hızlan.',
+              buttonLabel: passed ? 'Bonus Pratik' : 'Hataları Çalış',
+              bonusLabel: passed ? 'Perfect bonus' : 'Tekrar XP',
+              icon: passed ? Icons.emoji_events_rounded : Icons.replay_rounded,
+              onTap: () => Navigator.pushNamed(context, '/practice'),
             ),
-          ),
-          const SizedBox(height: 16),
-          Text('Cevaplar',
-              style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 10),
-          ...result.results.map((item) => _AnswerResultTile(item: item)),
-        ],
+            const SizedBox(height: AppSpace.lg),
+            const SectionHeader(
+              title: 'Cevaplar',
+              icon: Icons.fact_check_outlined,
+            ),
+            StaggeredReveal(
+              children: result.results
+                  .map((item) => _AnswerResultTile(item: item))
+                  .toList(),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ResultRow extends StatelessWidget {
-  const _ResultRow({required this.label, required this.value});
+/// PASS durumunda bir kez konfeti kutlaması tetikler (sonuç ekranı stateless).
+class _PassCelebrationTrigger extends StatefulWidget {
+  const _PassCelebrationTrigger({required this.title});
+
+  final String title;
+
+  @override
+  State<_PassCelebrationTrigger> createState() =>
+      _PassCelebrationTriggerState();
+}
+
+class _PassCelebrationTriggerState extends State<_PassCelebrationTrigger> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showCelebration(
+        context,
+        title: 'Tebrikler!',
+        subtitle: 'Quizi başarıyla geçtin.',
+        icon: Icons.emoji_events_rounded,
+        color: AppPalette.success,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+
+class _HeroStatRow extends StatelessWidget {
+  const _HeroStatRow({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -347,12 +538,24 @@ class _ResultRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.88),
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ],
       ),
     );
@@ -366,29 +569,46 @@ class _AnswerResultTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(item.question, style: const TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 6),
-          Text(item.answer),
-          const SizedBox(height: 6),
-          Text(
-            item.correct ? 'Doğru' : 'Yanlış',
-            style: TextStyle(
-              color: item.correct ? Colors.green : Colors.redAccent,
-              fontWeight: FontWeight.w700,
+    final color = item.correct ? AppPalette.success : AppPalette.danger;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.md),
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    item.question,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpace.sm),
+                AppStatPill(
+                  icon: item.correct
+                      ? Icons.check_circle_rounded
+                      : Icons.cancel_rounded,
+                  label: item.correct ? 'Doğru' : 'Yanlış',
+                  color: color,
+                  onLight: true,
+                ),
+              ],
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpace.sm),
+            Text(
+              item.answer,
+              style: const TextStyle(
+                color: AppColors.muted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

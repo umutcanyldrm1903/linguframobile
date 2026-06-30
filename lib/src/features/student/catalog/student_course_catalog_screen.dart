@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import 'student_catalog_repository.dart';
 import 'student_course_detail_screen.dart';
 
@@ -153,57 +154,139 @@ class _StudentCourseCatalogScreenState
         : AppStrings.t('Courses');
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(title)),
-      body: RefreshIndicator(
-        onRefresh: () => _load(silent: true),
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            TextField(
-              controller: _searchController,
-              textInputAction: TextInputAction.search,
-              onSubmitted: (_) => _load(),
-              decoration: InputDecoration(
-                hintText: AppStrings.t('Search'),
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  onPressed: () {
-                    _searchController.clear();
-                    _load();
-                  },
-                  icon: const Icon(Icons.clear),
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            if (_loading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-            if (!_loading && items.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 50),
-                child: Center(
-                  child: Text(
-                    AppStrings.t('No Data Found'),
-                    style: const TextStyle(color: AppColors.muted),
+      body: AppGlowBackground(
+        child: RefreshIndicator(
+          onRefresh: () => _load(silent: true),
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpace.xl),
+            children: [
+              AnimatedPageEntrance(
+                child: GradientHero(
+                  gradient: AppGradients.hero,
+                  glowColor: AppColors.accent,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 22,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        AppStrings.t('Find your next course'),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.88),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (!_loading && items.isNotEmpty) ...[
+                        const SizedBox(height: AppSpace.md),
+                        AppStatPill(
+                          icon: Icons.menu_book_rounded,
+                          label: '${items.length} ${AppStrings.t('Courses')}',
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
-            ...items.map(
-              (course) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _CatalogCourseTile(
-                  course: course,
-                  onTap: () => _openCourse(course),
-                  onWishlist: () => _toggleWishlist(course.slug),
-                  onCart: () => _addToCart(course.slug),
+              const SizedBox(height: AppSpace.lg),
+              AnimatedPageEntrance(
+                delay: const Duration(milliseconds: 60),
+                child: _SearchField(
+                  controller: _searchController,
+                  onSubmitted: () => _load(),
+                  onClear: () {
+                    _searchController.clear();
+                    _load();
+                  },
+                ),
+              ),
+              const SizedBox(height: AppSpace.lg),
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpace.huge),
+                  child: AppLoader(),
+                ),
+              if (!_loading && items.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpace.xxl),
+                  child: AppEmptyState(
+                    icon: Icons.search_off_rounded,
+                    title: AppStrings.t('No Data Found'),
+                    message: AppStrings.t('Try a different search'),
+                  ),
+                ),
+              if (!_loading && items.isNotEmpty)
+                StaggeredReveal(
+                  children: [
+                    for (final course in items)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.md),
+                        child: _CatalogCourseTile(
+                          course: course,
+                          onTap: () => _openCourse(course),
+                          onWishlist: () => _toggleWishlist(course.slug),
+                          onCart: () => _addToCart(course.slug),
+                        ),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchField extends StatelessWidget {
+  const _SearchField({
+    required this.controller,
+    required this.onSubmitted,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final VoidCallback onSubmitted;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpace.lg, vertical: 2),
+      radius: AppRadius.round,
+      child: Row(
+        children: [
+          const Icon(Icons.search_rounded, color: AppColors.brand),
+          const SizedBox(width: AppSpace.sm),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => onSubmitted(),
+              decoration: InputDecoration(
+                hintText: AppStrings.t('Search'),
+                border: InputBorder.none,
+                hintStyle: const TextStyle(
+                  color: AppColors.muted,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+          IconButton(
+            onPressed: onClear,
+            icon: const Icon(Icons.clear_rounded, color: AppColors.muted),
+            tooltip: AppStrings.t('Clear'),
+          ),
+        ],
       ),
     );
   }
@@ -227,106 +310,111 @@ class _CatalogCourseTile extends StatelessWidget {
     final hasImage = course.thumbnail.trim().isNotEmpty;
     final rating = course.rating;
 
-    return InkWell(
+    return AppCard(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: hasImage
-                  ? Image.network(
-                      course.thumbnail,
-                      width: 64,
-                      height: 64,
-                      fit: BoxFit.cover,
-                      webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-                      errorBuilder: (_, __, ___) => _placeholder(),
-                    )
-                  : _placeholder(),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    course.title,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+      padding: const EdgeInsets.all(AppSpace.md),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: AppRadius.all(AppRadius.sm),
+            child: hasImage
+                ? Image.network(
+                    course.thumbnail,
+                    width: 68,
+                    height: 68,
+                    fit: BoxFit.cover,
+                    webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+                    errorBuilder: (_, __, ___) => _placeholder(),
+                  )
+                : _placeholder(),
+          ),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  course.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
                   ),
+                ),
+                if (course.instructorName.trim().isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(
                     course.instructorName,
-                    style: const TextStyle(color: AppColors.muted),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      if (rating > 0) ...[
-                        const Icon(
-                          Icons.star,
-                          size: 16,
-                          color: AppColors.brand,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          rating.toStringAsFixed(1),
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      Expanded(
-                        child: Text(
-                          course.priceLabel,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: AppColors.brandDeep,
-                          ),
-                        ),
-                      ),
-                    ],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: AppColors.muted,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
-              ),
-            ),
-            Column(
-              children: [
-                IconButton(
-                  onPressed: onWishlist,
-                  icon: const Icon(Icons.favorite_border),
-                  color: AppColors.brand,
-                  tooltip: AppStrings.t('Wishlist'),
-                ),
-                IconButton(
-                  onPressed: onCart,
-                  icon: const Icon(Icons.add_shopping_cart),
-                  color: AppColors.muted,
-                  tooltip: AppStrings.t('Cart'),
+                const SizedBox(height: AppSpace.sm),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: AppSpace.sm,
+                  runSpacing: 6,
+                  children: [
+                    if (rating > 0)
+                      AppStatPill(
+                        icon: Icons.star_rounded,
+                        label: rating.toStringAsFixed(1),
+                        color: AppPalette.gold,
+                        onLight: true,
+                      ),
+                    if (course.priceLabel.trim().isNotEmpty)
+                      Text(
+                        course.priceLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.brandDeep,
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(width: AppSpace.xs),
+          Column(
+            children: [
+              IconButton(
+                onPressed: onWishlist,
+                icon: const Icon(Icons.favorite_border_rounded),
+                color: AppPalette.heart,
+                tooltip: AppStrings.t('Wishlist'),
+              ),
+              IconButton(
+                onPressed: onCart,
+                icon: const Icon(Icons.add_shopping_cart_rounded),
+                color: AppColors.brand,
+                tooltip: AppStrings.t('Cart'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   Widget _placeholder() {
     return Container(
-      width: 64,
-      height: 64,
-      color: const Color(0xFFE2E8F0),
+      width: 68,
+      height: 68,
+      decoration: BoxDecoration(
+        gradient: AppGradients.sky,
+        borderRadius: AppRadius.all(AppRadius.sm),
+      ),
       alignment: Alignment.center,
-      child: const Icon(Icons.menu_book, color: AppColors.muted),
+      child: const Icon(Icons.menu_book_rounded, color: AppColors.brand),
     );
   }
 }

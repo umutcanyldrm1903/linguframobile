@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../lessons/student_live_lesson_screen.dart';
 import '../messages/student_chat_screen.dart';
 import 'student_notifications_repository.dart';
@@ -145,135 +146,149 @@ class _StudentNotificationsScreenState
   Widget build(BuildContext context) {
     final items = _filtered;
     final anyUnread = _items.any((item) => item.unread);
+    final unreadCount = _items.where((item) => item.unread).length;
 
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: Text(AppStrings.t('Notifications'))),
-      body: RefreshIndicator(
-        onRefresh: () => _load(silent: true),
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Row(
-              children: [
-                Text(
-                  AppStrings.t('Notifications'),
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const Spacer(),
-                TextButton(
-                  onPressed:
-                      anyUnread && !_markingAllRead ? _markAllAsRead : null,
-                  child: Text(
-                    _markingAllRead
-                        ? AppStrings.t('Loading...')
-                        : AppStrings.t('Mark all as read'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _FilterChip(
-                  label: AppStrings.t('All'),
-                  active: _filter == null,
-                  onTap: () => setState(() => _filter = null),
-                ),
-                _FilterChip(
-                  label: AppStrings.t('Lessons'),
-                  active: _filter == StudentNotificationType.lesson,
-                  onTap: () =>
-                      setState(() => _filter = StudentNotificationType.lesson),
-                ),
-                _FilterChip(
-                  label: AppStrings.t('Payment'),
-                  active: _filter == StudentNotificationType.payment,
-                  onTap: () =>
-                      setState(() => _filter = StudentNotificationType.payment),
-                ),
-                _FilterChip(
-                  label: AppStrings.t('Messages'),
-                  active: _filter == StudentNotificationType.message,
-                  onTap: () =>
-                      setState(() => _filter = StudentNotificationType.message),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (_loading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 30),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-            if (!_loading && _hasError)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 30),
-                child: Center(
-                  child: Column(
+      body: AppGlowBackground(
+        child: RefreshIndicator(
+          onRefresh: () => _load(silent: true),
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpace.xl),
+            children: [
+              AnimatedPageEntrance(
+                child: GradientHero(
+                  gradient: AppGradients.hero,
+                  child: Row(
                     children: [
-                      Text(AppStrings.t('Something went wrong')),
-                      const SizedBox(height: 10),
-                      ElevatedButton(
-                        onPressed: _load,
-                        child: Text(AppStrings.t('Try Again')),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppStrings.t('Notifications'),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                            ),
+                            const SizedBox(height: 6),
+                            AppStatPill(
+                              icon: Icons.mark_email_unread_rounded,
+                              label: unreadCount > 0
+                                  ? '$unreadCount ${AppStrings.t('Notifications')}'
+                                  : AppStrings.t('No Data!'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.md),
+                      Icon(
+                        Icons.notifications_active_rounded,
+                        color: Colors.white.withValues(alpha: 0.92),
+                        size: 44,
                       ),
                     ],
                   ),
                 ),
               ),
-            if (!_loading && !_hasError && items.isEmpty)
-              Text(
-                AppStrings.t('No Data!'),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            if (!_hasError)
-              ...items.map(
-                (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _NotificationTile(
-                    item: item,
-                    actionLabel: _actionLabel(item.type),
-                    onTapAction: _buildAction(context, item),
+              const SizedBox(height: AppSpace.lg),
+              AnimatedPageEntrance(
+                delay: const Duration(milliseconds: 60),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: AppGhostButton(
+                    label: _markingAllRead
+                        ? AppStrings.t('Loading...')
+                        : AppStrings.t('Mark all as read'),
+                    icon: Icons.done_all_rounded,
+                    expand: false,
+                    onPressed:
+                        anyUnread && !_markingAllRead ? _markAllAsRead : null,
                   ),
                 ),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterChip extends StatelessWidget {
-  const _FilterChip({
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? AppColors.brand : AppColors.surface,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: AppColors.brand.withValues(alpha: 0.4)),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            color: AppColors.ink,
+              const SizedBox(height: AppSpace.md),
+              AnimatedPageEntrance(
+                delay: const Duration(milliseconds: 100),
+                child: Wrap(
+                  spacing: AppSpace.sm,
+                  runSpacing: AppSpace.sm,
+                  children: [
+                    AppChip(
+                      label: AppStrings.t('All'),
+                      icon: Icons.all_inbox_rounded,
+                      selected: _filter == null,
+                      onTap: () => setState(() => _filter = null),
+                    ),
+                    AppChip(
+                      label: AppStrings.t('Lessons'),
+                      icon: Icons.schedule_rounded,
+                      selected: _filter == StudentNotificationType.lesson,
+                      onTap: () => setState(
+                          () => _filter = StudentNotificationType.lesson),
+                    ),
+                    AppChip(
+                      label: AppStrings.t('Payment'),
+                      icon: Icons.credit_card_rounded,
+                      color: AppPalette.success,
+                      selected: _filter == StudentNotificationType.payment,
+                      onTap: () => setState(
+                          () => _filter = StudentNotificationType.payment),
+                    ),
+                    AppChip(
+                      label: AppStrings.t('Messages'),
+                      icon: Icons.chat_bubble_outline_rounded,
+                      color: AppColors.brandDeep,
+                      selected: _filter == StudentNotificationType.message,
+                      onTap: () => setState(
+                          () => _filter = StudentNotificationType.message),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpace.lg),
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpace.xxxl),
+                  child: AppLoader(),
+                ),
+              if (!_loading && _hasError)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpace.xxxl),
+                  child: AppErrorState(
+                    message: AppStrings.t('Something went wrong'),
+                    retryLabel: AppStrings.t('Try Again'),
+                    onRetry: _load,
+                  ),
+                ),
+              if (!_loading && !_hasError && items.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpace.xxxl),
+                  child: AppEmptyState(
+                    icon: Icons.notifications_none_rounded,
+                    title: AppStrings.t('No Data!'),
+                  ),
+                ),
+              if (!_hasError && items.isNotEmpty)
+                StaggeredReveal(
+                  children: [
+                    for (final item in items)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.md),
+                        child: _NotificationTile(
+                          item: item,
+                          actionLabel: _actionLabel(item.type),
+                          onTapAction: _buildAction(context, item),
+                        ),
+                      ),
+                  ],
+                ),
+            ],
           ),
         ),
       ),
@@ -294,53 +309,65 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final icon = _iconFor(item.type);
     final color = _colorFor(item.type);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: item.unread
-            ? AppColors.brand.withValues(alpha: 0.08)
-            : AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
+      radius: AppRadius.md,
+      color: item.unread ? AppColors.brand.withValues(alpha: 0.06) : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: color.withValues(alpha: 0.15),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.14),
+                  borderRadius: AppRadius.all(AppRadius.sm),
+                ),
                 child: Icon(icon, color: color),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       item.title,
-                      style: Theme.of(context).textTheme.titleLarge,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.ink,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       item.subtitle,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppColors.muted,
+                      ),
                     ),
                   ],
                 ),
               ),
+              const SizedBox(width: AppSpace.sm),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(item.time, style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    item.time,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColors.muted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   if (item.unread)
                     Container(
                       margin: const EdgeInsets.only(top: 6),
-                      width: 8,
-                      height: 8,
+                      width: 9,
+                      height: 9,
                       decoration: const BoxDecoration(
                         color: AppColors.brand,
                         shape: BoxShape.circle,
@@ -351,16 +378,16 @@ class _NotificationTile extends StatelessWidget {
             ],
           ),
           if (actionLabel != null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             Align(
               alignment: Alignment.centerLeft,
-              child: OutlinedButton(
+              child: AppButton(
+                label: actionLabel!,
                 onPressed: onTapAction,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.brand,
-                  side: const BorderSide(color: AppColors.brand),
-                ),
-                child: Text(actionLabel!),
+                tone: _toneFor(item.type),
+                icon: _actionIconFor(item.type),
+                expand: false,
+                height: 44,
               ),
             ),
           ],
@@ -380,12 +407,34 @@ class _NotificationTile extends StatelessWidget {
     }
   }
 
+  IconData _actionIconFor(StudentNotificationType type) {
+    switch (type) {
+      case StudentNotificationType.lesson:
+        return Icons.videocam_rounded;
+      case StudentNotificationType.payment:
+        return Icons.credit_card_rounded;
+      case StudentNotificationType.message:
+        return Icons.chat_rounded;
+    }
+  }
+
+  AppButtonTone _toneFor(StudentNotificationType type) {
+    switch (type) {
+      case StudentNotificationType.lesson:
+        return AppButtonTone.brand;
+      case StudentNotificationType.payment:
+        return AppButtonTone.success;
+      case StudentNotificationType.message:
+        return AppButtonTone.violet;
+    }
+  }
+
   Color _colorFor(StudentNotificationType type) {
     switch (type) {
       case StudentNotificationType.lesson:
         return AppColors.brand;
       case StudentNotificationType.payment:
-        return const Color(0xFF22C55E);
+        return AppPalette.success;
       case StudentNotificationType.message:
         return AppColors.brandDeep;
     }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../cart/student_cart_screen.dart';
 import 'student_catalog_repository.dart';
 
@@ -138,56 +139,73 @@ class _StudentCatalogCourseDetailScreenState
         : (widget.fallbackTitle ?? AppStrings.t('Course Details'));
 
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : (_error != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(_error!, textAlign: TextAlign.center),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            onPressed: _load,
-                            child: Text(AppStrings.t('Try Again')),
-                          ),
-                        ],
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: Text(title),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      extendBodyBehindAppBar: false,
+      body: AppGlowBackground(
+        child: _loading
+            ? AppLoader(message: AppStrings.t('Course Details'))
+            : (_error != null
+                  ? AppErrorState(
+                      message: _error!,
+                      onRetry: _load,
+                      retryLabel: AppStrings.t('Try Again'),
+                    )
+                  : ListView(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpace.lg,
+                        AppSpace.lg,
+                        AppSpace.lg,
+                        AppSpace.xxxl,
                       ),
-                    ),
-                  )
-                : ListView(
-                    padding: const EdgeInsets.all(20),
-                    children: [
-                      _Header(detail: detail!),
-                      const SizedBox(height: 14),
-                      _Description(text: detail.description),
-                      const SizedBox(height: 14),
-                      _Curriculum(curriculums: detail.curriculums),
-                    ],
-                  )),
+                      children: [
+                        AnimatedPageEntrance(
+                          child: _Header(detail: detail!),
+                        ),
+                        const SizedBox(height: AppSpace.lg),
+                        AnimatedPageEntrance(
+                          delay: const Duration(milliseconds: 90),
+                          child: _Description(text: detail.description),
+                        ),
+                        const SizedBox(height: AppSpace.lg),
+                        AnimatedPageEntrance(
+                          delay: const Duration(milliseconds: 160),
+                          child: _Curriculum(curriculums: detail.curriculums),
+                        ),
+                      ],
+                    )),
+      ),
       bottomNavigationBar: _loading || detail == null
           ? null
           : SafeArea(
               top: false,
-              minimum: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              minimum: const EdgeInsets.fromLTRB(
+                AppSpace.lg,
+                AppSpace.sm,
+                AppSpace.lg,
+                AppSpace.md,
+              ),
               child: Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
+                    child: AppGhostButton(
+                      label: AppStrings.t('Add To Cart'),
+                      icon: Icons.add_shopping_cart,
                       onPressed: _actionLoading ? null : _addToCart,
-                      icon: const Icon(Icons.add_shopping_cart),
-                      label: Text(AppStrings.t('Add To Cart')),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpace.md),
                   Expanded(
-                    child: ElevatedButton.icon(
+                    child: AppButton(
+                      label: AppStrings.t('Proceed to checkout'),
+                      icon: Icons.payment,
+                      tone: AppButtonTone.brand,
+                      loading: _actionLoading,
                       onPressed: _actionLoading ? null : _goCheckout,
-                      icon: const Icon(Icons.payment),
-                      label: Text(AppStrings.t('Proceed to checkout')),
                     ),
                   ),
                 ],
@@ -212,18 +230,14 @@ class _Header extends StatelessWidget {
         ? detail.discountLabel
         : detail.priceLabel;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return GradientHero(
+      gradient: AppGradients.hero,
+      padding: const EdgeInsets.all(AppSpace.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: AppRadius.all(AppRadius.md),
             child: hasImage
                 ? Image.network(
                     detail.thumbnail,
@@ -235,39 +249,76 @@ class _Header extends StatelessWidget {
                   )
                 : _placeholder(),
           ),
-          const SizedBox(height: 12),
-          Text(detail.title, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: AppSpace.md),
+          Text(
+            detail.title,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                ),
+          ),
           const SizedBox(height: 6),
-          Text(instructor, style: const TextStyle(color: AppColors.muted)),
-          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(
+                Icons.person_outline,
+                size: 16,
+                color: Colors.white70,
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  instructor,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.md),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: AppSpace.sm,
+            runSpacing: AppSpace.sm,
             children: [
               if (detail.rating > 0)
-                _Chip(
-                  icon: Icons.star,
+                AppStatPill(
+                  icon: Icons.star_rounded,
                   label: detail.rating.toStringAsFixed(1),
+                  color: AppPalette.gold,
                 ),
               if (detail.reviewsCount > 0)
-                _Chip(
+                AppStatPill(
                   icon: Icons.reviews_outlined,
                   label: '${detail.reviewsCount} ${AppStrings.t('Reviews')}',
                 ),
               if (detail.students > 0)
-                _Chip(
+                AppStatPill(
                   icon: Icons.group_outlined,
                   label: '${detail.students} ${AppStrings.t('Students')}',
                 ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            price,
-            style: const TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-              color: AppColors.brandDeep,
+          const SizedBox(height: AppSpace.md),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpace.md,
+              vertical: AppSpace.sm,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: AppRadius.pill,
+            ),
+            child: Text(
+              price,
+              style: const TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -279,9 +330,9 @@ class _Header extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: 190,
-      color: const Color(0xFFE2E8F0),
+      color: Colors.white.withValues(alpha: 0.16),
       alignment: Alignment.center,
-      child: const Icon(Icons.menu_book, color: AppColors.muted, size: 34),
+      child: const Icon(Icons.menu_book, color: Colors.white70, size: 34),
     );
   }
 }
@@ -294,24 +345,17 @@ class _Description extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasText = text.trim().isNotEmpty;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppStrings.t('Description'),
-            style: Theme.of(context).textTheme.titleLarge,
+          SectionHeader(
+            title: AppStrings.t('Description'),
+            icon: Icons.subject_rounded,
           ),
-          const SizedBox(height: 8),
           Text(
             hasText ? text : AppStrings.t('No description'),
-            style: const TextStyle(height: 1.4),
+            style: const TextStyle(height: 1.5, color: AppColors.ink),
           ),
         ],
       ),
@@ -326,83 +370,34 @@ class _Curriculum extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppStrings.t('Curriculum'),
-            style: Theme.of(context).textTheme.titleLarge,
+          SectionHeader(
+            title: AppStrings.t('Curriculum'),
+            icon: Icons.menu_book_rounded,
           ),
-          const SizedBox(height: 8),
           if (curriculums.isEmpty)
-            Text(AppStrings.t('No Data Found'))
-          else
-            ...curriculums.map(
-              (section) => Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      section.title,
-                      style: const TextStyle(fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 8),
-                    if (section.items.isEmpty)
-                      Text(
-                        AppStrings.t('No Data Found'),
-                        style: const TextStyle(color: AppColors.muted),
-                      )
-                    else
-                      ...section.items
-                          .take(6)
-                          .map(
-                            (item) => Padding(
-                              padding: const EdgeInsets.only(bottom: 6),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    _iconForType(item.type),
-                                    size: 16,
-                                    color: AppColors.brand,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      item.title.trim().isNotEmpty
-                                          ? item.title
-                                          : item.type,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  if (item.duration.trim().isNotEmpty)
-                                    Text(
-                                      item.duration,
-                                      style: const TextStyle(
-                                        color: AppColors.muted,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                  ],
-                ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
+              child: Text(
+                AppStrings.t('No Data Found'),
+                style: const TextStyle(color: AppColors.muted),
               ),
+            )
+          else
+            StaggeredReveal(
+              children: [
+                for (final section in curriculums)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpace.md),
+                    child: _ChapterTile(
+                      section: section,
+                      iconForType: _iconForType,
+                    ),
+                  ),
+              ],
             ),
         ],
       ),
@@ -423,27 +418,104 @@ class _Curriculum extends StatelessWidget {
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({required this.icon, required this.label});
+class _ChapterTile extends StatelessWidget {
+  const _ChapterTile({required this.section, required this.iconForType});
 
-  final IconData icon;
-  final String label;
+  final CatalogCurriculum section;
+  final IconData Function(String type) iconForType;
 
   @override
   Widget build(BuildContext context) {
+    final items = section.items.take(6).toList();
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.brand.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(999),
+        color: AppPalette.cloud,
+        borderRadius: AppRadius.all(AppRadius.sm),
+        border: Border.all(color: AppPalette.line, width: 1.2),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: AppColors.brand),
-          const SizedBox(width: 4),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
-        ],
+      clipBehavior: Clip.antiAlias,
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          tilePadding: const EdgeInsets.symmetric(
+            horizontal: AppSpace.md,
+            vertical: AppSpace.xs,
+          ),
+          childrenPadding: const EdgeInsets.fromLTRB(
+            AppSpace.md,
+            0,
+            AppSpace.md,
+            AppSpace.md,
+          ),
+          collapsedIconColor: AppColors.brand,
+          iconColor: AppColors.brand,
+          leading: Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: AppColors.brand.withValues(alpha: 0.12),
+              borderRadius: AppRadius.all(AppRadius.sm),
+            ),
+            child: const Icon(
+              Icons.folder_open_rounded,
+              size: 18,
+              color: AppColors.brand,
+            ),
+          ),
+          title: Text(
+            section.title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              color: AppColors.ink,
+            ),
+          ),
+          children: [
+            if (items.isEmpty)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  AppStrings.t('No Data Found'),
+                  style: const TextStyle(color: AppColors.muted),
+                ),
+              )
+            else
+              ...items.map(
+                (item) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpace.sm),
+                  child: Row(
+                    children: [
+                      Icon(
+                        iconForType(item.type),
+                        size: 17,
+                        color: AppColors.brand,
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                      Expanded(
+                        child: Text(
+                          item.title.trim().isNotEmpty
+                              ? item.title
+                              : item.type,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(color: AppColors.ink),
+                        ),
+                      ),
+                      if (item.duration.trim().isNotEmpty)
+                        Text(
+                          item.duration,
+                          style: const TextStyle(
+                            color: AppColors.muted,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../messages/chat_repository.dart';
 
 enum _ThreadAction { report, block, unblock }
@@ -360,70 +361,161 @@ class _InstructorChatScreenState extends State<InstructorChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        title: Text(widget.name),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          widget.name,
+          style: const TextStyle(
+            color: AppColors.ink,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        iconTheme: const IconThemeData(color: AppColors.ink),
         actions: [
           PopupMenuButton<_ThreadAction>(
             enabled: !_busyAction,
+            icon: const Icon(Icons.more_vert_rounded, color: AppColors.ink),
+            shape: RoundedRectangleBorder(
+              borderRadius: AppRadius.all(AppRadius.sm),
+            ),
             onSelected: _handleThreadAction,
             itemBuilder: (context) => [
               PopupMenuItem(
                 value: _ThreadAction.report,
-                child: Text(AppStrings.t('Report User')),
+                child: Row(
+                  children: [
+                    const Icon(Icons.flag_rounded,
+                        size: 18, color: AppPalette.warning),
+                    const SizedBox(width: AppSpace.sm),
+                    Text(AppStrings.t('Report User')),
+                  ],
+                ),
               ),
               PopupMenuItem(
                 value: _moderation.blockedByMe
                     ? _ThreadAction.unblock
                     : _ThreadAction.block,
-                child: Text(
-                  AppStrings.t(
-                    _moderation.blockedByMe ? 'Unblock User' : 'Block User',
-                  ),
+                child: Row(
+                  children: [
+                    Icon(
+                      _moderation.blockedByMe
+                          ? Icons.lock_open_rounded
+                          : Icons.block_rounded,
+                      size: 18,
+                      color: _moderation.blockedByMe
+                          ? AppPalette.success
+                          : AppPalette.danger,
+                    ),
+                    const SizedBox(width: AppSpace.sm),
+                    Text(
+                      AppStrings.t(
+                        _moderation.blockedByMe ? 'Unblock User' : 'Block User',
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
         ],
       ),
-      body: Column(
-        children: [
-          if (_blockedBannerText.isNotEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: const Color(0xFFFFF7ED),
-              child: Text(
-                _blockedBannerText,
-                style: const TextStyle(
-                  color: Color(0xFF9A3412),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          Expanded(
-            child: _loading
-                ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(20),
-                    itemCount: _messages.length,
-                    itemBuilder: (_, index) {
-                      final msg = _messages[index];
-                      final isMe = msg.senderId == _userId;
-                      return _ChatBubble(
-                        text: msg.body,
-                        isMe: isMe,
-                        time: msg.timeLabel,
-                      );
-                    },
+      body: AppGlowBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              if (_blockedBannerText.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpace.lg,
+                    AppSpace.sm,
+                    AppSpace.lg,
+                    0,
                   ),
+                  child: AnimatedPageEntrance(
+                    child: AppCard(
+                      color: AppPalette.warning.withValues(alpha: 0.10),
+                      border: false,
+                      shadow: const [],
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.lg,
+                        vertical: AppSpace.md,
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppPalette.warning.withValues(alpha: 0.16),
+                            ),
+                            child: Icon(
+                              _moderation.blockedByMe
+                                  ? Icons.block_rounded
+                                  : Icons.do_not_disturb_on_rounded,
+                              color: AppPalette.warning,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpace.md),
+                          Expanded(
+                            child: Text(
+                              _blockedBannerText,
+                              style: TextStyle(
+                                color: AppPalette.warning.withValues(alpha: 0.95),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 12.5,
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              Expanded(
+                child: _loading
+                    ? AppLoader(message: AppStrings.t('Loading...'))
+                    : _messages.isEmpty
+                        ? AppEmptyState(
+                            icon: Icons.forum_rounded,
+                            title: AppStrings.t('No messages yet'),
+                            message:
+                                AppStrings.t('Write your message...'),
+                          )
+                        : ListView.builder(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpace.lg,
+                              AppSpace.lg,
+                              AppSpace.lg,
+                              AppSpace.sm,
+                            ),
+                            itemCount: _messages.length,
+                            itemBuilder: (_, index) {
+                              final msg = _messages[index];
+                              final isMe = msg.senderId == _userId;
+                              return _ChatBubble(
+                                key: ValueKey(msg.id),
+                                text: msg.body,
+                                isMe: isMe,
+                                time: msg.timeLabel,
+                              );
+                            },
+                          ),
+              ),
+              _ChatInput(
+                controller: _controller,
+                onSend: _moderation.canSend ? _sendMessage : null,
+              ),
+            ],
           ),
-          _ChatInput(
-            controller: _controller,
-            onSend: _moderation.canSend ? _sendMessage : null,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -431,6 +523,7 @@ class _InstructorChatScreenState extends State<InstructorChatScreen> {
 
 class _ChatBubble extends StatelessWidget {
   const _ChatBubble({
+    super.key,
     required this.text,
     required this.isMe,
     required this.time,
@@ -442,41 +535,62 @@ class _ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final alignment = isMe ? Alignment.centerRight : Alignment.centerLeft;
-    final background = isMe ? AppColors.brandDeep : AppColors.surface;
-    final textColor = isMe ? Colors.white : AppColors.ink;
-
-    return Align(
-      alignment: alignment,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: const BoxConstraints(maxWidth: 260),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
+    final bubble = Container(
+      constraints: const BoxConstraints(maxWidth: 280),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpace.lg,
+        vertical: AppSpace.md,
+      ),
+      decoration: BoxDecoration(
+        gradient: isMe ? AppGradients.brand : null,
+        color: isMe ? null : Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(AppRadius.lg),
+          topRight: const Radius.circular(AppRadius.lg),
+          bottomLeft: Radius.circular(isMe ? AppRadius.lg : 6),
+          bottomRight: Radius.circular(isMe ? 6 : AppRadius.lg),
         ),
-        child: Column(
-          crossAxisAlignment:
-              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Text(
-              text,
-              style: TextStyle(
-                color: textColor,
-                fontWeight: FontWeight.w600,
-              ),
+        border: isMe ? null : Border.all(color: AppPalette.line, width: 1.2),
+        boxShadow: isMe
+            ? AppShadows.glow(AppColors.brand, opacity: 0.22)
+            : AppShadows.soft,
+      ),
+      child: Column(
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          Text(
+            text,
+            style: TextStyle(
+              color: isMe ? Colors.white : AppColors.ink,
+              fontWeight: FontWeight.w600,
+              height: 1.32,
             ),
-            const SizedBox(height: 6),
+          ),
+          if (time.isNotEmpty) ...[
+            const SizedBox(height: 5),
             Text(
               time,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontSize: 11,
-                    color: isMe ? Colors.white70 : AppColors.muted,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: isMe
+                        ? Colors.white.withValues(alpha: 0.85)
+                        : AppColors.muted,
                   ),
             ),
           ],
+        ],
+      ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.md),
+      child: AnimatedPageEntrance(
+        offset: Offset(isMe ? 0.06 : -0.06, 0.04),
+        child: Align(
+          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: bubble,
         ),
       ),
     );
@@ -496,40 +610,74 @@ class _ChatInput extends StatelessWidget {
   Widget build(BuildContext context) {
     final disabled = onSend == null;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      decoration: const BoxDecoration(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpace.lg,
+        AppSpace.sm,
+        AppSpace.lg,
+        AppSpace.lg,
+      ),
+      decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        border: const Border(top: BorderSide(color: AppPalette.line)),
+        boxShadow: AppShadows.soft,
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Expanded(
-            child: TextField(
-              controller: controller,
-              enabled: !disabled,
-              decoration: InputDecoration(
-                hintText: AppStrings.t(
-                  disabled
-                      ? 'Messaging is disabled for this conversation.'
-                      : 'Write your message...',
+            child: Container(
+              decoration: BoxDecoration(
+                color: AppPalette.cloud,
+                borderRadius: AppRadius.pill,
+                border: Border.all(color: AppPalette.line, width: 1.2),
+              ),
+              child: TextField(
+                controller: controller,
+                enabled: !disabled,
+                minLines: 1,
+                maxLines: 4,
+                style: const TextStyle(
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w600,
                 ),
-                filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                decoration: InputDecoration(
+                  hintText: AppStrings.t(
+                    disabled
+                        ? 'Messaging is disabled for this conversation.'
+                        : 'Write your message...',
+                  ),
+                  hintStyle: const TextStyle(
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.lg,
+                    vertical: AppSpace.md,
+                  ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 10),
-          GestureDetector(
+          const SizedBox(width: AppSpace.md),
+          PressableScale(
             onTap: onSend,
-            child: CircleAvatar(
-              radius: 22,
-              backgroundColor:
-                  disabled ? const Color(0xFFCBD5E1) : AppColors.brandDeep,
-              child: const Icon(Icons.send, color: Colors.white),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: disabled ? null : AppGradients.brand,
+                color: disabled ? AppPalette.line : null,
+                boxShadow: disabled
+                    ? null
+                    : AppShadows.glow(AppColors.brand, opacity: 0.34),
+              ),
+              child: Icon(
+                Icons.send_rounded,
+                color: disabled ? AppColors.muted : Colors.white,
+                size: 22,
+              ),
             ),
           ),
         ],

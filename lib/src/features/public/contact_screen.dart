@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/ui/ui.dart';
 import 'public_page_scaffold.dart';
 import 'public_repository.dart';
 
@@ -97,8 +98,12 @@ class _ContactScreenState extends State<ContactScreen> {
         phone: _phoneController.text.trim(),
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppStrings.t('Message sent successfully'))),
+      showCelebration(
+        context,
+        title: AppStrings.t('Mesajın bize ulaştı!'),
+        subtitle: AppStrings.t('Message sent successfully'),
+        icon: Icons.mark_email_read_rounded,
+        color: AppPalette.success,
       );
       _formKey.currentState!.reset();
       _nameController.clear();
@@ -148,7 +153,7 @@ class _ContactScreenState extends State<ContactScreen> {
                 padding: EdgeInsets.symmetric(
                   horizontal: isCompactPublicLayout(context) ? 14 : 18,
                 ),
-                child: Column(
+                child: StaggeredReveal(
                   children: [
                     _InfoGrid(info: info),
                     const SizedBox(height: 16),
@@ -198,31 +203,35 @@ class _InfoGrid extends StatelessWidget {
     final cards = <Widget>[];
     if (address.isNotEmpty) {
       cards.add(_InfoCard(
-        icon: Icons.location_on,
+        icon: Icons.location_on_rounded,
         title: AppStrings.t('Address'),
         subtitle: address,
+        gradient: AppGradients.brand,
       ));
     }
     if (phone.isNotEmpty) {
       cards.add(_InfoCard(
-        icon: Icons.call,
+        icon: Icons.call_rounded,
         title: AppStrings.t('Phone'),
         subtitle: phone,
+        gradient: AppGradients.success,
       ));
     }
     if (email.isNotEmpty) {
       cards.add(_InfoCard(
-        icon: Icons.email,
+        icon: Icons.email_rounded,
         title: AppStrings.t('E-mail Address'),
         subtitle: email,
+        gradient: AppGradients.violet,
       ));
     }
 
     if (cards.isEmpty) {
       cards.add(_InfoCard(
-        icon: Icons.info_outline,
+        icon: Icons.info_outline_rounded,
         title: AppStrings.t('Information'),
         subtitle: AppStrings.t('Contact Messages'),
+        gradient: AppGradients.brand,
       ));
     }
 
@@ -242,36 +251,52 @@ class _InfoCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.gradient,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final Gradient gradient;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: AppColors.brand.withValues(alpha: 0.15),
-            child: Icon(icon, color: AppColors.brand),
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              gradient: gradient,
+              borderRadius: AppRadius.all(AppRadius.sm),
+              boxShadow: AppShadows.glow(AppColors.brand, opacity: 0.22),
+            ),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title,
-                    style: const TextStyle(fontWeight: FontWeight.w700)),
-                Text(subtitle),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
+                    fontSize: 14.5,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: AppColors.muted,
+                    fontWeight: FontWeight.w600,
+                    height: 1.35,
+                  ),
+                ),
               ],
             ),
           ),
@@ -310,28 +335,35 @@ class _ContactForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Form(
         key: formKey,
         autovalidateMode: autovalidateMode,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              AppStrings.t('Send Us Message'),
-              style: const TextStyle(fontWeight: FontWeight.w700),
+            Row(
+              children: [
+                Expanded(
+                  child: SectionHeader(
+                    title: AppStrings.t('Send Us Message'),
+                    icon: Icons.mail_outline_rounded,
+                  ),
+                ),
+                AppStatPill(
+                  icon: Icons.schedule_rounded,
+                  label: AppStrings.t('2 saat içinde yanıt'),
+                  color: AppPalette.success,
+                  onLight: true,
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpace.sm),
             _InputField(
               label: '${AppStrings.t('Comment')} *',
               controller: messageController,
               maxLines: 4,
+              icon: Icons.chat_bubble_outline_rounded,
               onChanged: (_) => onFieldChanged('message'),
               validator: (value) {
                 final api = apiErrors['message'];
@@ -345,6 +377,7 @@ class _ContactForm extends StatelessWidget {
             _InputField(
               label: '${AppStrings.t('Subject')} *',
               controller: subjectController,
+              icon: Icons.subject_rounded,
               onChanged: (_) => onFieldChanged('subject'),
               validator: (value) {
                 final api = apiErrors['subject'];
@@ -358,6 +391,7 @@ class _ContactForm extends StatelessWidget {
             _InputField(
               label: '${AppStrings.t('Name')} *',
               controller: nameController,
+              icon: Icons.person_outline_rounded,
               onChanged: (_) => onFieldChanged('name'),
               validator: (value) {
                 final api = apiErrors['name'];
@@ -372,6 +406,7 @@ class _ContactForm extends StatelessWidget {
               label: '${AppStrings.t('E-mail')} *',
               controller: emailController,
               keyboardType: TextInputType.emailAddress,
+              icon: Icons.alternate_email_rounded,
               onChanged: (_) => onFieldChanged('email'),
               validator: (value) {
                 final api = apiErrors['email'];
@@ -386,6 +421,7 @@ class _ContactForm extends StatelessWidget {
               label: AppStrings.t('Phone'),
               controller: phoneController,
               keyboardType: TextInputType.phone,
+              icon: Icons.call_rounded,
               onChanged: (_) => onFieldChanged('phone'),
               validator: (value) {
                 final api = apiErrors['phone'];
@@ -393,15 +429,15 @@ class _ContactForm extends StatelessWidget {
                 return null;
               },
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: isSubmitting ? null : onSubmit,
-                child: Text(isSubmitting
-                    ? AppStrings.t('Submitting')
-                    : AppStrings.t('Submit Now')),
-              ),
+            const SizedBox(height: AppSpace.lg),
+            AppButton(
+              label: isSubmitting
+                  ? AppStrings.t('Submitting')
+                  : AppStrings.t('Submit Now'),
+              onPressed: isSubmitting ? null : onSubmit,
+              loading: isSubmitting,
+              tone: AppButtonTone.brand,
+              icon: Icons.send_rounded,
             ),
           ],
         ),
@@ -418,6 +454,7 @@ class _InputField extends StatelessWidget {
     this.keyboardType,
     this.validator,
     this.onChanged,
+    this.icon,
   });
 
   final String label;
@@ -426,6 +463,7 @@ class _InputField extends StatelessWidget {
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final ValueChanged<String>? onChanged;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -435,7 +473,46 @@ class _InputField extends StatelessWidget {
       keyboardType: keyboardType,
       validator: validator,
       onChanged: onChanged,
-      decoration: InputDecoration(labelText: label),
+      style: const TextStyle(
+        color: AppColors.ink,
+        fontWeight: FontWeight.w600,
+      ),
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: icon == null
+            ? null
+            : Icon(icon, size: 20, color: AppColors.muted),
+        filled: true,
+        fillColor: AppPalette.cloud,
+        labelStyle: const TextStyle(
+          color: AppColors.muted,
+          fontWeight: FontWeight.w600,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.md,
+          vertical: AppSpace.md,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: AppRadius.all(AppRadius.sm),
+          borderSide: const BorderSide(color: AppPalette.line),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: AppRadius.all(AppRadius.sm),
+          borderSide: const BorderSide(color: AppPalette.line),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: AppRadius.all(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.brand, width: 1.6),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: AppRadius.all(AppRadius.sm),
+          borderSide: const BorderSide(color: AppPalette.danger),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: AppRadius.all(AppRadius.sm),
+          borderSide: const BorderSide(color: AppPalette.danger, width: 1.6),
+        ),
+      ),
     );
   }
 }
@@ -448,25 +525,51 @@ class _MapPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mapUrl = info?.mapUrl ?? '';
-    return Container(
-      height: 200,
-      decoration: BoxDecoration(
-        color: const Color(0xFFE2E8F0),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Center(
-        child: mapUrl.isEmpty
-            ? Text(AppStrings.t('Map'))
-            : ElevatedButton.icon(
+    return GradientHero(
+      gradient: AppGradients.night,
+      padding: const EdgeInsets.all(AppSpace.xl),
+      glowColor: AppColors.accent,
+      child: SizedBox(
+        height: 168,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.16),
+                borderRadius: AppRadius.all(AppRadius.sm),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+              ),
+              child: const Icon(Icons.map_rounded, color: Colors.white),
+            ),
+            const SizedBox(height: AppSpace.md),
+            Text(
+              AppStrings.t('Map'),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: AppSpace.md),
+            if (mapUrl.isNotEmpty)
+              AppButton(
+                label: AppStrings.t('View'),
+                expand: false,
+                tone: AppButtonTone.success,
+                icon: Icons.open_in_new_rounded,
                 onPressed: () async {
                   final uri = Uri.tryParse(mapUrl);
                   if (uri != null) {
                     await launchUrl(uri, mode: LaunchMode.externalApplication);
                   }
                 },
-                icon: const Icon(Icons.map),
-                label: Text(AppStrings.t('View')),
               ),
+          ],
+        ),
       ),
     );
   }

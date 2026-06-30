@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/ui/ui.dart';
 import 'public_page_scaffold.dart';
 import 'public_repository.dart';
 
@@ -102,6 +103,15 @@ class _CorporateScreenState extends State<CorporateScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppStrings.t('Message sent successfully'))),
       );
+      showCelebration(
+        context,
+        title: AppStrings.t('Message sent successfully'),
+        subtitle: AppStrings.t(
+          'Fill in the details for a corporate training quote. Our team will get back to you shortly.',
+        ),
+        icon: Icons.apartment_rounded,
+        color: AppColors.brand,
+      );
       _formKey.currentState!.reset();
       _companyController.clear();
       _firstNameController.clear();
@@ -146,10 +156,10 @@ class _CorporateScreenState extends State<CorporateScreen> {
             padding: EdgeInsets.symmetric(
               horizontal: isCompactPublicLayout(context) ? 14 : 18,
             ),
-            child: Column(
+            child: StaggeredReveal(
               children: [
                 const _CorporateCta(),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpace.lg),
                 _CorporateForm(
                   formKey: _formKey,
                   companyController: _companyController,
@@ -180,41 +190,57 @@ class _CorporateCta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compact = isCompactPublicLayout(context);
-    return Container(
-      padding: EdgeInsets.all(compact ? 16 : 18),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(compact ? 24 : 20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: compact
-            ? [
-                BoxShadow(
-                  color: AppColors.ink.withValues(alpha: 0.06),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ]
-            : null,
-      ),
+    return GradientHero(
+      gradient: AppGradients.hero,
+      glowColor: AppColors.accent,
+      padding: const EdgeInsets.all(AppSpace.xl),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Text(
             AppStrings.t('Let your company cover your lesson fees!'),
-            style: Theme.of(context).textTheme.titleLarge,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  height: 1.1,
+                ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Text(
             AppStrings.t(
               'Fill in the details for a corporate training quote. Our team will get back to you shortly.',
             ),
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  height: 1.45,
+                  fontWeight: FontWeight.w600,
+                ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: AppSpace.sm,
+            runSpacing: AppSpace.sm,
+            children: [
+              const AppStatPill(
+                icon: Icons.apartment_rounded,
+                label: '50+ şirket',
+              ),
+              AppStatPill(
+                icon: Icons.workspace_premium_rounded,
+                label: AppStrings.t('Corporate'),
+              ),
+              AppStatPill(
+                icon: Icons.verified_rounded,
+                label: AppStrings.t('Corporate Form'),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpace.lg),
           ClipRRect(
-            borderRadius: BorderRadius.circular(compact ? 20 : 16),
+            borderRadius: AppRadius.all(AppRadius.md),
             child: Image.asset(
               'assets/web/h4_cta_bg.jpg',
               fit: BoxFit.cover,
@@ -257,34 +283,19 @@ class _CorporateForm extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compact = isCompactPublicLayout(context);
-    return Container(
-      padding: EdgeInsets.all(compact ? 18 : 16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(compact ? 24 : 18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: compact
-            ? [
-                BoxShadow(
-                  color: AppColors.ink.withValues(alpha: 0.06),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                ),
-              ]
-            : null,
-      ),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpace.lg),
+      radius: AppRadius.xl,
       child: Form(
         key: formKey,
         autovalidateMode: autovalidateMode,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              AppStrings.t('Corporate Form'),
-              style: const TextStyle(fontWeight: FontWeight.w700),
+            SectionHeader(
+              title: AppStrings.t('Corporate Form'),
+              icon: Icons.business_center_rounded,
             ),
-            const SizedBox(height: 12),
             _InputField(
               label: '${AppStrings.t('Company name')} *',
               controller: companyController,
@@ -297,7 +308,7 @@ class _CorporateForm extends StatelessWidget {
                     : null;
               },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             _InputField(
               label: '${AppStrings.t('Contact first name')} *',
               controller: firstNameController,
@@ -310,7 +321,7 @@ class _CorporateForm extends StatelessWidget {
                     : null;
               },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             _InputField(
               label: '${AppStrings.t('Contact last name')} *',
               controller: lastNameController,
@@ -323,7 +334,7 @@ class _CorporateForm extends StatelessWidget {
                     : null;
               },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             _InputField(
               label: '${AppStrings.t('Corporate email')} *',
               controller: emailController,
@@ -337,7 +348,7 @@ class _CorporateForm extends StatelessWidget {
                     : null;
               },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             _InputField(
               label: '${AppStrings.t('Phone')} *',
               controller: phoneController,
@@ -351,7 +362,7 @@ class _CorporateForm extends StatelessWidget {
                     : null;
               },
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.md),
             _InputField(
               label: AppStrings.t('Number of trainees'),
               controller: traineesController,
@@ -363,17 +374,15 @@ class _CorporateForm extends StatelessWidget {
                 return null;
               },
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: isSubmitting ? null : onSubmit,
-                child: Text(
-                  isSubmitting
-                      ? AppStrings.t('Submitting')
-                      : AppStrings.t('Submit your company'),
-                ),
-              ),
+            const SizedBox(height: AppSpace.lg),
+            AppButton(
+              label: isSubmitting
+                  ? AppStrings.t('Submitting')
+                  : AppStrings.t('Submit your company'),
+              onPressed: isSubmitting ? null : onSubmit,
+              loading: isSubmitting,
+              tone: AppButtonTone.brand,
+              icon: Icons.send_rounded,
             ),
           ],
         ),
@@ -399,12 +408,35 @@ class _InputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    OutlineInputBorder border(Color color, [double width = 1.2]) =>
+        OutlineInputBorder(
+          borderRadius: AppRadius.all(AppRadius.sm),
+          borderSide: BorderSide(color: color, width: width),
+        );
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       validator: validator,
       onChanged: onChanged,
-      decoration: InputDecoration(labelText: label),
+      style: const TextStyle(fontWeight: FontWeight.w600),
+      decoration: InputDecoration(
+        labelText: label,
+        floatingLabelStyle: const TextStyle(
+          color: AppColors.brand,
+          fontWeight: FontWeight.w700,
+        ),
+        filled: true,
+        fillColor: AppPalette.cloud,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpace.lg,
+          vertical: AppSpace.md,
+        ),
+        border: border(AppPalette.line),
+        enabledBorder: border(AppPalette.line),
+        focusedBorder: border(AppColors.brand, 1.6),
+        errorBorder: border(AppPalette.danger),
+        focusedErrorBorder: border(AppPalette.danger, 1.6),
+      ),
     );
   }
 }

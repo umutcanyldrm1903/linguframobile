@@ -4,10 +4,9 @@ import '../../core/config/app_config.dart';
 import '../../core/localization/app_strings.dart';
 import '../../core/storage/secure_storage.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/ui/ui.dart';
 import '../shared/native_video_player_screen.dart';
 import 'public_page_scaffold.dart';
-import 'public_theme.dart';
-import 'speak_coach_screen.dart';
 
 class AfterTestScreen extends StatelessWidget {
   const AfterTestScreen({super.key});
@@ -21,17 +20,17 @@ class AfterTestScreen extends StatelessWidget {
       path: '/uploads/website-videos/hero/cnn-tanitim-1080p.mp4',
     ),
     _AfterTestVideo(
-      titleTr: 'Derslerden kisa kesit 1',
+      titleTr: 'Derslerden kısa kesit 1',
       titleEn: 'Short lesson preview 1',
       path: '/uploads/website-videos/home-showcase-web/home-video-01.mp4',
     ),
     _AfterTestVideo(
-      titleTr: 'Derslerden kisa kesit 2',
+      titleTr: 'Derslerden kısa kesit 2',
       titleEn: 'Short lesson preview 2',
       path: '/uploads/website-videos/home-showcase-web/home-video-02.mp4',
     ),
     _AfterTestVideo(
-      titleTr: 'Derslerden kisa kesit 3',
+      titleTr: 'Derslerden kısa kesit 3',
       titleEn: 'Short lesson preview 3',
       path: '/uploads/website-videos/home-showcase-web/home-video-03.mp4',
     ),
@@ -40,92 +39,89 @@ class AfterTestScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTr = AppStrings.code == 'tr';
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: publicAppViewport(
         context,
-        SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                IconButton(
-                  onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    '/app-home',
-                    (_) => false,
-                  ),
-                  icon: const Icon(Icons.close_rounded),
-                ),
-                const SizedBox(height: 4),
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAF7FF),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      isTr ? 'Test sonrasi' : 'After your test',
-                      style: const TextStyle(
-                        color: Color(0xFF1D7CFF),
-                        fontWeight: FontWeight.w900,
+        AppGlowBackground(
+          accent: AppColors.brand,
+          child: SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Material(
+                      color: Colors.white,
+                      shape: const CircleBorder(),
+                      elevation: 0,
+                      child: IconButton(
+                        onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/app-home',
+                          (_) => false,
+                        ),
+                        icon: const Icon(Icons.close_rounded,
+                            color: AppColors.ink),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  isTr
-                      ? 'Lingufranca ile konusma pratiğini canlı derse taşı.'
-                      : 'Turn your speaking result into a live lesson plan.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        color: AppColors.brandNight,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.8,
-                      ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  isTr
-                      ? 'Test sonucuna göre seviyeni, zayıf alanını ve sana uygun öğretmeni belirliyoruz. Deneme dersinde doğrudan konuşma pratiğiyle başlarsın.'
-                      : 'We use your test result to match your level, weak area, and teacher. Your trial lesson starts directly with speaking practice.',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColors.muted,
-                        height: 1.45,
-                      ),
-                ),
-                const SizedBox(height: 22),
-                _AfterTestBenefitGrid(isTr: isTr),
-                const SizedBox(height: 22),
-                _AfterTestProofStrip(isTr: isTr),
-                const SizedBox(height: 22),
-                Text(
-                  isTr ? 'Bizi videolarla tani' : 'Meet us through videos',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppColors.brandNight,
-                        fontWeight: FontWeight.w900,
-                      ),
-                ),
-                const SizedBox(height: 12),
-                ..._videos.map(
-                  (video) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: _AfterTestVideoTile(video: video, isTr: isTr),
+                  const SizedBox(height: AppSpace.md),
+                  AnimatedPageEntrance(
+                    child: _AchievementHero(isTr: isTr),
                   ),
-                ),
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
+                  const SizedBox(height: AppSpace.xl),
+                  Text(
+                    isTr
+                        ? 'Lingufranca ile konuşma pratiğini canlı derse taşı.'
+                        : 'Turn your speaking result into a live lesson plan.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      color: AppColors.brandNight,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.8,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+                  Text(
+                    isTr
+                        ? 'Test sonucuna göre seviyeni, zayıf alanını ve sana uygun öğretmeni belirliyoruz. Deneme dersinde doğrudan konuşma pratiğiyle başlarsın.'
+                        : 'We use your test result to match your level, weak area, and teacher. Your trial lesson starts directly with speaking practice.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: AppColors.muted,
+                      height: 1.45,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpace.xxl),
+                  _AfterTestBenefitGrid(isTr: isTr),
+                  const SizedBox(height: AppSpace.xxl),
+                  _AfterTestProofStrip(isTr: isTr),
+                  const SizedBox(height: AppSpace.xxl),
+                  SectionHeader(
+                    title: isTr ? 'Bizi videolarla tani' : 'Meet us through videos',
+                    icon: Icons.play_circle_fill_rounded,
+                  ),
+                  StaggeredReveal(
+                    children: [
+                      for (final video in _videos)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.md),
+                          child: _AfterTestVideoTile(video: video, isTr: isTr),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.md),
+                  AppButton(
+                    label: isTr
+                        ? 'Ücretsiz deneme dersimi ayirt'
+                        : 'Book my free trial lesson',
+                    tone: AppButtonTone.gold,
+                    icon: Icons.workspace_premium_rounded,
                     onPressed: () async {
                       await SecureStorage.setValue(
                         _trialBookingIntentKey,
@@ -134,64 +130,84 @@ class AfterTestScreen extends StatelessWidget {
                       if (!context.mounted) return;
                       Navigator.pushNamed(context, '/register');
                     },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1D7CFF),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                    ),
-                    child: Text(
-                      isTr
-                          ? 'Ucretsiz deneme dersimi ayirt'
-                          : 'Book my free trial lesson',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
-                      ),
-                    ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  height: 54,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const PublicTheme(
-                            child: SpeakCoachScreen(initialMissionStep: 0),
-                          ),
+                  const SizedBox(height: AppSpace.md),
+                  AppGhostButton(
+                    label: isTr ? 'Pratiği tekrar aç' : 'Open practice again',
+                    icon: Icons.replay_rounded,
+                    onPressed: () => Navigator.pushNamed(context, '/practice'),
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+                  Center(
+                    child: TextButton(
+                      onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                        context,
+                        '/app-home',
+                        (_) => false,
+                      ),
+                      child: Text(
+                        isTr ? 'Ana sayfaya dön' : 'Back to home',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.muted,
                         ),
-                      );
-                    },
-                    child: Text(
-                      isTr
-                          ? 'Speaking testini tekrar yap'
-                          : 'Retake speaking test',
+                      ),
                     ),
                   ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        expandHeight: true,
+      ),
+    );
+  }
+}
+
+class _AchievementHero extends StatelessWidget {
+  const _AchievementHero({required this.isTr});
+
+  final bool isTr;
+
+  @override
+  Widget build(BuildContext context) {
+    return GradientHero(
+      gradient: AppGradients.gold,
+      glowColor: Colors.white,
+      child: Row(
+        children: [
+          AchievementBadge(
+            icon: Icons.emoji_events_rounded,
+            label: isTr ? 'Test tamamlandı' : 'Test complete',
+            color: Colors.white,
+          ),
+          const SizedBox(width: AppSpace.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isTr ? 'Başarı açıldı!' : 'Achievement unlocked!',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
                 ),
-                const SizedBox(height: 8),
-                Center(
-                  child: TextButton(
-                    onPressed: () => Navigator.pushNamedAndRemoveUntil(
-                      context,
-                      '/app-home',
-                      (_) => false,
-                    ),
-                    child: Text(
-                      isTr ? 'Ana sayfaya don' : 'Back to home',
-                      style: const TextStyle(fontWeight: FontWeight.w800),
-                    ),
+                const SizedBox(height: 4),
+                Text(
+                  isTr
+                      ? 'Test sonrasi'
+                      : 'After your test',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
           ),
-        ),
-        expandHeight: true,
+        ],
       ),
     );
   }
@@ -204,54 +220,53 @@ class _AfterTestBenefitGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
+    final items = <(IconData, String, String, Gradient)>[
       (
         Icons.record_voice_over_rounded,
-        isTr ? 'Canli speaking' : 'Live speaking',
+        isTr ? 'Canlı speaking' : 'Live speaking',
         isTr
-            ? 'Ogretmenle gercek konusma pratigi.'
+            ? 'Ogretmenle gerçek konuşma pratigi.'
             : 'Real speaking practice with a teacher.',
+        AppGradients.brand,
       ),
       (
         Icons.route_rounded,
         isTr ? 'Kisisel plan' : 'Personal plan',
         isTr
-            ? 'Seviyene gore 7 gunluk rota.'
+            ? 'Seviyene göre 7 günlük rota.'
             : 'A 7-day route based on your level.',
+        AppGradients.violet,
       ),
       (
         Icons.workspace_premium_rounded,
-        isTr ? 'Ucretsiz deneme' : 'Free trial',
+        isTr ? 'Ücretsiz deneme' : 'Free trial',
         isTr
-            ? 'Ilk dersi risk almadan dene.'
+            ? 'İlk dersi risk almadan dene.'
             : 'Try the first lesson without risk.',
+        AppGradients.gold,
       ),
     ];
 
-    return Column(
-      children: items
-          .map(
-            (item) => Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF7FBFF),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: const Color(0xFFE3EAF5)),
-              ),
+    return StaggeredReveal(
+      children: [
+        for (final item in items)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpace.md),
+            child: AppCard(
+              padding: const EdgeInsets.all(AppSpace.lg),
               child: Row(
                 children: [
                   Container(
-                    width: 42,
-                    height: 42,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFEAF7FF),
-                      shape: BoxShape.circle,
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      gradient: item.$4,
+                      borderRadius: AppRadius.all(AppRadius.md),
+                      boxShadow: AppShadows.glow(AppColors.brand, opacity: 0.22),
                     ),
-                    child: Icon(item.$1, color: const Color(0xFF1D7CFF)),
+                    child: Icon(item.$1, color: Colors.white, size: 24),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpace.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -279,8 +294,8 @@ class _AfterTestBenefitGrid extends StatelessWidget {
                 ],
               ),
             ),
-          )
-          .toList(),
+          ),
+      ],
     );
   }
 }
@@ -292,31 +307,32 @@ class _AfterTestProofStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF12345B), Color(0xFF1D7CFF)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(24),
-      ),
+    return GradientHero(
+      gradient: AppGradients.night,
+      glowColor: AppColors.accent,
+      padding: const EdgeInsets.all(AppSpace.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            isTr ? 'Neden guven veriyor?' : 'Why it builds trust',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
+          Row(
+            children: [
+              const Icon(Icons.verified_rounded, color: Colors.white, size: 22),
+              const SizedBox(width: AppSpace.sm),
+              Expanded(
+                child: Text(
+                  isTr ? 'Neden güven veriyor?' : 'Why it builds trust',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
                 ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpace.sm),
           Text(
             isTr
-                ? 'Videolar, ogrenci deneyimleri ve medya gorunumleriyle test sonucunu gercek bir ders deneyimine bagliyoruz.'
+                ? 'Videolar, öğrenci deneyimleri ve medya gorunumleriyle test sonucunu gerçek bir ders deneyimine bağlıyoruz.'
                 : 'Videos, student stories, and media features connect the test result to a real lesson experience.',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: Colors.white.withValues(alpha: 0.88),
@@ -342,8 +358,8 @@ class _AfterTestVideoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final title = isTr ? video.titleTr : video.titleEn;
     final url = '${AppConfig.webBaseUrl}${video.path}';
-    return InkWell(
-      borderRadius: BorderRadius.circular(20),
+    return AppCard(
+      padding: const EdgeInsets.all(AppSpace.md),
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -354,48 +370,34 @@ class _AfterTestVideoTile extends StatelessWidget {
           ),
         );
       },
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE3EAF5)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.brandNight.withValues(alpha: 0.04),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
+      child: Row(
+        children: [
+          Container(
+            width: 62,
+            height: 46,
+            decoration: BoxDecoration(
+              gradient: AppGradients.brand,
+              borderRadius: AppRadius.all(AppRadius.md),
+              boxShadow: AppShadows.glow(AppColors.brand, opacity: 0.24),
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 62,
-              height: 46,
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAF7FF),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.play_arrow_rounded,
-                color: Color(0xFF1D7CFF),
-                size: 34,
-              ),
+            child: const Icon(
+              Icons.play_arrow_rounded,
+              color: Colors.white,
+              size: 34,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                title,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: AppColors.brandNight,
-                      fontWeight: FontWeight.w900,
-                    ),
-              ),
+          ),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: AppColors.brandNight,
+                    fontWeight: FontWeight.w900,
+                  ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
-          ],
-        ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: AppColors.muted),
+        ],
       ),
     );
   }

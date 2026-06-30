@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../zoom/live_lesson_launcher.dart';
 import 'student_lessons_repository.dart';
 
@@ -24,40 +25,57 @@ class StudentLiveLessonScreen extends StatelessWidget {
       _LessonJoinState.unknown => AppStrings.t('Loading'),
     };
 
+    final buttonTone = switch (joinState) {
+      _LessonJoinState.canJoin => AppButtonTone.success,
+      _ => AppButtonTone.neutral,
+    };
+
     return Scaffold(
-      appBar: AppBar(title: Text(AppStrings.t('Online Lesson'))),
-      body: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          _HeroCard(lesson: lesson),
-          const SizedBox(height: 16),
-          _StatusCard(lesson: lesson),
-          const SizedBox(height: 16),
-          _MeetingCard(lesson: lesson, revealCredentials: canJoin),
-          const SizedBox(height: 16),
-          const _RulesCard(),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: canJoin
-                  ? () async {
-                      await openLiveLessonSession(
-                        context,
-                        title: lesson!.title.isNotEmpty
-                            ? lesson!.title
-                            : AppStrings.t('Online Lesson'),
-                        joinUrl: lesson!.joinUrl ?? '',
-                        meetingId: lesson!.meetingId,
-                        password: lesson!.password,
-                      );
-                    }
-                  : null,
-              icon: const Icon(Icons.video_call),
-              label: Text(buttonLabel),
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(AppStrings.t('Online Lesson')),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: AppGlowBackground(
+        accent: AppColors.brand,
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpace.xl),
+          children: [
+            AnimatedPageEntrance(
+              child: _HeroCard(lesson: lesson),
             ),
-          ),
-        ],
+            const SizedBox(height: AppSpace.lg),
+            StaggeredReveal(
+              children: [
+                _StatusCard(lesson: lesson),
+                const SizedBox(height: AppSpace.lg),
+                _MeetingCard(lesson: lesson, revealCredentials: canJoin),
+                const SizedBox(height: AppSpace.lg),
+                const _RulesCard(),
+                const SizedBox(height: AppSpace.xl),
+                AppButton(
+                  label: buttonLabel,
+                  tone: buttonTone,
+                  icon: Icons.video_call_rounded,
+                  onPressed: canJoin
+                      ? () async {
+                          await openLiveLessonSession(
+                            context,
+                            title: lesson!.title.isNotEmpty
+                                ? lesson!.title
+                                : AppStrings.t('Online Lesson'),
+                            joinUrl: lesson!.joinUrl ?? '',
+                            meetingId: lesson!.meetingId,
+                            password: lesson!.password,
+                          );
+                        }
+                      : null,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -108,6 +126,32 @@ _LessonJoinState _deriveJoinState(LiveLessonItem? lesson) {
   return _LessonJoinState.notStarted;
 }
 
+/// Maps a join state to a meaningful semantic color + icon.
+({Color color, IconData icon}) _statusVisual(_LessonJoinState state) {
+  return switch (state) {
+    _LessonJoinState.canJoin => (
+        color: AppPalette.success,
+        icon: Icons.check_circle_rounded,
+      ),
+    _LessonJoinState.pending => (
+        color: AppPalette.warning,
+        icon: Icons.hourglass_top_rounded,
+      ),
+    _LessonJoinState.notStarted => (
+        color: AppColors.brand,
+        icon: Icons.schedule_rounded,
+      ),
+    _LessonJoinState.finished => (
+        color: AppPalette.danger,
+        icon: Icons.event_busy_rounded,
+      ),
+    _LessonJoinState.unknown => (
+        color: AppColors.muted,
+        icon: Icons.hourglass_empty_rounded,
+      ),
+  };
+}
+
 class _HeroCard extends StatelessWidget {
   const _HeroCard({this.lesson});
 
@@ -121,45 +165,70 @@ class _HeroCard extends StatelessWidget {
     final instructor = lesson?.instructorName ?? '';
     final dateLabel = _formatDate(lesson?.startTime);
     final timeLabel = _formatTime(lesson?.startTime);
-    final meta = [
-      if (instructor.isNotEmpty) '${AppStrings.t('Instructor')}: $instructor',
-      if (dateLabel.isNotEmpty || timeLabel.isNotEmpty)
-        '${dateLabel.isNotEmpty ? dateLabel : ''}${dateLabel.isNotEmpty && timeLabel.isNotEmpty ? ' • ' : ''}$timeLabel',
-    ].where((value) => value.isNotEmpty).toList();
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.brand, Color(0xFFF59E0B)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
+    return GradientHero(
+      gradient: AppGradients.hero,
+      glowColor: AppPalette.gold,
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CircleAvatar(
-            radius: 26,
-            backgroundColor: Colors.white,
-            child: Icon(Icons.school, color: AppColors.brand),
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: AppRadius.all(AppRadius.md),
+              boxShadow: AppShadows.glow(AppColors.brandDeep, opacity: 0.25),
+            ),
+            child: const Icon(Icons.school_rounded,
+                color: AppColors.brand, size: 28),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: AppSpace.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title,
+                  AppStrings.t('Live Lesson'),
                   style: const TextStyle(
-                    color: AppColors.ink,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                    letterSpacing: 0.6,
                   ),
                 ),
-                const SizedBox(height: 6),
-                for (final item in meta)
-                  Text(item, style: const TextStyle(color: AppColors.ink)),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 19,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: AppSpace.md),
+                Wrap(
+                  spacing: AppSpace.sm,
+                  runSpacing: AppSpace.sm,
+                  children: [
+                    if (instructor.isNotEmpty)
+                      AppStatPill(
+                        icon: Icons.person_rounded,
+                        label: instructor,
+                      ),
+                    if (dateLabel.isNotEmpty)
+                      AppStatPill(
+                        icon: Icons.calendar_today_rounded,
+                        label: dateLabel,
+                      ),
+                    if (timeLabel.isNotEmpty)
+                      AppStatPill(
+                        icon: Icons.access_time_rounded,
+                        label: timeLabel,
+                      ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -184,22 +253,29 @@ class _StatusCard extends StatelessWidget {
       _LessonJoinState.canJoin => AppStrings.t('You can join the lesson'),
       _LessonJoinState.finished => AppStrings.t('Lesson is finished'),
     };
+    final visual = _statusVisual(state);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Row(
         children: [
-          const Icon(Icons.schedule, color: AppColors.brand),
-          const SizedBox(width: 10),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: visual.color.withValues(alpha: 0.14),
+              borderRadius: AppRadius.all(AppRadius.sm),
+            ),
+            child: Icon(visual.icon, color: visual.color),
+          ),
+          const SizedBox(width: AppSpace.md),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(height: 1.4),
+              style: const TextStyle(
+                height: 1.4,
+                fontWeight: FontWeight.w700,
+                color: AppColors.ink,
+              ),
             ),
           ),
         ],
@@ -220,31 +296,53 @@ class _MeetingCard extends StatelessWidget {
     final password = revealCredentials ? (lesson?.password ?? '-') : '-';
     final startLabel = _formatDateTime(lesson?.startTime);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppStrings.t('Zoom Meeting'),
-            style: const TextStyle(fontWeight: FontWeight.w700),
+          SectionHeader(
+            title: AppStrings.t('Zoom Meeting'),
+            icon: Icons.videocam_rounded,
           ),
           if (!revealCredentials) ...[
-            const SizedBox(height: 10),
-            Text(
-              AppStrings.t('Lesson is not started yet'),
-              style: const TextStyle(color: AppColors.muted),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpace.md, vertical: AppSpace.sm),
+              decoration: BoxDecoration(
+                color: AppPalette.warning.withValues(alpha: 0.12),
+                borderRadius: AppRadius.all(AppRadius.sm),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.lock_clock_rounded,
+                      size: 18, color: AppPalette.warning),
+                  const SizedBox(width: AppSpace.sm),
+                  Expanded(
+                    child: Text(
+                      AppStrings.t('Lesson is not started yet'),
+                      style: const TextStyle(
+                        color: AppColors.muted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(height: AppSpace.md),
           ],
-          const SizedBox(height: 10),
-          _InfoRow(label: AppStrings.t('Meeting ID'), value: meetingId),
-          _InfoRow(label: AppStrings.t('Password'), value: password),
           _InfoRow(
+            icon: Icons.tag_rounded,
+            label: AppStrings.t('Meeting ID'),
+            value: meetingId,
+          ),
+          _InfoRow(
+            icon: Icons.key_rounded,
+            label: AppStrings.t('Password'),
+            value: password,
+          ),
+          _InfoRow(
+            icon: Icons.event_rounded,
             label: AppStrings.t('Starts At'),
             value: startLabel.isEmpty ? '-' : startLabel,
           ),
@@ -259,21 +357,14 @@ class _RulesCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppStrings.t('Lesson Rules'),
-            style: const TextStyle(fontWeight: FontWeight.w700),
+          SectionHeader(
+            title: AppStrings.t('Lesson Rules'),
+            icon: Icons.checklist_rounded,
           ),
-          const SizedBox(height: 8),
           _Rule(
               text:
                   AppStrings.t('Be ready 5 minutes before the lesson starts.')),
@@ -290,20 +381,40 @@ class _RulesCard extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
+  const _InfoRow({required this.label, required this.value, this.icon});
 
   final String label;
   final String value;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.sm),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w700)),
+          if (icon != null) ...[
+            Icon(icon, size: 18, color: AppColors.muted),
+            const SizedBox(width: AppSpace.sm),
+          ],
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.muted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const Spacer(),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                color: AppColors.ink,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -318,12 +429,19 @@ class _Rule extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: AppSpace.xs + 1),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle, size: 18, color: AppColors.brand),
-          const SizedBox(width: 8),
-          Expanded(child: Text(text)),
+          const Icon(Icons.check_circle_rounded,
+              size: 19, color: AppPalette.success),
+          const SizedBox(width: AppSpace.sm),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(color: AppColors.ink, height: 1.35),
+            ),
+          ),
         ],
       ),
     );

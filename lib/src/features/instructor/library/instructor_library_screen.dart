@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../shared/content_preview_launcher.dart';
 import '../students/instructor_students_repository.dart';
 import 'instructor_library_repository.dart';
@@ -371,136 +372,166 @@ class _InstructorLibraryScreenState extends State<InstructorLibraryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(AppStrings.t('Library')),
         actions: [
           IconButton(
             onPressed: _saving ? null : _createItem,
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add_rounded),
             tooltip: AppStrings.t('Create'),
           ),
         ],
       ),
-      body: FutureBuilder<InstructorLibraryPayload?>(
-        future: _libraryFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: AppGlowBackground(
+        child: FutureBuilder<InstructorLibraryPayload?>(
+          future: _libraryFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return AppLoader(message: AppStrings.t('Library'));
+            }
 
-          if (snapshot.hasError) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            if (snapshot.hasError) {
+              return AppErrorState(
+                message: AppStrings.t('Something went wrong'),
+                onRetry: _reload,
+                retryLabel: AppStrings.t('Try Again'),
+              );
+            }
+
+            final payload = snapshot.data;
+            if (payload == null || payload.items.isEmpty) {
+              return AppEmptyState(
+                icon: Icons.folder_open_rounded,
+                title: AppStrings.t('No materials shared yet.'),
+                message:
+                    AppStrings.t('Upload materials for your assigned students.'),
+                actionLabel: _saving ? null : AppStrings.t('Create'),
+                onAction: _saving ? null : _createItem,
+              );
+            }
+
+            final categories = payload.categories;
+            final filteredItems = _selectedCategory.isEmpty
+                ? payload.items
+                : payload.items
+                    .where((item) => item.category == _selectedCategory)
+                    .toList(growable: false);
+
+            return AnimatedPageEntrance(
+              child: ListView(
+                padding: const EdgeInsets.all(AppSpace.xl),
                 children: [
-                  Text(AppStrings.t('Something went wrong')),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: _reload,
-                    child: Text(AppStrings.t('Try Again')),
+                  GradientHero(
+                    glowColor: AppPalette.gold,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.20),
+                                borderRadius: AppRadius.all(AppRadius.sm),
+                              ),
+                              child: const Icon(
+                                Icons.folder_shared_rounded,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.md),
+                            Expanded(
+                              child: Text(
+                                AppStrings.t('Library'),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpace.md),
+                        Text(
+                          AppStrings.t(
+                              'Upload materials for your assigned students.'),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: Colors.white.withValues(alpha: 0.92),
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                        const SizedBox(height: AppSpace.lg),
+                        Wrap(
+                          spacing: AppSpace.sm,
+                          runSpacing: AppSpace.sm,
+                          children: [
+                            AppStatPill(
+                              icon: Icons.inventory_2_rounded,
+                              label:
+                                  '${payload.items.length} ${AppStrings.t('Library')}',
+                            ),
+                            if (categories.isNotEmpty)
+                              AppStatPill(
+                                icon: Icons.category_rounded,
+                                label:
+                                    '${categories.length} ${AppStrings.t('Category')}',
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (categories.isNotEmpty) ...[
+                    const SizedBox(height: AppSpace.xl),
+                    Wrap(
+                      spacing: AppSpace.sm,
+                      runSpacing: AppSpace.sm,
+                      children: [
+                        AppChip(
+                          label: AppStrings.t('All'),
+                          icon: Icons.apps_rounded,
+                          selected: _selectedCategory.isEmpty,
+                          onTap: () => setState(() => _selectedCategory = ''),
+                        ),
+                        ...categories.map(
+                          (category) => AppChip(
+                            label: category,
+                            icon: Icons.folder_rounded,
+                            selected: category == _selectedCategory,
+                            onTap: () =>
+                                setState(() => _selectedCategory = category),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: AppSpace.lg),
+                  StaggeredReveal(
+                    children: [
+                      for (final item in filteredItems)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.md),
+                          child: _LibraryItemCard(
+                            item: item,
+                            onEdit: _saving ? null : () => _editItem(item),
+                            onDelete: _saving ? null : () => _deleteItem(item),
+                          ),
+                        ),
+                    ],
                   ),
                 ],
               ),
             );
-          }
-
-          final payload = snapshot.data;
-          if (payload == null || payload.items.isEmpty) {
-            return Center(
-                child: Text(AppStrings.t('No materials shared yet.')));
-          }
-
-          final categories = payload.categories;
-          final filteredItems = _selectedCategory.isEmpty
-              ? payload.items
-              : payload.items
-                  .where((item) => item.category == _selectedCategory)
-                  .toList(growable: false);
-
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Text(
-                AppStrings.t('Library'),
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 6),
-              Text(
-                AppStrings.t('Upload materials for your assigned students.'),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              if (categories.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _CategoryChip(
-                      label: AppStrings.t('All'),
-                      active: _selectedCategory.isEmpty,
-                      onTap: () => setState(() => _selectedCategory = ''),
-                    ),
-                    ...categories.map(
-                      (category) => _CategoryChip(
-                        label: category,
-                        active: category == _selectedCategory,
-                        onTap: () =>
-                            setState(() => _selectedCategory = category),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 16),
-              ...filteredItems.map(
-                (item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _LibraryItemCard(
-                    item: item,
-                    onEdit: _saving ? null : () => _editItem(item),
-                    onDelete: _saving ? null : () => _deleteItem(item),
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _CategoryChip extends StatelessWidget {
-  const _CategoryChip({
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: active ? AppColors.brand : AppColors.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: active ? AppColors.brand : const Color(0xFFE2E8F0),
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: active ? Colors.white : AppColors.ink,
-            fontWeight: FontWeight.w700,
-          ),
+          },
         ),
       ),
     );
@@ -524,21 +555,24 @@ class _LibraryItemCard extends StatelessWidget {
         ? '-'
         : DateFormat('dd.MM.yyyy HH:mm').format(item.createdAt!.toLocal());
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.folder, color: AppColors.brandDeep),
-              const SizedBox(width: 10),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.brand.withValues(alpha: 0.12),
+                  borderRadius: AppRadius.all(AppRadius.sm),
+                ),
+                child: const Icon(Icons.folder_rounded,
+                    color: AppColors.brandDeep, size: 22),
+              ),
+              const SizedBox(width: AppSpace.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,14 +581,26 @@ class _LibraryItemCard extends StatelessWidget {
                       item.title,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
+                            color: AppColors.ink,
                           ),
                     ),
                     const SizedBox(height: 4),
-                    Text('${AppStrings.t('Student')}: ${item.studentName}'),
+                    Text(
+                      '${AppStrings.t('Student')}: ${item.studentName}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: AppColors.muted,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
                   ],
                 ),
               ),
               PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert_rounded,
+                    color: AppColors.muted),
+                shape: RoundedRectangleBorder(
+                  borderRadius: AppRadius.all(AppRadius.sm),
+                ),
                 onSelected: (value) {
                   if (value == 'edit') {
                     onEdit?.call();
@@ -567,38 +613,73 @@ class _LibraryItemCard extends StatelessWidget {
                 itemBuilder: (context) => [
                   PopupMenuItem<String>(
                     value: 'edit',
-                    child: Text(AppStrings.t('Edit')),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.edit_rounded,
+                            size: 18, color: AppColors.brand),
+                        const SizedBox(width: AppSpace.sm),
+                        Text(AppStrings.t('Edit')),
+                      ],
+                    ),
                   ),
                   PopupMenuItem<String>(
                     value: 'delete',
-                    child: Text(AppStrings.t('Delete')),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.delete_outline_rounded,
+                            size: 18, color: AppPalette.danger),
+                        const SizedBox(width: AppSpace.sm),
+                        Text(AppStrings.t('Delete')),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.md),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: AppSpace.sm,
+            runSpacing: AppSpace.sm,
             children: [
-              _MetaTag(label: '${AppStrings.t('Category')}: ${item.category}'),
-              _MetaTag(
-                  label:
-                      '${AppStrings.t('File Type')}: ${item.fileType.toUpperCase()}'),
-              _MetaTag(label: '${AppStrings.t('Created at')}: $createdAtLabel'),
+              AppStatPill(
+                icon: Icons.category_rounded,
+                label: '${AppStrings.t('Category')}: ${item.category}',
+                color: AppColors.brand,
+                onLight: true,
+              ),
+              AppStatPill(
+                icon: Icons.description_rounded,
+                label:
+                    '${AppStrings.t('File Type')}: ${item.fileType.toUpperCase()}',
+                color: AppPalette.violet,
+                onLight: true,
+              ),
+              AppStatPill(
+                icon: Icons.schedule_rounded,
+                label: '${AppStrings.t('Created at')}: $createdAtLabel',
+                color: AppColors.muted,
+                onLight: true,
+              ),
             ],
           ),
           if (item.description.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Text(item.description),
+            const SizedBox(height: AppSpace.md),
+            Text(
+              item.description,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.ink,
+                  ),
+            ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpace.md),
           Align(
             alignment: Alignment.centerRight,
-            child: OutlinedButton(
+            child: AppGhostButton(
+              label: AppStrings.t('View File'),
+              icon: Icons.open_in_new_rounded,
+              expand: false,
               onPressed: () => _openFile(context, item),
-              child: Text(AppStrings.t('View File')),
             ),
           ),
         ],
@@ -638,30 +719,6 @@ class _LibraryItemCard extends StatelessWidget {
 
     final normalized = raw.startsWith('/') ? raw : '/$raw';
     return Uri.tryParse('${AppConfig.webBaseUrl}$normalized');
-  }
-}
-
-class _MetaTag extends StatelessWidget {
-  const _MetaTag({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-      ),
-    );
   }
 }
 

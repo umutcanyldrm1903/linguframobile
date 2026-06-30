@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../catalog/student_course_detail_screen.dart';
 import 'student_wishlist_repository.dart';
 
@@ -102,43 +103,95 @@ class _StudentWishlistScreenState extends State<StudentWishlistScreen> {
     final items = _items;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(AppStrings.t('Wishlist'))),
-      body: RefreshIndicator(
-        onRefresh: () => _load(silent: true),
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Text(
-              AppStrings.t('Wishlist'),
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 10),
-            if (_loading)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-            if (!_loading && items.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 50),
-                child: Center(
-                  child: Text(
-                    AppStrings.t('No Data Found'),
-                    style: const TextStyle(color: AppColors.muted),
+      body: AppGlowBackground(
+        accent: AppPalette.heart,
+        child: RefreshIndicator(
+          onRefresh: () => _load(silent: true),
+          child: ListView(
+            padding: const EdgeInsets.all(AppSpace.xl),
+            children: [
+              AnimatedPageEntrance(
+                child: GradientHero(
+                  gradient: AppGradients.violet,
+                  glowColor: AppPalette.heart,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              AppStrings.t('Wishlist'),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w900,
+                                fontSize: 22,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              AppStrings.t('Saved courses'),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13.5,
+                              ),
+                            ),
+                            if (!_loading && items.isNotEmpty) ...[
+                              const SizedBox(height: AppSpace.md),
+                              AppStatPill(
+                                icon: Icons.favorite_rounded,
+                                label: '${items.length}',
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: AppSpace.md),
+                      const Icon(
+                        Icons.favorite_rounded,
+                        color: Colors.white,
+                        size: 56,
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ...items.map(
-              (course) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _CourseTile(
-                  course: course,
-                  onTap: () => _openCourse(course.slug),
-                  onRemove: () => _remove(course.slug),
+              const SizedBox(height: AppSpace.xl),
+              if (_loading)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpace.huge),
+                  child: AppLoader(),
                 ),
-              ),
-            ),
-          ],
+              if (!_loading && items.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpace.xxl),
+                  child: AppEmptyState(
+                    icon: Icons.favorite_border_rounded,
+                    title: AppStrings.t('No Data Found'),
+                    message: AppStrings.t('Saved courses'),
+                    actionLabel: AppStrings.t('Browse Courses'),
+                    onAction: () => Navigator.of(context).maybePop(),
+                  ),
+                ),
+              if (!_loading && items.isNotEmpty)
+                StaggeredReveal(
+                  children: [
+                    for (final course in items)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpace.md),
+                        child: _CourseTile(
+                          course: course,
+                          onTap: () => _openCourse(course.slug),
+                          onRemove: () => _remove(course.slug),
+                        ),
+                      ),
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -161,92 +214,92 @@ class _CourseTile extends StatelessWidget {
     final hasImage = course.thumbnail.trim().isNotEmpty;
     final rating = course.rating;
 
-    return InkWell(
+    return AppCard(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: hasImage
-                  ? Image.network(
-                      course.thumbnail,
-                      width: 64,
-                      height: 64,
-                      fit: BoxFit.cover,
-                      webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
-                      errorBuilder: (_, __, ___) => _placeholder(),
-                    )
-                  : _placeholder(),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    course.title,
-                    style: const TextStyle(fontWeight: FontWeight.w800),
+      padding: const EdgeInsets.all(AppSpace.md),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: AppRadius.all(AppRadius.sm),
+            child: hasImage
+                ? Image.network(
+                    course.thumbnail,
+                    width: 68,
+                    height: 68,
+                    fit: BoxFit.cover,
+                    webHtmlElementStrategy: WebHtmlElementStrategy.prefer,
+                    errorBuilder: (_, __, ___) => _placeholder(),
+                  )
+                : _placeholder(),
+          ),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  course.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    course.instructorName,
-                    style: const TextStyle(color: AppColors.muted),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      if (rating > 0) ...[
-                        const Icon(Icons.star,
-                            size: 16, color: AppColors.brand),
-                        const SizedBox(width: 4),
-                        Text(
-                          rating.toStringAsFixed(1),
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(width: 10),
-                      ],
-                      Expanded(
-                        child: Text(
-                          course.priceLabel,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.brandDeep,
-                          ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  course.instructorName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: AppColors.muted),
+                ),
+                const SizedBox(height: AppSpace.sm),
+                Row(
+                  children: [
+                    if (rating > 0) ...[
+                      AppStatPill(
+                        icon: Icons.star_rounded,
+                        label: rating.toStringAsFixed(1),
+                        color: AppPalette.gold,
+                        onLight: true,
+                      ),
+                      const SizedBox(width: AppSpace.sm),
+                    ],
+                    Expanded(
+                      child: Text(
+                        course.priceLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.brandDeep,
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            IconButton(
-              onPressed: onRemove,
-              icon: const Icon(Icons.favorite, color: AppColors.brand),
-              tooltip: AppStrings.t('Remove'),
-            ),
-          ],
-        ),
+          ),
+          IconButton(
+            onPressed: onRemove,
+            icon: const Icon(Icons.favorite_rounded, color: AppPalette.heart),
+            tooltip: AppStrings.t('Remove'),
+          ),
+        ],
       ),
     );
   }
 
   Widget _placeholder() {
     return Container(
-      width: 64,
-      height: 64,
-      color: const Color(0xFFE2E8F0),
+      width: 68,
+      height: 68,
+      decoration: const BoxDecoration(
+        gradient: AppGradients.sky,
+      ),
       alignment: Alignment.center,
-      child: const Icon(Icons.menu_book, color: AppColors.muted),
+      child: const Icon(Icons.menu_book_rounded, color: AppColors.muted),
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import '../../public/public_repository.dart';
 import '../checkout/student_checkout_screen.dart';
 
@@ -19,74 +20,86 @@ class _StudentPackagesScreenState extends State<StudentPackagesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(title: Text(AppStrings.t('Packages'))),
-      body: FutureBuilder<PlanPayload?>(
-        future: _future,
-        builder: (context, snapshot) {
-          final payload = snapshot.data;
-          final plans = payload?.plans ?? const <StudentPlan>[];
-          final currency = payload?.currency ?? 'TRY';
+      body: AppGlowBackground(
+        child: FutureBuilder<PlanPayload?>(
+          future: _future,
+          builder: (context, snapshot) {
+            final payload = snapshot.data;
+            final plans = payload?.plans ?? const <StudentPlan>[];
+            final currency = payload?.currency ?? 'TRY';
 
-          final packageCards = plans.map((plan) {
-            final title = plan.displayTitle.isNotEmpty
-                ? plan.displayTitle
-                : (plan.title.isNotEmpty ? plan.title : 'Plan');
-            final subtitle =
-                '${plan.lessonsTotal} ${AppStrings.t('Lessons')} - ${plan.durationMonths} ${AppStrings.t('Months')}';
-            final features = [
-              '${AppStrings.t('Lesson Duration')}: ${plan.lessonDuration} ${AppStrings.t('Minutes')}',
-              '${AppStrings.t('Cancellation Right')}: ${plan.cancelTotal}',
-              AppStrings.t('Flexible Lesson Scheduling'),
-            ];
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return AppLoader(message: AppStrings.t('Packages'));
+            }
 
-            final data = _PackageData(
-              title: title,
-              price: _formatPrice(plan.price, currency),
-              subtitle: subtitle,
-              badge: plan.label.isNotEmpty ? plan.label : null,
-              features: features,
-              highlight: plan.featured,
-            );
+            final packageCards = plans.map((plan) {
+              final title = plan.displayTitle.isNotEmpty
+                  ? plan.displayTitle
+                  : (plan.title.isNotEmpty ? plan.title : 'Plan');
+              final subtitle =
+                  '${plan.lessonsTotal} ${AppStrings.t('Lessons')} - ${plan.durationMonths} ${AppStrings.t('Months')}';
+              final features = [
+                '${AppStrings.t('Lesson Duration')}: ${plan.lessonDuration} ${AppStrings.t('Minutes')}',
+                '${AppStrings.t('Cancellation Right')}: ${plan.cancelTotal}',
+                AppStrings.t('Flexible Lesson Scheduling'),
+              ];
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: _PackageCard(
-                data: data,
-                onSelect: () => _open(
-                  context,
-                  StudentCheckoutScreen(
-                    plan: plan,
-                    currency: currency,
+              final data = _PackageData(
+                title: title,
+                price: _formatPrice(plan.price, currency),
+                subtitle: subtitle,
+                badge: plan.label.isNotEmpty ? plan.label : null,
+                features: features,
+                highlight: plan.featured,
+              );
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppSpace.md),
+                child: _PackageCard(
+                  data: data,
+                  onSelect: () => _open(
+                    context,
+                    StudentCheckoutScreen(
+                      plan: plan,
+                      currency: currency,
+                    ),
                   ),
                 ),
-              ),
-            );
-          }).toList();
+              );
+            }).toList();
 
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              _HeroCard(),
-              const SizedBox(height: 18),
-              Text(AppStrings.t('Packages'),
-                  style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 6),
-              Text(
-                AppStrings.t('Choose your plan and pay securely with Iyzico.'),
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              if (snapshot.connectionState == ConnectionState.waiting)
-                const Center(child: CircularProgressIndicator()),
-              if (plans.isEmpty &&
-                  snapshot.connectionState != ConnectionState.waiting)
-                Text(AppStrings.t('No Data Found')),
-              ...packageCards,
-              const SizedBox(height: 8),
-              _ComparisonCard(),
-            ],
-          );
-        },
+            return ListView(
+              padding: const EdgeInsets.all(AppSpace.xl),
+              children: [
+                AnimatedPageEntrance(child: const _HeroCard()),
+                const SizedBox(height: AppSpace.xl),
+                AnimatedPageEntrance(
+                  delay: const Duration(milliseconds: 80),
+                  child: SectionHeader(
+                    icon: Icons.workspace_premium_rounded,
+                    title: AppStrings.t('Packages'),
+                    subtitle: AppStrings.t(
+                        'Choose your plan and pay securely with Iyzico.'),
+                  ),
+                ),
+                if (plans.isEmpty)
+                  AppEmptyState(
+                    icon: Icons.inventory_2_rounded,
+                    title: AppStrings.t('No Data Found'),
+                  )
+                else
+                  StaggeredReveal(children: packageCards),
+                const SizedBox(height: AppSpace.sm),
+                AnimatedPageEntrance(
+                  delay: const Duration(milliseconds: 160),
+                  child: const _ComparisonCard(),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -120,34 +133,40 @@ class _StudentPackagesScreenState extends State<StudentPackagesScreen> {
 }
 
 class _HeroCard extends StatelessWidget {
+  const _HeroCard();
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.brand, Color(0xFFFFB647)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
+    return GradientHero(
+      gradient: AppGradients.hero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            AppStrings.t('Choose Your Plan'),
-            style: const TextStyle(
-              color: AppColors.ink,
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome_rounded,
+                  color: Colors.white, size: 22),
+              const SizedBox(width: AppSpace.sm),
+              Expanded(
+                child: Text(
+                  AppStrings.t('Choose Your Plan'),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpace.sm),
           Text(
             AppStrings.t(
                 'Compare lesson duration, package credits, and support options to pick the package that fits you best.'),
-            style: const TextStyle(color: AppColors.ink),
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.92),
+              height: 1.35,
+            ),
           ),
         ],
       ),
@@ -181,96 +200,116 @@ class _PackageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor =
-        data.highlight ? AppColors.brand : const Color(0xFFE2E8F0);
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+    final theme = Theme.of(context);
+    final card = AppCard(
+      border: !data.highlight,
+      shadow: data.highlight
+          ? AppShadows.glow(AppColors.brand, opacity: 0.26)
+          : null,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Expanded(
-                child:
-                    Text(data.title, style: Theme.of(context).textTheme.titleLarge),
+                child: Text(
+                  data.title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.ink,
+                  ),
+                ),
               ),
               if (data.badge != null && data.badge!.isNotEmpty)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: AppColors.brand.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(data.badge!,
-                      style: const TextStyle(fontWeight: FontWeight.w700)),
+                AppStatPill(
+                  icon: data.highlight
+                      ? Icons.star_rounded
+                      : Icons.local_offer_rounded,
+                  label: data.badge!,
+                  color:
+                      data.highlight ? AppPalette.goldDeep : AppColors.brand,
+                  onLight: true,
                 ),
             ],
           ),
           const SizedBox(height: 6),
-          Text(data.subtitle, style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 10),
-          Text(data.price, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 12),
-          Column(
-            children: data.features
-                .map(
-                  (feature) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.check_circle,
-                            size: 18, color: AppColors.brand),
-                        const SizedBox(width: 8),
-                        Expanded(child: Text(feature)),
-                      ],
+          Text(
+            data.subtitle,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.muted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: AppSpace.md),
+          Text(
+            data.price,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w900,
+              color: AppColors.brand,
+            ),
+          ),
+          const SizedBox(height: AppSpace.md),
+          ...data.features.map(
+            (feature) => Padding(
+              padding: const EdgeInsets.only(bottom: AppSpace.sm),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.check_circle_rounded,
+                      size: 18, color: AppPalette.success),
+                  const SizedBox(width: AppSpace.sm),
+                  Expanded(
+                    child: Text(
+                      feature,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                )
-                .toList(),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onSelect,
-              child: Text(AppStrings.t('Select')),
+                ],
+              ),
             ),
+          ),
+          const SizedBox(height: AppSpace.md),
+          AppButton(
+            label: AppStrings.t('Select'),
+            onPressed: onSelect,
+            tone: data.highlight ? AppButtonTone.gold : AppButtonTone.brand,
+            icon: Icons.arrow_forward_rounded,
           ),
         ],
       ),
+    );
+
+    if (!data.highlight) return card;
+
+    // Recommended plan -> gradient border + glow ring.
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        gradient: AppGradients.gold,
+        borderRadius: AppRadius.all(AppRadius.lg + 2),
+        boxShadow: AppShadows.glow(AppPalette.goldDeep, opacity: 0.30),
+      ),
+      child: card,
     );
   }
 }
 
 class _ComparisonCard extends StatelessWidget {
+  const _ComparisonCard();
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
+    return AppCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(AppStrings.t('Package'),
-              style: const TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 8),
+          SectionHeader(
+            icon: Icons.table_chart_rounded,
+            title: AppStrings.t('Package'),
+          ),
           _ComparisonRow(
               label: AppStrings.t('Lesson Duration'), value: '40 dk'),
           _ComparisonRow(
@@ -296,15 +335,34 @@ class _ComparisonRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: AppSpace.sm),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: Text(label)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+          const Icon(Icons.check_rounded, size: 16, color: AppPalette.success),
+          const SizedBox(width: AppSpace.sm),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.muted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpace.sm),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                color: AppColors.ink,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 }
-
-

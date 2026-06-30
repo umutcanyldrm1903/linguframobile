@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../../core/localization/app_strings.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/ui/ui.dart';
 import 'instructor_schedule_repository.dart';
 
 class InstructorScheduleScreen extends StatefulWidget {
@@ -96,67 +97,113 @@ class _InstructorScheduleScreenState extends State<InstructorScheduleScreen> {
     final week = _buildWeek();
 
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return AppLoader(message: AppStrings.t('Schedule'));
     }
 
     if (_loadError != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(_loadError!),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _loadAvailabilities,
-              child: Text(AppStrings.t('Try Again')),
-            ),
-          ],
-        ),
+      return AppErrorState(
+        message: _loadError!,
+        onRetry: _loadAvailabilities,
+        retryLabel: AppStrings.t('Try Again'),
       );
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(20),
-      children: [
-        Text(AppStrings.t('Schedule'), style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 6),
-        Text(
-          AppStrings.t(
-            'Please click to indicate your available hours so that we can create your course calendar.',
+    final selectedCount = _availabilityIds.length;
+
+    return AnimatedPageEntrance(
+      child: ListView(
+        padding: const EdgeInsets.all(AppSpace.xl),
+        children: [
+          GradientHero(
+            gradient: AppGradients.hero,
+            glowColor: AppColors.accent,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        borderRadius: AppRadius.all(AppRadius.sm),
+                      ),
+                      child: const Icon(
+                        Icons.calendar_month_rounded,
+                        color: Colors.white,
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpace.md),
+                    Expanded(
+                      child: Text(
+                        AppStrings.t('Schedule'),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                            ),
+                      ),
+                    ),
+                    AppStatPill(
+                      icon: Icons.check_circle_rounded,
+                      label: '$selectedCount',
+                      color: AppColors.accent,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpace.md),
+                Text(
+                  AppStrings.t(
+                    'Please click to indicate your available hours so that we can create your course calendar.',
+                  ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        fontWeight: FontWeight.w600,
+                        height: 1.35,
+                      ),
+                ),
+              ],
+            ),
           ),
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-        const SizedBox(height: 16),
-        SizedBox(
-          height: 520,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemBuilder: (_, index) {
-              final day = week[index];
-              return _DayColumn(
-                label: day.label,
-                date: day.date,
-                slots: _defaultSlots,
-                isSelected: (slotIndex) =>
-                    _availabilityIds.containsKey(_slotKey(index, _defaultSlots[slotIndex])),
-                isBusy: (slotIndex) =>
-                    _busyKeys.contains(_slotKey(index, _defaultSlots[slotIndex])),
-                onTap: (slotIndex) => _toggleSlot(index, _defaultSlots[slotIndex]),
-              );
-            },
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemCount: week.length,
+          const SizedBox(height: AppSpace.xl),
+          SectionHeader(
+            title: AppStrings.t('Schedule'),
+            subtitle: AppStrings.t(
+              'Please click to indicate your available hours so that we can create your course calendar.',
+            ),
+            icon: Icons.touch_app_rounded,
           ),
-        ),
-        const SizedBox(height: 18),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
+          SizedBox(
+            height: 520,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemBuilder: (_, index) {
+                final day = week[index];
+                return _DayColumn(
+                  label: day.label,
+                  date: day.date,
+                  slots: _defaultSlots,
+                  isSelected: (slotIndex) =>
+                      _availabilityIds.containsKey(_slotKey(index, _defaultSlots[slotIndex])),
+                  isBusy: (slotIndex) =>
+                      _busyKeys.contains(_slotKey(index, _defaultSlots[slotIndex])),
+                  onTap: (slotIndex) => _toggleSlot(index, _defaultSlots[slotIndex]),
+                );
+              },
+              separatorBuilder: (_, __) => const SizedBox(width: AppSpace.md),
+              itemCount: week.length,
+            ),
+          ),
+          const SizedBox(height: AppSpace.xl),
+          AppButton(
+            label: AppStrings.t('Update'),
             onPressed: _loadAvailabilities,
-            child: Text(AppStrings.t('Update')),
+            tone: AppButtonTone.brand,
+            icon: Icons.refresh_rounded,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -180,60 +227,157 @@ class _DayColumn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 160,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: Theme.of(context).textTheme.titleLarge),
-          Text(date, style: Theme.of(context).textTheme.bodyMedium),
-          const SizedBox(height: 10),
-          Expanded(
-            child: ListView.separated(
-              itemCount: slots.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 8),
-              itemBuilder: (_, index) {
-                final selected = isSelected(index);
-                final busy = isBusy(index);
-                return GestureDetector(
-                  onTap: busy ? null : () => onTap(index),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? AppColors.brand
-                          : busy
-                              ? const Color(0xFFE2E8F0)
-                              : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: selected ? AppColors.brand : const Color(0xFFE2E8F0),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        slots[index],
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 168,
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpace.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: AppColors.brand.withValues(alpha: 0.12),
+                    borderRadius: AppRadius.all(AppRadius.sm),
+                  ),
+                  child: const Icon(
+                    Icons.event_rounded,
+                    size: 16,
+                    color: AppColors.brand,
+                  ),
+                ),
+                const SizedBox(width: AppSpace.sm),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
                           color: AppColors.ink,
-                          fontSize: 12,
                         ),
                       ),
-                    ),
+                      Text(
+                        date,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: AppColors.muted,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
-                );
-              },
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpace.md),
+            Expanded(
+              child: ListView.separated(
+                itemCount: slots.length,
+                separatorBuilder: (_, __) => const SizedBox(height: AppSpace.sm),
+                itemBuilder: (_, index) {
+                  final selected = isSelected(index);
+                  final busy = isBusy(index);
+                  return _SlotTile(
+                    label: slots[index],
+                    selected: selected,
+                    busy: busy,
+                    onTap: busy ? null : () => onTap(index),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SlotTile extends StatelessWidget {
+  const _SlotTile({
+    required this.label,
+    required this.selected,
+    required this.busy,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final bool busy;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color textColor;
+    if (selected) {
+      textColor = Colors.white;
+    } else if (busy) {
+      textColor = AppColors.muted;
+    } else {
+      textColor = AppColors.ink;
+    }
+
+    final tile = AnimatedContainer(
+      duration: AppMotion.fast,
+      padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
+      decoration: BoxDecoration(
+        gradient: selected ? AppGradients.brand : null,
+        color: selected
+            ? null
+            : busy
+                ? AppPalette.line
+                : AppPalette.cloud,
+        borderRadius: AppRadius.all(AppRadius.sm),
+        border: Border.all(
+          color: selected ? Colors.transparent : AppPalette.line,
+          width: 1.2,
+        ),
+        boxShadow: selected
+            ? AppShadows.glow(AppColors.brand, opacity: 0.26)
+            : null,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (busy)
+            const Padding(
+              padding: EdgeInsets.only(right: 6),
+              child: SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.muted),
+                ),
+              ),
+            )
+          else if (selected)
+            const Padding(
+              padding: EdgeInsets.only(right: 6),
+              child: Icon(Icons.check_rounded, size: 14, color: Colors.white),
+            ),
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: textColor,
+                fontSize: 12,
+              ),
             ),
           ),
         ],
       ),
     );
+
+    if (onTap == null) return tile;
+    return PressableScale(onTap: onTap, child: tile);
   }
 }
 
@@ -266,17 +410,17 @@ List<_WeekDay> _buildWeek() {
 String _monthName(int month) {
   const months = [
     'Ocak',
-    'Şubat',
+    '�ubat',
     'Mart',
     'Nisan',
-    'Mayıs',
+    'May�s',
     'Haziran',
     'Temmuz',
-    'Ağustos',
-    'Eylül',
+    'A�ustos',
+    'Eyl�l',
     'Ekim',
-    'Kasım',
-    'Aralık',
+    'Kas�m',
+    'Aral�k',
   ];
   return months[month - 1];
 }
