@@ -6,7 +6,7 @@ import '../../core/network/api_response.dart';
 class PracticeApiService {
   const PracticeApiService();
 
-  static const Duration _requestTimeout = Duration(seconds: 5);
+  static const Duration _requestTimeout = Duration(seconds: 20);
 
   Future<Map<String, dynamic>?> getHome() => _getMap('/practice/home');
 
@@ -69,7 +69,8 @@ class PracticeApiService {
   ) =>
       _postMap('/practice/assistant/preferences', data: data);
 
-  Future<Map<String, dynamic>?> getPath() => _getMap('/practice/path');
+  Future<Map<String, dynamic>?> getPath() =>
+      _getMap('/practice/path', timeout: const Duration(seconds: 25));
 
   Future<Map<String, dynamic>?> getProfile() => _getMap('/practice/profile');
 
@@ -369,8 +370,8 @@ class PracticeApiService {
           )
           .timeout(const Duration(seconds: 45));
       return ApiResponseParser.tryMap(response.data);
-    } on DioException {
-      return null;
+    } on DioException catch (error) {
+      return _errorMap(error);
     } on Object {
       return null;
     }
@@ -443,8 +444,8 @@ class PracticeApiService {
           .post('/practice/lessons/$lessonId/start')
           .timeout(_requestTimeout);
       return ApiResponseParser.tryMap(response.data);
-    } on DioException {
-      return null;
+    } on DioException catch (error) {
+      return _errorMap(error);
     } on Object {
       return null;
     }
@@ -467,8 +468,8 @@ class PracticeApiService {
         },
       ).timeout(_requestTimeout);
       return ApiResponseParser.tryMap(response.data);
-    } on DioException {
-      return null;
+    } on DioException catch (error) {
+      return _errorMap(error);
     } on Object {
       return null;
     }
@@ -485,8 +486,8 @@ class PracticeApiService {
         data: {'lesson_id': lessonId, 'answer': answer},
       ).timeout(_requestTimeout);
       return ApiResponseParser.tryMap(response.data);
-    } on DioException {
-      return null;
+    } on DioException catch (error) {
+      return _errorMap(error);
     } on Object {
       return null;
     }
@@ -498,8 +499,8 @@ class PracticeApiService {
           .post('/practice/streak/repair')
           .timeout(_requestTimeout);
       return ApiResponseParser.tryMap(response.data);
-    } on DioException {
-      return null;
+    } on DioException catch (error) {
+      return _errorMap(error);
     } on Object {
       return null;
     }
@@ -512,8 +513,8 @@ class PracticeApiService {
     try {
       final response = await ApiClient.dio.get(path).timeout(timeout);
       return ApiResponseParser.tryMap(response.data);
-    } on DioException {
-      return null;
+    } on DioException catch (error) {
+      return _errorMap(error);
     } on Object {
       return null;
     }
@@ -528,8 +529,8 @@ class PracticeApiService {
       final response =
           await ApiClient.dio.post(path, data: data).timeout(timeout);
       return ApiResponseParser.tryMap(response.data);
-    } on DioException {
-      return null;
+    } on DioException catch (error) {
+      return _errorMap(error);
     } on Object {
       return null;
     }
@@ -558,10 +559,24 @@ class PracticeApiService {
       final response =
           await ApiClient.dio.delete(path).timeout(_requestTimeout);
       return ApiResponseParser.tryMap(response.data);
-    } on DioException {
-      return null;
+    } on DioException catch (error) {
+      return _errorMap(error);
     } on Object {
       return null;
     }
+  }
+
+  Map<String, dynamic> _errorMap(DioException error) {
+    final responseData = ApiResponseParser.tryMap(error.response?.data);
+    return <String, dynamic>{
+      if (responseData != null) ...responseData,
+      '_api_error': true,
+      '_status_code': error.response?.statusCode,
+      '_error_type': error.type.name,
+      '_message': responseData?['message']?.toString() ??
+          error.response?.statusMessage ??
+          error.message ??
+          'Practice request failed',
+    };
   }
 }

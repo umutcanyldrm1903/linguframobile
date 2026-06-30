@@ -85,28 +85,49 @@ class _PracticeLessonScreenState extends State<PracticeLessonScreen> {
       _questions = null;
       _loadError = null;
     });
-    final isDemo = widget.lesson.id.startsWith('demo-');
-    if (!isDemo) {
-      final started = await _repository.startLesson(widget.lesson);
-      if (!started) {
-        if (!mounted) return;
-        setState(() {
-          _questions = const [];
+    try {
+      final isDemo = widget.lesson.id.startsWith('demo-');
+      if (!isDemo) {
+        final started = await _repository.startLesson(widget.lesson);
+        if (!started) {
+          if (!mounted) return;
+          setState(() {
+            _questions = const [];
+            _loadError =
+                'Ders başlatılamadı. Oturumunu ve bağlantını kontrol edip tekrar dene.';
+          });
+          return;
+        }
+      }
+      final questions = await _repository.loadLessonQuestions(widget.lesson);
+      if (!mounted) return;
+      setState(() {
+        _questions = questions;
+        if (questions.isEmpty) {
           _loadError =
-              'Ders başlatılamadı. Oturumunu ve bağlantını kontrol edip tekrar dene.';
-        });
-        return;
-      }
-    }
-    final questions = await _repository.loadLessonQuestions(widget.lesson);
-    if (!mounted) return;
-    setState(() {
-      _questions = questions;
-      if (questions.isEmpty) {
+              'Bu dersin soruları sunucudan alınamadı. Lütfen tekrar dene.';
+        }
+      });
+    } on PracticeAuthException {
+      if (!mounted) return;
+      setState(() {
+        _questions = const [];
+        _loadError = 'Oturum süren doldu. Devam etmek için yeniden giriş yap.';
+      });
+    } on PracticeApiLoadException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _questions = const [];
+        _loadError = error.message;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _questions = const [];
         _loadError =
-            'Bu dersin soruları sunucudan alınamadı. Lütfen tekrar dene.';
-      }
-    });
+            'Ders yüklenemedi. İnternet bağlantını kontrol edip tekrar dene.';
+      });
+    }
   }
 
   Future<void> _check() async {
@@ -117,11 +138,47 @@ class _PracticeLessonScreenState extends State<PracticeLessonScreen> {
     final question = questions[_index];
 
     setState(() => _submitting = true);
-    final result = await _repository.answerQuestion(
-      question.id.toString(),
-      lessonId: widget.lesson.id,
-      answer: value,
-    );
+    Map<String, dynamic>? result;
+    try {
+      result = await _repository.answerQuestion(
+        question.id.toString(),
+        lessonId: widget.lesson.id,
+        answer: value,
+      );
+    } on PracticeAuthException {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Oturum süren doldu. Lütfen yeniden giriş yap.',
+          ),
+          action: SnackBarAction(
+            label: 'Giriş',
+            onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+          ),
+        ),
+      );
+      return;
+    } on PracticeApiLoadException catch (error) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+      return;
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _submitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Cevap sunucuda doğrulanamadı. Bağlantını kontrol edip tekrar dene.',
+          ),
+        ),
+      );
+      return;
+    }
 
     bool correct;
     String correctAnswer;
@@ -289,11 +346,48 @@ class _PracticeLessonScreenState extends State<PracticeLessonScreen> {
       // için önce kaydın işlenmesi gerek (eski sürüm unawaited'di → API
       // başarısız olsa bile XP/konfeti gösteriliyordu).
       setState(() => _submitting = true);
-      final completion = await _repository.completeLesson(
-        widget.lesson,
-        correct: _correct,
-        total: questions.length,
-      );
+      Map<String, dynamic>? completion;
+      try {
+        completion = await _repository.completeLesson(
+          widget.lesson,
+          correct: _correct,
+          total: questions.length,
+        );
+      } on PracticeAuthException {
+        if (!mounted) return;
+        setState(() => _submitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Oturum süren doldu. Lütfen yeniden giriş yap.',
+            ),
+            action: SnackBarAction(
+              label: 'Giriş',
+              onPressed: () =>
+                  Navigator.pushReplacementNamed(context, '/login'),
+            ),
+          ),
+        );
+        return;
+      } on PracticeApiLoadException catch (error) {
+        if (!mounted) return;
+        setState(() => _submitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.message)),
+        );
+        return;
+      } catch (_) {
+        if (!mounted) return;
+        setState(() => _submitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Ders sonucu kaydedilemedi. Bağlantını kontrol edip tekrar dene.',
+            ),
+          ),
+        );
+        return;
+      }
       if (!mounted) return;
       setState(() => _submitting = false);
       if (completion == null) {

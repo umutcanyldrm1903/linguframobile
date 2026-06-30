@@ -52,6 +52,13 @@ class _PracticePathScreenState extends State<PracticePathScreen> {
 
         final data = snapshot.data;
         if (snapshot.hasError || data == null || data.lessons.isEmpty) {
+          final error = snapshot.error;
+          final isAuthError = error is PracticeAuthException;
+          final detail = error is PracticeApiLoadException
+              ? error.message
+              : isAuthError
+                  ? 'Ders yoluna devam etmek için yeniden giriş yap.'
+                  : 'Bağlantını kontrol edip tekrar dene.';
           return Scaffold(
             backgroundColor: practiceKraft,
             body: SafeArea(
@@ -67,29 +74,40 @@ class _PracticePathScreenState extends State<PracticePathScreen> {
                         size: 54,
                       ),
                       const SizedBox(height: 14),
-                      const Text(
-                        'Ders yolu yüklenemedi',
+                      Text(
+                        isAuthError
+                            ? 'Oturum yenilemen gerekiyor'
+                            : 'Ders yolu yüklenemedi',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: practiceInk,
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Bağlantını kontrol edip tekrar dene.',
+                      Text(
+                        detail,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: practiceMuted,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: 20),
                       FilledButton.icon(
-                        onPressed: _retry,
-                        icon: const Icon(Icons.refresh_rounded),
-                        label: const Text('Tekrar dene'),
+                        onPressed: isAuthError
+                            ? () => Navigator.pushReplacementNamed(
+                                  context,
+                                  '/login',
+                                )
+                            : _retry,
+                        icon: Icon(
+                          isAuthError
+                              ? Icons.login_rounded
+                              : Icons.refresh_rounded,
+                        ),
+                        label: Text(isAuthError ? 'Giriş yap' : 'Tekrar dene'),
                       ),
                     ],
                   ),

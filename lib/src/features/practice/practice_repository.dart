@@ -281,6 +281,22 @@ class PracticeSocialFeedItem {
   final Color color;
 }
 
+class PracticeAuthException implements Exception {
+  const PracticeAuthException();
+
+  @override
+  String toString() => 'PracticeAuthException';
+}
+
+class PracticeApiLoadException implements Exception {
+  const PracticeApiLoadException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
+
 class PracticeRepository {
   const PracticeRepository({this.api = const PracticeApiService()});
 
@@ -315,6 +331,7 @@ class PracticeRepository {
 
   Future<PracticeStats> fetchStats() async {
     final data = await api.getHome();
+    _throwIfApiFailed(data, context: 'Pratik ana verisi alınamadı.');
     final stats = data?['stats'];
     if (stats is Map) {
       return _statsFromMap(Map<String, dynamic>.from(stats));
@@ -324,6 +341,7 @@ class PracticeRepository {
 
   Future<List<PracticeLesson>> fetchLessons() async {
     final data = await api.getPath();
+    _throwIfApiFailed(data, context: 'Ders yolu alınamadı.');
     final courses = data?['courses'];
     final parsed = <PracticeLesson>[];
     if (courses is List) {
@@ -347,6 +365,7 @@ class PracticeRepository {
   /// Boşsa yerleşik örnek ünitelere düşer.
   Future<List<PracticeUnit>> fetchUnits() async {
     final data = await api.getPath();
+    _throwIfApiFailed(data, context: 'Ders yolu alınamadı.');
     final courses = data?['courses'];
     final units = <PracticeUnit>[];
     if (courses is List) {
@@ -483,6 +502,7 @@ class PracticeRepository {
     final data = lesson.mode == 'legendary'
         ? await api.getLegendaryLesson(lesson.id)
         : await api.getLesson(lesson.id);
+    _throwIfApiFailed(data, context: 'Ders soruları alınamadı.');
     final lessonMap = data?['lesson'];
     if (lessonMap is Map) {
       final questions = lessonMap['questions'];
@@ -854,6 +874,7 @@ class PracticeRepository {
 
   Future<bool> startLesson(PracticeLesson lesson) async {
     final data = await api.startLesson(lesson.id);
+    _throwIfApiFailed(data, context: 'Ders başlatılamadı.');
     return data?['started'] == true;
   }
 
@@ -861,23 +882,31 @@ class PracticeRepository {
     PracticeLesson lesson, {
     required int correct,
     required int total,
-  }) {
+  }) async {
+    Map<String, dynamic>? data;
     if (lesson.mode == 'legendary') {
-      return api.completeLegendaryLesson(
+      data = await api.completeLegendaryLesson(
         lesson.id,
         correct: correct,
         total: total,
       );
+    } else {
+      data =
+          await api.completeLesson(lesson.id, correct: correct, total: total);
     }
-    return api.completeLesson(lesson.id, correct: correct, total: total);
+    _throwIfApiFailed(data, context: 'Ders sonucu kaydedilemedi.');
+    return data;
   }
 
   Future<Map<String, dynamic>?> answerQuestion(
     String questionId, {
     required String lessonId,
     required Object? answer,
-  }) {
-    return api.answerQuestion(questionId, lessonId: lessonId, answer: answer);
+  }) async {
+    final data = await api.answerQuestion(questionId,
+        lessonId: lessonId, answer: answer);
+    _throwIfApiFailed(data, context: 'Cevap doğrulanamadı.');
+    return data;
   }
 
   /// Gerçek sıralama API'den gelir; veri yoksa SAHTE kişi gösterme — boş döndür.
@@ -914,7 +943,25 @@ class PracticeRepository {
     // Sunucu yanıt vermezse SAHTE başarı dönme — onarım sunucuda yapılır;
     // aksi halde konfeti gösterilir ama seri/coin gerçekte değişmez.
     final remote = await api.repairStreak();
+    _throwIfApiFailed(remote, context: 'Seri onarımı yapılamadı.');
     return remote ?? {'success': false};
+  }
+
+  void _throwIfApiFailed(
+    Map<String, dynamic>? data, {
+    required String context,
+  }) {
+    if (data?['_api_error'] != true) return;
+
+    final statusCode = _int(data?['_status_code']);
+    if (statusCode == 401 || statusCode == 403) {
+      throw const PracticeAuthException();
+    }
+
+    final message = '${data?['_message'] ?? ''}'.trim();
+    throw PracticeApiLoadException(
+      message.isEmpty ? context : '$context $message',
+    );
   }
 
   PracticeStats _statsFromMap(Map<String, dynamic> map) {
