@@ -1,12 +1,16 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 
 class PracticeSoundService {
-  static final AudioPlayer _player = AudioPlayer();
+  static AudioPlayer? _player;
   static bool _enabled = true;
   static bool _hapticEnabled = true;
+
+  static bool get _canUseAssetAudio =>
+      !kIsWeb && defaultTargetPlatform != TargetPlatform.android;
 
   static void setEnabled(bool value) {
     _enabled = value;
@@ -18,10 +22,16 @@ class PracticeSoundService {
 
   static Future<void> _play(String asset, SystemSoundType fallback) async {
     if (!_enabled) return;
+    if (!_canUseAssetAudio) {
+      await SystemSound.play(fallback);
+      return;
+    }
+
     try {
-      await _player.stop();
-      await _player.setAsset('assets/sounds/$asset');
-      await _player.play();
+      final player = _player ??= AudioPlayer();
+      await player.stop();
+      await player.setAsset('assets/sounds/$asset');
+      await player.play();
     } catch (_) {
       await SystemSound.play(fallback);
     }
@@ -32,7 +42,7 @@ class PracticeSoundService {
     try {
       await impact();
     } catch (_) {
-      // haptic yoksa yoksay
+      // Haptic desteklenmiyorsa sessizce geç.
     }
   }
 
@@ -59,52 +69,43 @@ class PracticeSoundService {
     await _haptic(HapticFeedback.heavyImpact);
   }
 
-  // ── Semantik takma adlar (yeni çağrılar; mevcut wav'ları yeniden kullanır) ──
-
-  /// Ders tamamlandı: fanfar + orta titreşim.
+  // Semantik takma adlar: yeni çağrılar mevcut wav dosyalarını yeniden kullanır.
   static Future<void> onLessonComplete() async {
     await playComplete();
     await _haptic(HapticFeedback.mediumImpact);
   }
 
-  /// Streak devam: ateş sesi + orta titreşim.
   static Future<void> onStreakContinue() async {
     await playStreak();
     await _haptic(HapticFeedback.mediumImpact);
   }
 
-  /// XP kazanıldı: kısa ses.
   static Future<void> onXpEarned() => playXp();
 
-  /// Buton/seçim dokunuşu: hafif selection tık + tap sesi.
   static Future<void> onTap() async {
     unawaited(_play('tap.wav', SystemSoundType.click));
     await _haptic(HapticFeedback.selectionClick);
   }
 
-  /// Eşleşme (match pairs).
   static Future<void> onMatch() async {
     await playCorrect();
     await _haptic(HapticFeedback.lightImpact);
   }
 
-  /// Lig yükselme: level_up fanfar + güçlü titreşim.
   static Future<void> onLeaguePromotion() async {
     await _play('level_up.wav', SystemSoundType.click);
     await _haptic(HapticFeedback.vibrate);
   }
 
-  /// Rozet/sandık kazanıldı: badge fanfar + güçlü titreşim.
   static Future<void> onBadgeEarned() async {
     await _play('badge.wav', SystemSoundType.click);
     await _haptic(HapticFeedback.vibrate);
   }
 
-  /// Seviye atlama: level_up fanfar.
   static Future<void> onLevelUp() async {
     await _play('level_up.wav', SystemSoundType.click);
     await _haptic(HapticFeedback.vibrate);
   }
 
-  static Future<void> dispose() => _player.dispose();
+  static Future<void> dispose() => _player?.dispose() ?? Future.value();
 }

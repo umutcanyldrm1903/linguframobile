@@ -43,19 +43,39 @@ Future<void> main() async {
   PaymentNativeService.deepLinkStream.listen((_) {});
 
   runApp(const ProviderScope(child: LingufrancaApp()));
-  unawaited(_warmUpAppServices());
+  unawaited(_runStartupTask('warmup', _warmUpAppServices));
 }
 
 Future<void> _warmUpAppServices() async {
-  await Future.wait([
-    initializeDateFormatting(),
-    AppStrings.load(),
-    AppCurrency.load(),
-  ]);
+  await _runStartupTask('localization', () async {
+    await Future.wait([
+      initializeDateFormatting(),
+      AppStrings.load(),
+      AppCurrency.load(),
+    ]);
+  });
 
-  await AppTelemetryService.instance.markAppReady();
-  unawaited(AppNotificationService.instance.initialize());
-  unawaited(PracticeAdService().initialize());
+  await _runStartupTask(
+    'telemetry-ready',
+    AppTelemetryService.instance.markAppReady,
+  );
+  unawaited(_runStartupTask(
+    'notifications',
+    AppNotificationService.instance.initialize,
+  ));
+  unawaited(_runStartupTask('ads', () => PracticeAdService().initialize()));
+}
+
+Future<void> _runStartupTask(
+  String name,
+  Future<void> Function() task,
+) async {
+  try {
+    await task();
+  } catch (error, stackTrace) {
+    debugPrint('Startup task failed ($name): $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
 }
 
 class LingufrancaApp extends ConsumerWidget {

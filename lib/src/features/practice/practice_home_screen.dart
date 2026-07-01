@@ -27,6 +27,7 @@ class _PracticeHomeScreenState extends State<PracticeHomeScreen> {
   static const PracticeRepository _repository = PracticeRepository();
   late Future<_PracticeHomeData> _homeData;
   bool _premiumOfferScheduled = false;
+  bool _diagnosticsRunning = false;
 
   @override
   void initState() {
@@ -47,6 +48,35 @@ class _PracticeHomeScreenState extends State<PracticeHomeScreen> {
 
   void _retry() {
     setState(() => _homeData = _loadHomeData());
+  }
+
+  Future<void> _showConnectionReport() async {
+    if (_diagnosticsRunning) return;
+    setState(() => _diagnosticsRunning = true);
+    try {
+      final report = await _repository.connectionReport();
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Pratik bağlantı testi'),
+          content: SingleChildScrollView(
+            child: SelectableText(
+              report,
+              style: const TextStyle(fontFamily: 'monospace'),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Kapat'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _diagnosticsRunning = false);
+    }
   }
 
   @override
@@ -111,6 +141,17 @@ class _PracticeHomeScreenState extends State<PracticeHomeScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
+                      OutlinedButton.icon(
+                        onPressed:
+                            _diagnosticsRunning ? null : _showConnectionReport,
+                        icon: const Icon(Icons.network_check_rounded),
+                        label: Text(
+                          _diagnosticsRunning
+                              ? 'Test ediliyor...'
+                              : 'Bağlantıyı test et',
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       FilledButton.icon(
                         onPressed: isAuthError
                             ? () => Navigator.pushReplacementNamed(

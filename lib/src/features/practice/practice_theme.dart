@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/localization/app_strings.dart';
+import '../../core/network/api_client.dart';
 import '../../core/storage/secure_storage.dart';
 import 'screens/practice_visuals.dart';
 
@@ -12,7 +14,8 @@ const bool _practiceQaAuthBypass =
 /// Yuvarlak Nunito fontu ve oyunlaştırılmış kontrol stillerini uygular;
 /// LMS tarafının global Poppins teması etkilenmez.
 class PracticeTheme extends StatelessWidget {
-  const PracticeTheme({super.key, required this.child, this.allowGuest = false});
+  const PracticeTheme(
+      {super.key, required this.child, this.allowGuest = false});
 
   final Widget child;
 
@@ -30,11 +33,17 @@ class PracticeTheme extends StatelessWidget {
     // El-yazısı (Caveat) yalnızca büyük başlıklarda; gövde okunaklı Nunito kalır.
     final textTheme = body.copyWith(
       displayLarge: GoogleFonts.caveat(
-          textStyle: body.displayLarge, fontWeight: FontWeight.w700, color: practiceInk),
+          textStyle: body.displayLarge,
+          fontWeight: FontWeight.w700,
+          color: practiceInk),
       displayMedium: GoogleFonts.caveat(
-          textStyle: body.displayMedium, fontWeight: FontWeight.w700, color: practiceInk),
+          textStyle: body.displayMedium,
+          fontWeight: FontWeight.w700,
+          color: practiceInk),
       headlineLarge: GoogleFonts.caveat(
-          textStyle: body.headlineLarge, fontWeight: FontWeight.w700, color: practiceInk),
+          textStyle: body.headlineLarge,
+          fontWeight: FontWeight.w700,
+          color: practiceInk),
     );
 
     return Theme(
@@ -156,7 +165,27 @@ class _PracticeAuthGateState extends State<_PracticeAuthGate> {
   Future<bool> _hasToken() async {
     if (_practiceQaAuthBypass) return true;
     final token = (await SecureStorage.getToken() ?? '').trim();
-    return token.isNotEmpty;
+    if (token.isEmpty) return false;
+
+    try {
+      await ApiClient.dio
+          .get('/check-access-token')
+          .timeout(const Duration(seconds: 10));
+      return true;
+    } on DioException catch (error) {
+      final status = error.response?.statusCode;
+      if (status == 401 || status == 403) {
+        await SecureStorage.clearToken();
+        await SecureStorage.deleteValue('pending_after_login_route_v1');
+        return false;
+      }
+
+      // If the network is temporarily unavailable, let the target screen show
+      // its detailed connection diagnostic instead of forcing a logout.
+      return true;
+    } on Object {
+      return true;
+    }
   }
 
   @override

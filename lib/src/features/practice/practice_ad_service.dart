@@ -57,8 +57,13 @@ class PracticeAdService {
 
   Future<void> initialize() async {
     if (_initialized || !_adsSupported) return;
-    await MobileAds.instance.initialize();
-    _initialized = true;
+    try {
+      await MobileAds.instance.initialize();
+      _initialized = true;
+    } catch (error, stackTrace) {
+      debugPrint('PracticeAdService initialize failed: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
   }
 
   Future<bool> showInterstitial({required bool premium}) async {

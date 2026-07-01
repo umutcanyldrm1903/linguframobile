@@ -70,6 +70,12 @@ android {
             }
         }
     }
+
+    packaging {
+        jniLibs {
+            pickFirsts += "**/libc++_shared.so"
+        }
+    }
 }
 
 gradle.taskGraph.whenReady {

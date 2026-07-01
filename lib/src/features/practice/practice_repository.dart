@@ -2,6 +2,8 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../../core/config/app_config.dart';
+import '../../core/storage/secure_storage.dart';
 import 'practice_api_service.dart';
 
 @immutable
@@ -301,6 +303,81 @@ class PracticeRepository {
   const PracticeRepository({this.api = const PracticeApiService()});
 
   final PracticeApiService api;
+
+  Future<String> connectionReport() async {
+    final lines = <String>[
+      'API: ${AppConfig.apiBaseUrl}',
+    ];
+
+    try {
+      final token = (await SecureStorage.getToken() ?? '').trim();
+      lines.add(
+        token.isEmpty
+            ? 'Oturum tokeni: yok'
+            : 'Oturum tokeni: var (${token.length} karakter)',
+      );
+    } on Object catch (error) {
+      lines.add('Oturum tokeni okunamadi: $error');
+    }
+
+    await _appendEndpointReport(
+      lines,
+      label: 'Ana veri',
+      request: api.getHome,
+      summarize: (data) {
+        final stats = data['stats'];
+        return stats is Map ? 'stats geldi' : 'stats eksik';
+      },
+    );
+    await _appendEndpointReport(
+      lines,
+      label: 'Ders yolu',
+      request: api.getPath,
+      summarize: (data) {
+        final courses = data['courses'];
+        if (courses is! List) return 'courses eksik';
+        var unitCount = 0;
+        var lessonCount = 0;
+        for (final course in courses.whereType<Map>()) {
+          final units = course['units'];
+          if (units is! List) continue;
+          unitCount += units.length;
+          for (final unit in units.whereType<Map>()) {
+            final lessons = unit['lessons'];
+            if (lessons is List) lessonCount += lessons.length;
+          }
+        }
+        return '${courses.length} kurs, $unitCount unite, $lessonCount ders';
+      },
+    );
+
+    return lines.join('\n');
+  }
+
+  Future<void> _appendEndpointReport(
+    List<String> lines, {
+    required String label,
+    required Future<Map<String, dynamic>?> Function() request,
+    required String Function(Map<String, dynamic> data) summarize,
+  }) async {
+    try {
+      final data = await request();
+      if (data == null) {
+        lines.add('$label: gecersiz/bos cevap');
+        return;
+      }
+      if (data['_api_error'] == true) {
+        final status = data['_status_code'] ?? '-';
+        final type = data['_error_type'] ?? '-';
+        final message = '${data['_message'] ?? 'hata'}'.trim();
+        lines.add('$label: HATA status=$status type=$type mesaj=$message');
+        return;
+      }
+      lines.add('$label: OK, ${summarize(data)}');
+    } on Object catch (error) {
+      lines.add('$label: ISTISNA $error');
+    }
+  }
 
   /// Veri gelmeden önce / API boşken gösterilen DÜRÜST varsayılan: yeni
   /// kullanıcı durumu (sıfırlar). Sahte ilerleme YOK. Gerçek değerler API'den
