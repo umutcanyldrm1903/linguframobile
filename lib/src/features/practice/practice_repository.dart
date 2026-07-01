@@ -215,7 +215,10 @@ class PracticeQuestion {
   }
 
   factory PracticeQuestion.fromJson(Map<String, dynamic> map) {
-    final rawOptions = map['options'];
+    final rawOptions = map['options'] ??
+        map['question_options'] ??
+        map['choices'] ??
+        map['answers'];
     final options = <PracticeQuestionOption>[];
     if (rawOptions is List) {
       for (final option in rawOptions) {
@@ -227,6 +230,15 @@ class PracticeQuestion {
           options.add(PracticeQuestionOption.text('$option'));
         }
       }
+    } else if (rawOptions is Map) {
+      rawOptions.forEach((key, value) {
+        options.add(
+          PracticeQuestionOption(
+            label: '$value',
+            value: '$key',
+          ),
+        );
+      });
     }
     final rawMeta = map['meta'];
     final meta = rawMeta is Map
@@ -602,29 +614,29 @@ class PracticeRepository {
         ? await api.getLegendaryLesson(lesson.id)
         : await api.getLesson(lesson.id);
     _throwIfApiFailed(data, context: 'Ders soruları alınamadı.');
-    final lessonMap = data?['lesson'];
-    if (lessonMap is Map) {
-      final questions = lessonMap['questions'];
-      if (questions is List) {
-        final parsed = questions
-            .whereType<Map>()
-            .map(
-              (question) => PracticeQuestion.fromJson(
-                  Map<String, dynamic>.from(question)),
-            )
-            .where(
-              (question) =>
-                  question.prompt.isNotEmpty ||
-                  question.questionText.isNotEmpty,
-            )
-            .toList(growable: false);
-        if (parsed.isNotEmpty) return parsed;
-      }
-    }
+    final parsed = _questionsFromRaw(_lessonQuestionsPayload(data));
+    if (parsed.isNotEmpty) return parsed;
     if (lesson.id.startsWith('demo-') || lesson.id == 'taster') {
       return _fallbackQuestions(lesson.id);
     }
     return const <PracticeQuestion>[];
+  }
+
+  Object? _lessonQuestionsPayload(Map<String, dynamic>? data) {
+    if (data == null) return null;
+    final lessonMap = data['lesson'];
+    if (lessonMap is Map) {
+      return lessonMap['questions'] ?? lessonMap['items'];
+    }
+    final nestedData = data['data'];
+    if (nestedData is Map) {
+      final nestedLesson = nestedData['lesson'];
+      if (nestedLesson is Map) {
+        return nestedLesson['questions'] ?? nestedLesson['items'];
+      }
+      return nestedData['questions'] ?? nestedData['items'];
+    }
+    return data['questions'] ?? data['items'];
   }
 
   List<PracticeQuestion> _fallbackQuestions(String lessonId) {
@@ -974,7 +986,13 @@ class PracticeRepository {
   Future<bool> startLesson(PracticeLesson lesson) async {
     final data = await api.startLesson(lesson.id);
     _throwIfApiFailed(data, context: 'Ders başlatılamadı.');
-    return data?['started'] == true;
+    if (data == null) return true;
+    if (data['started'] == true || data['success'] == true) return true;
+    final nested = data['data'];
+    if (nested is Map) {
+      return nested['started'] == true || nested['success'] == true;
+    }
+    return data.isNotEmpty;
   }
 
   Future<Map<String, dynamic>?> completeLesson(

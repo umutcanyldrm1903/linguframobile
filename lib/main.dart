@@ -236,7 +236,7 @@ class LingufrancaApp extends ConsumerWidget {
         '/practice/lesson': (context) {
           final args = ModalRoute.of(context)?.settings.arguments;
           if (args is! PracticeLesson) {
-            return const PracticeTheme(child: PracticeHomeScreen());
+            return const PracticeTheme(child: _PracticeLessonEntryScreen());
           }
           return PracticeTheme(child: PracticeLessonScreen(lesson: args));
         },
@@ -247,6 +247,82 @@ class LingufrancaApp extends ConsumerWidget {
           }
           return const PracticeTheme(child: PracticeHomeScreen());
         },
+      },
+    );
+  }
+}
+
+class _PracticeLessonEntryScreen extends StatefulWidget {
+  const _PracticeLessonEntryScreen();
+
+  @override
+  State<_PracticeLessonEntryScreen> createState() =>
+      _PracticeLessonEntryScreenState();
+}
+
+class _PracticeLessonEntryScreenState
+    extends State<_PracticeLessonEntryScreen> {
+  static const _repository = PracticeRepository();
+  late final Future<PracticeLesson?> _lesson = _loadLesson();
+
+  Future<PracticeLesson?> _loadLesson() async {
+    final lessons = await _repository.fetchLessons();
+    for (final lesson in lessons) {
+      if (!lesson.locked) return lesson;
+    }
+    return lessons.isEmpty ? null : lessons.first;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<PracticeLesson?>(
+      future: _lesson,
+      builder: (context, snapshot) {
+        final lesson = snapshot.data;
+        if (lesson != null) {
+          return PracticeLessonScreen(lesson: lesson);
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        return Scaffold(
+          body: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.cloud_off_rounded, size: 48),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Pratik dersi bulunamadı',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      snapshot.error?.toString() ??
+                          'Ders yolunu açıp tekrar dene.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () =>
+                          Navigator.pushReplacementNamed(context, '/practice'),
+                      child: const Text('Pratik ana sayfasına dön'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
       },
     );
   }

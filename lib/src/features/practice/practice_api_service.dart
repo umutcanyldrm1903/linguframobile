@@ -483,7 +483,10 @@ class PracticeApiService {
     try {
       final response = await ApiClient.dio.post(
         '/practice/questions/$questionId/answer',
-        data: {'lesson_id': lessonId, 'answer': answer},
+        data: {
+          'lesson_id': lessonId,
+          'answer': answer == null ? null : '$answer',
+        },
       ).timeout(_requestTimeout);
       return ApiResponseParser.tryMap(response.data);
     } on DioException catch (error) {

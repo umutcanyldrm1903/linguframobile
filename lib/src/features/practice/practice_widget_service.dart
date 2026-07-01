@@ -11,18 +11,23 @@ class PracticeWidgetService {
   }) async {
     if (kIsWeb) return;
 
-    await HomeWidget.saveWidgetData<String>('practice_title', 'Günlük Pratik');
-    await HomeWidget.saveWidgetData<String>(
-      'practice_subtitle',
-      '$streak gün seri • $xp XP • $hearts can',
-    );
-    await HomeWidget.saveWidgetData<int>('practice_streak', streak);
-    await HomeWidget.saveWidgetData<int>('practice_xp', xp);
-    await HomeWidget.saveWidgetData<int>('practice_hearts', hearts);
-    await HomeWidget.updateWidget(
-      androidName: 'PracticeWidgetProvider',
-      iOSName: 'PracticeWidget',
-    );
+    try {
+      await HomeWidget.saveWidgetData<String>(
+          'practice_title', 'Günlük Pratik');
+      await HomeWidget.saveWidgetData<String>(
+        'practice_subtitle',
+        '$streak gün seri • $xp XP • $hearts can',
+      );
+      await HomeWidget.saveWidgetData<int>('practice_streak', streak);
+      await HomeWidget.saveWidgetData<int>('practice_xp', xp);
+      await HomeWidget.saveWidgetData<int>('practice_hearts', hearts);
+      await HomeWidget.updateWidget(
+        androidName: 'PracticeWidgetProvider',
+        iOSName: 'PracticeWidget',
+      );
+    } catch (error) {
+      debugPrint('PracticeWidgetService.update ignored: $error');
+    }
   }
 
   static Future<void> updateFromMap(Map<String, dynamic> stats) {
