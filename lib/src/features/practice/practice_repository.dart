@@ -332,11 +332,18 @@ class PracticeRepository {
   Future<PracticeStats> fetchStats() async {
     final data = await api.getHome();
     _throwIfApiFailed(data, context: 'Pratik ana verisi alınamadı.');
-    final stats = data?['stats'];
+    if (data == null) {
+      throw const PracticeApiLoadException(
+        'Pratik ana verisi alınamadı. Sunucudan geçerli cevap gelmedi.',
+      );
+    }
+    final stats = data['stats'];
     if (stats is Map) {
       return _statsFromMap(Map<String, dynamic>.from(stats));
     }
-    return loadStats();
+    throw const PracticeApiLoadException(
+      'Pratik ana verisi eksik geldi. Lütfen tekrar giriş yapıp dene.',
+    );
   }
 
   Future<List<PracticeLesson>> fetchLessons() async {
@@ -344,60 +351,75 @@ class PracticeRepository {
     _throwIfApiFailed(data, context: 'Ders yolu alınamadı.');
     final courses = data?['courses'];
     final parsed = <PracticeLesson>[];
-    if (courses is List) {
-      for (final course in courses.whereType<Map>()) {
-        final units = course['units'];
-        if (units is! List) continue;
-        for (final unit in units.whereType<Map>()) {
-          final lessons = unit['lessons'];
-          if (lessons is! List) continue;
-          for (final lesson in lessons.whereType<Map>()) {
-            final map = Map<String, dynamic>.from(lesson);
-            parsed.add(_lessonFromMap(map));
-          }
+    if (data == null || courses is! List) {
+      throw const PracticeApiLoadException(
+        'Ders yolu alınamadı. Sunucu ders listesini göndermedi.',
+      );
+    }
+    for (final course in courses.whereType<Map>()) {
+      final units = course['units'];
+      if (units is! List) continue;
+      for (final unit in units.whereType<Map>()) {
+        final lessons = unit['lessons'];
+        if (lessons is! List) continue;
+        for (final lesson in lessons.whereType<Map>()) {
+          final map = Map<String, dynamic>.from(lesson);
+          parsed.add(_lessonFromMap(map));
         }
       }
+    }
+    if (parsed.isEmpty) {
+      throw const PracticeApiLoadException(
+        'Ders yolu boş geldi. Hostingde pratik içeriklerini tekrar kontrol et.',
+      );
     }
     return parsed;
   }
 
   /// Path'i ünite yapısını koruyarak çeker (`GET /practice/path`).
-  /// Boşsa yerleşik örnek ünitelere düşer.
+  /// Boş veya geçersiz API cevabını açık hata olarak yükseltir.
   Future<List<PracticeUnit>> fetchUnits() async {
     final data = await api.getPath();
     _throwIfApiFailed(data, context: 'Ders yolu alınamadı.');
     final courses = data?['courses'];
     final units = <PracticeUnit>[];
-    if (courses is List) {
-      for (final course in courses.whereType<Map>()) {
-        final courseTitle = '${course['title'] ?? ''}';
-        final rawUnits = course['units'];
-        if (rawUnits is! List) continue;
-        var index = 1;
-        for (final unit in rawUnits.whereType<Map>()) {
-          final unitMap = Map<String, dynamic>.from(unit);
-          final rawLessons = unitMap['lessons'];
-          final lessons = <PracticeLesson>[];
-          if (rawLessons is List) {
-            for (final lesson in rawLessons.whereType<Map>()) {
-              lessons.add(_lessonFromMap(Map<String, dynamic>.from(lesson)));
-            }
+    if (data == null || courses is! List) {
+      throw const PracticeApiLoadException(
+        'Ders yolu alınamadı. Sunucu ünite listesini göndermedi.',
+      );
+    }
+    for (final course in courses.whereType<Map>()) {
+      final courseTitle = '${course['title'] ?? ''}';
+      final rawUnits = course['units'];
+      if (rawUnits is! List) continue;
+      var index = 1;
+      for (final unit in rawUnits.whereType<Map>()) {
+        final unitMap = Map<String, dynamic>.from(unit);
+        final rawLessons = unitMap['lessons'];
+        final lessons = <PracticeLesson>[];
+        if (rawLessons is List) {
+          for (final lesson in rawLessons.whereType<Map>()) {
+            lessons.add(_lessonFromMap(Map<String, dynamic>.from(lesson)));
           }
-          if (lessons.isEmpty) continue;
-          units.add(
-            PracticeUnit(
-              title: '${unitMap['title'] ?? '$index. Ünite'}',
-              section: courseTitle.isNotEmpty
-                  ? courseTitle
-                  : '${unitMap['section'] ?? ''}',
-              subtitle:
-                  '${unitMap['description'] ?? unitMap['subtitle'] ?? ''}',
-              lessons: lessons,
-            ),
-          );
-          index++;
         }
+        if (lessons.isEmpty) continue;
+        units.add(
+          PracticeUnit(
+            title: '${unitMap['title'] ?? '$index. Ünite'}',
+            section: courseTitle.isNotEmpty
+                ? courseTitle
+                : '${unitMap['section'] ?? ''}',
+            subtitle: '${unitMap['description'] ?? unitMap['subtitle'] ?? ''}',
+            lessons: lessons,
+          ),
+        );
+        index++;
       }
+    }
+    if (units.isEmpty) {
+      throw const PracticeApiLoadException(
+        'Ders yolu boş geldi. Hostingde pratik ünite ve ders içeriklerini tekrar kontrol et.',
+      );
     }
     return units;
   }

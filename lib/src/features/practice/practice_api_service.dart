@@ -372,8 +372,8 @@ class PracticeApiService {
       return ApiResponseParser.tryMap(response.data);
     } on DioException catch (error) {
       return _errorMap(error);
-    } on Object {
-      return null;
+    } on Object catch (error) {
+      return _unknownErrorMap(error);
     }
   }
 
@@ -446,8 +446,8 @@ class PracticeApiService {
       return ApiResponseParser.tryMap(response.data);
     } on DioException catch (error) {
       return _errorMap(error);
-    } on Object {
-      return null;
+    } on Object catch (error) {
+      return _unknownErrorMap(error);
     }
   }
 
@@ -470,8 +470,8 @@ class PracticeApiService {
       return ApiResponseParser.tryMap(response.data);
     } on DioException catch (error) {
       return _errorMap(error);
-    } on Object {
-      return null;
+    } on Object catch (error) {
+      return _unknownErrorMap(error);
     }
   }
 
@@ -488,8 +488,8 @@ class PracticeApiService {
       return ApiResponseParser.tryMap(response.data);
     } on DioException catch (error) {
       return _errorMap(error);
-    } on Object {
-      return null;
+    } on Object catch (error) {
+      return _unknownErrorMap(error);
     }
   }
 
@@ -501,8 +501,8 @@ class PracticeApiService {
       return ApiResponseParser.tryMap(response.data);
     } on DioException catch (error) {
       return _errorMap(error);
-    } on Object {
-      return null;
+    } on Object catch (error) {
+      return _unknownErrorMap(error);
     }
   }
 
@@ -515,8 +515,8 @@ class PracticeApiService {
       return ApiResponseParser.tryMap(response.data);
     } on DioException catch (error) {
       return _errorMap(error);
-    } on Object {
-      return null;
+    } on Object catch (error) {
+      return _unknownErrorMap(error);
     }
   }
 
@@ -531,8 +531,8 @@ class PracticeApiService {
       return ApiResponseParser.tryMap(response.data);
     } on DioException catch (error) {
       return _errorMap(error);
-    } on Object {
-      return null;
+    } on Object catch (error) {
+      return _unknownErrorMap(error);
     }
   }
 
@@ -549,8 +549,8 @@ class PracticeApiService {
       // Premium kota cevapları 429 ile gelir. UI bu yapıdaki
       // premium_required alanını görerek doğru teklif ekranını açar.
       return ApiResponseParser.tryMap(error.response?.data);
-    } on Object {
-      return null;
+    } on Object catch (error) {
+      return _unknownErrorMap(error);
     }
   }
 
@@ -561,8 +561,8 @@ class PracticeApiService {
       return ApiResponseParser.tryMap(response.data);
     } on DioException catch (error) {
       return _errorMap(error);
-    } on Object {
-      return null;
+    } on Object catch (error) {
+      return _unknownErrorMap(error);
     }
   }
 
@@ -577,6 +577,15 @@ class PracticeApiService {
           error.response?.statusMessage ??
           error.message ??
           'Practice request failed',
+    };
+  }
+
+  Map<String, dynamic> _unknownErrorMap(Object error) {
+    return <String, dynamic>{
+      '_api_error': true,
+      '_status_code': null,
+      '_error_type': error.runtimeType.toString(),
+      '_message': error.toString(),
     };
   }
 }
