@@ -111,18 +111,30 @@ class _PracticeLessonScreenState extends State<PracticeLessonScreen> {
     } on PracticeAuthException {
       if (!mounted) return;
       setState(() {
+        _showCountdown = false;
         _questions = const [];
         _loadError = 'Oturum süren doldu. Devam etmek için yeniden giriş yap.';
       });
+    } on PracticeNoHeartsException catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _showCountdown = false;
+        _questions = const [];
+        _loadError =
+            'Canların bitti. Derse devam etmek için can kazan, can doldur veya Premium ile sınırsız can aç.';
+      });
+      await _handleStartBlockedByHearts(error.message);
     } on PracticeApiLoadException catch (error) {
       if (!mounted) return;
       setState(() {
+        _showCountdown = false;
         _questions = const [];
         _loadError = error.message;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
+        _showCountdown = false;
         _questions = const [];
         _loadError =
             'Ders yüklenemedi. İnternet bağlantını kontrol edip tekrar dene.';
@@ -317,6 +329,78 @@ class _PracticeLessonScreenState extends State<PracticeLessonScreen> {
     } else {
       Navigator.of(context).maybePop();
     }
+  }
+
+  Future<void> _handleStartBlockedByHearts(String serverMessage) async {
+    final choice = await showOutOfHeartsSheet(context);
+    if (!mounted) return;
+
+    if (choice == 'refill') {
+      final data = await _api.refillHearts();
+      if (!mounted) return;
+      if (data == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppStrings.code == 'tr'
+                ? 'Can doldurulamadı. Coinin yetmiyorsa mağazadan can paketi alabilirsin.'
+                : 'Could not refill. If you need coins, open the shop for heart packs.'),
+            action: SnackBarAction(
+              label: AppStrings.code == 'tr' ? 'Mağaza' : 'Shop',
+              onPressed: () => Navigator.pushNamed(context, '/practice/shop'),
+            ),
+          ),
+        );
+        return;
+      }
+      final stats = _repository.parseStats(data['stats']);
+      setState(() => _hearts = stats.hearts.clamp(0, _maxHearts));
+      if (_hearts > 0) await _load();
+      return;
+    }
+
+    if (choice == 'practice') {
+      await _earnHeartBeforeStart();
+      return;
+    }
+
+    if (choice == 'premium') {
+      await PracticePremiumOfferService.instance.openPremiumPage(
+        context,
+        trigger: PracticePremiumTrigger.hearts,
+      );
+      if (!mounted) return;
+      final activated = await _loadPremium();
+      if (activated) {
+        await _load();
+      } else {
+        setState(() {
+          _loadError = serverMessage.isEmpty
+              ? 'Canların bitti. Premium ile sınırsız can açabilir veya pratik yaparak 1 can kazanabilirsin.'
+              : serverMessage;
+        });
+      }
+      return;
+    }
+
+    Navigator.of(context).maybePop();
+  }
+
+  Future<void> _earnHeartBeforeStart() async {
+    final questions = await _repository.loadAdaptiveQuestions(limit: 3);
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PracticeSessionScreen(
+          title: 'Can kazanma pratiği',
+          questions: questions,
+          enforceHearts: false,
+          onComplete: (correct, total) async => '+1 can kazandın!',
+        ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _hearts = _hearts <= 0 ? 1 : _hearts);
+    await _load();
   }
 
   /// Kısa bir tekrar pratiğiyle 1 can kazandırır, sonra derse devam eder.

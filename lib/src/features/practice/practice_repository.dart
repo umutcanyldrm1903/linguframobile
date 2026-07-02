@@ -311,6 +311,10 @@ class PracticeApiLoadException implements Exception {
   String toString() => message;
 }
 
+class PracticeNoHeartsException extends PracticeApiLoadException {
+  const PracticeNoHeartsException(super.message);
+}
+
 class PracticeRepository {
   const PracticeRepository({this.api = const PracticeApiService()});
 
@@ -1076,6 +1080,24 @@ class PracticeRepository {
     }
 
     final message = '${data?['_message'] ?? ''}'.trim();
+    final lowerMessage = message.toLowerCase();
+    final rawCode = '${data?['code'] ?? data?['error_code'] ?? data?['error']}'
+        .toLowerCase();
+    final isNoHearts = lowerMessage.contains('no hearts') ||
+        lowerMessage.contains('heart') && lowerMessage.contains('left') ||
+        lowerMessage.contains('can') && lowerMessage.contains('bitti') ||
+        lowerMessage.contains('yeterli can') ||
+        rawCode.contains('no_hearts') ||
+        rawCode.contains('hearts_empty') ||
+        rawCode.contains('heart_required');
+    if (isNoHearts) {
+      throw PracticeNoHeartsException(
+        message.isEmpty
+            ? 'Canların bitti. Devam etmek için can kazan, can doldur veya Premium ile sınırsız can aç.'
+            : message,
+      );
+    }
+
     throw PracticeApiLoadException(
       message.isEmpty ? context : '$context $message',
     );

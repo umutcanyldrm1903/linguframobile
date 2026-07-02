@@ -237,7 +237,8 @@ class AnswerFeedbackBar extends StatelessWidget {
   }
 }
 
-/// Can bittiğinde çıkan kilitleyen modal. 'refill' / 'exit' döndürür.
+/// Can bittiğinde çıkan kilitleyen modal.
+/// 'premium' / 'practice' / 'refill' / 'exit' döndürür.
 Future<String?> showOutOfHeartsSheet(BuildContext context) {
   return showModalBottomSheet<String>(
     context: context,
@@ -257,7 +258,7 @@ Future<String?> showOutOfHeartsSheet(BuildContext context) {
               const PracticeMascot(size: 110, mood: PracticeMascotMood.sad),
               const SizedBox(height: 12),
               Text(
-                _isTr ? 'Canlarin bitti!' : 'You ran out of hearts!',
+                _isTr ? 'Canların bitti!' : 'You ran out of hearts!',
                 style: const TextStyle(
                   color: practiceInk,
                   fontSize: 24,
@@ -284,7 +285,7 @@ Future<String?> showOutOfHeartsSheet(BuildContext context) {
               ),
               const SizedBox(height: 10),
               Practice3DButton(
-                label: _isTr ? 'PRATIKLE 1 CAN KAZAN' : 'PRACTICE FOR 1 HEART',
+                label: _isTr ? 'PRATİKLE 1 CAN KAZAN' : 'PRACTICE FOR 1 HEART',
                 color: practiceGreen,
                 onPressed: () => Navigator.pop(context, 'practice'),
               ),
@@ -296,7 +297,7 @@ Future<String?> showOutOfHeartsSheet(BuildContext context) {
               ),
               const SizedBox(height: 10),
               Practice3DButton(
-                label: _isTr ? 'DERSTEN CIK' : 'QUIT LESSON',
+                label: _isTr ? 'DERSTEN ÇIK' : 'QUIT LESSON',
                 color: practiceGreen,
                 outlined: true,
                 onPressed: () => Navigator.pop(context, 'exit'),
