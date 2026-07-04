@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/motion/app_motion.dart';
 import '../practice_ad_service.dart';
 import '../practice_api_service.dart';
@@ -222,6 +224,8 @@ class _PracticePremiumScreenState extends State<PracticePremiumScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+                const _SubscriptionLegalLinks(compact: true),
                 const SizedBox(height: 18),
                 _FeatureGrid(premium: premium),
                 const SizedBox(height: 20),
@@ -257,6 +261,8 @@ class _PracticePremiumScreenState extends State<PracticePremiumScreen> {
                   premium: premium,
                   onTap: () => _rewardedAd(),
                 ),
+                const SizedBox(height: 14),
+                const _SubscriptionLegalLinks(),
               ],
             ),
     );
@@ -268,6 +274,117 @@ class _PracticePremiumScreenState extends State<PracticePremiumScreen> {
       'plan': null,
       'expires_at': null,
     };
+  }
+}
+
+class _SubscriptionLegalLinks extends StatelessWidget {
+  const _SubscriptionLegalLinks({this.compact = false});
+
+  final bool compact;
+
+  Future<void> _open(String path) async {
+    final uri = Uri.parse('${AppConfig.webBaseUrl}$path');
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (compact) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFFBEB),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFFE8A3), width: 1.5),
+        ),
+        child: Wrap(
+          spacing: 10,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            const Icon(
+              Icons.verified_user_rounded,
+              color: Color(0xFFF59E0B),
+              size: 18,
+            ),
+            const Text(
+              'Yasal bilgiler:',
+              style: TextStyle(
+                color: practiceInk,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            InkWell(
+              onTap: () => _open('/mobile-app-terms-of-use'),
+              child: const Text(
+                'Kullanım Şartları',
+                style: TextStyle(
+                  color: practiceBlue,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            InkWell(
+              onTap: () => _open('/mobile-app-privacy-policy'),
+              child: const Text(
+                'Gizlilik Politikası',
+                style: TextStyle(
+                  color: practiceBlue,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: practiceLine, width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Abonelik bilgileri',
+            style: TextStyle(
+              color: practiceInk,
+              fontWeight: FontWeight.w900,
+              fontSize: 15,
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Premium paketler App Store hesabın üzerinden yönetilir ve seçilen süreye göre otomatik yenilenir. İptal işlemini App Store abonelik ayarlarından yapabilirsin.',
+            style: TextStyle(
+              color: practiceMuted,
+              height: 1.35,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 10,
+            runSpacing: 8,
+            children: [
+              TextButton(
+                onPressed: () => _open('/mobile-app-terms-of-use'),
+                child: const Text('Kullanım Şartları'),
+              ),
+              TextButton(
+                onPressed: () => _open('/mobile-app-privacy-policy'),
+                child: const Text('Gizlilik Politikası'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 
