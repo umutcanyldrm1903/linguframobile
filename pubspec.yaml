@@ -47,6 +47,7 @@ dependencies:
   sign_in_with_apple: ^6.1.4
   google_mobile_ads: ^8.0.0
   in_app_purchase: ^3.3.0
+  in_app_purchase_storekit: ^0.4.10+1
   home_widget: ^0.9.2
 
 dev_dependencies:

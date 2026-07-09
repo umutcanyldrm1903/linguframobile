@@ -6,6 +6,18 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 
 import 'practice_api_service.dart';
 
+class _StoreProductQueryResult {
+  const _StoreProductQueryResult({
+    required this.products,
+    required this.notFoundIds,
+    this.error,
+  });
+
+  final List<ProductDetails> products;
+  final Set<String> notFoundIds;
+  final IAPError? error;
+}
+
 class PracticePurchaseService {
   PracticePurchaseService({this.api = const PracticeApiService()});
 
@@ -145,6 +157,53 @@ class PracticePurchaseService {
     throw lastError ?? StateError('StoreKit ürün sorgusu cevap vermedi.');
   }
 
+  Future<_StoreProductQueryResult> _queryProductsResilient(
+    InAppPurchase iap,
+    Set<String> ids,
+  ) async {
+    ProductDetailsResponse? response;
+
+    try {
+      response = await _queryProductDetailsWithRetry(iap, ids);
+      if (response.error == null ||
+          response.productDetails.isNotEmpty ||
+          ids.length == 1) {
+        return _StoreProductQueryResult(
+          products: response.productDetails.toList(),
+          notFoundIds: response.notFoundIDs.toSet(),
+          error: response.error,
+        );
+      }
+    } on Object {
+      if (ids.length == 1) rethrow;
+    }
+
+    final products = <ProductDetails>[];
+    final notFoundIds = <String>{};
+    var lastError = response?.error;
+
+    for (final id in ids) {
+      try {
+        final singleResponse = await _queryProductDetailsWithRetry(iap, {id});
+        products.addAll(singleResponse.productDetails);
+        notFoundIds.addAll(singleResponse.notFoundIDs);
+        lastError = singleResponse.error ?? lastError;
+        if (singleResponse.productDetails.isEmpty &&
+            singleResponse.notFoundIDs.isEmpty) {
+          notFoundIds.add(id);
+        }
+      } on Object {
+        notFoundIds.add(id);
+      }
+    }
+
+    return _StoreProductQueryResult(
+      products: products,
+      notFoundIds: notFoundIds,
+      error: products.isEmpty ? lastError : null,
+    );
+  }
+
   Future<List<ProductDetails>> loadProducts() async {
     try {
       final iap = _iap;
@@ -162,22 +221,22 @@ class PracticePurchaseService {
         return [];
       }
 
-      final response = await _queryProductDetailsWithRetry(iap, productIds);
-      final products = response.productDetails.toList()
+      final query = await _queryProductsResilient(iap, productIds);
+      final products = query.products
         ..sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
 
-      if (response.error != null) {
+      if (query.error != null && products.isEmpty) {
         lastPremiumQueryMessage =
-            'Store hata döndürdü: ${response.error!.message}';
+            'Store hata döndürdü: ${query.error!.message}. Tek tek ürün sorgusu da sonuç vermedi. Beklenen ürün ID: ${productIds.join(', ')}';
       } else if (products.isEmpty) {
-        final missing = response.notFoundIDs.isEmpty
+        final missing = query.notFoundIds.isEmpty
             ? productIds.join(', ')
-            : response.notFoundIDs.join(', ');
+            : query.notFoundIds.join(', ');
         lastPremiumQueryMessage =
             'Store bağlantısı var ama ürün dönmedi. Eksik ürün ID: $missing. App Store Connect ürünleri onaylı olsa bile Paid Apps Agreement, Tax/Banking, bundle ID veya App Store yayılımı kontrol edilmeli.';
-      } else if (response.notFoundIDs.isNotEmpty) {
+      } else if (query.notFoundIds.isNotEmpty) {
         lastPremiumQueryMessage =
-            '${products.length} ürün geldi, şu ID’ler bulunamadı: ${response.notFoundIDs.join(', ')}';
+            '${products.length} ürün geldi, şu ID’ler bulunamadı: ${query.notFoundIds.join(', ')}';
       } else {
         lastPremiumQueryMessage =
             '${products.length} premium ürün App Store’dan başarıyla geldi.';
@@ -230,21 +289,22 @@ class PracticePurchaseService {
             'Store bağlantısı şu anda kullanılamıyor. Cihazda App Store hesabı, internet ve uygulama imzası kontrol edilmeli.';
         return [];
       }
-      final response = await _queryProductDetailsWithRetry(iap, gemProductIds);
-      final products = response.productDetails.toList()
+      final query = await _queryProductsResilient(iap, gemProductIds);
+      final products = query.products
         ..sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
 
-      if (response.error != null) {
-        lastGemQueryMessage = 'Store hata döndürdü: ${response.error!.message}';
+      if (query.error != null && products.isEmpty) {
+        lastGemQueryMessage =
+            'Store hata döndürdü: ${query.error!.message}. Tek tek mücevher sorgusu da sonuç vermedi. Beklenen ürün ID: ${gemProductIds.join(', ')}';
       } else if (products.isEmpty) {
-        final missing = response.notFoundIDs.isEmpty
+        final missing = query.notFoundIds.isEmpty
             ? gemProductIds.join(', ')
-            : response.notFoundIDs.join(', ');
+            : query.notFoundIds.join(', ');
         lastGemQueryMessage =
             'Store bağlantısı var ama mücevher ürünü dönmedi. Eksik ürün ID: $missing.';
-      } else if (response.notFoundIDs.isNotEmpty) {
+      } else if (query.notFoundIds.isNotEmpty) {
         lastGemQueryMessage =
-            '${products.length} mücevher ürünü geldi, şu ID’ler bulunamadı: ${response.notFoundIDs.join(', ')}';
+            '${products.length} mücevher ürünü geldi, şu ID’ler bulunamadı: ${query.notFoundIds.join(', ')}';
       } else {
         lastGemQueryMessage =
             '${products.length} mücevher ürünü App Store’dan başarıyla geldi.';
