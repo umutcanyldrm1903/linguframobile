@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 import 'practice_api_service.dart';
@@ -75,6 +76,66 @@ class PracticePurchaseService {
 
   Future<bool> get isAvailable async => await _iap?.isAvailable() ?? false;
 
+  bool _isTransientStoreKitFailure(Object? error) {
+    final text = error.toString().toLowerCase();
+    return error is PlatformException ||
+        text.contains('storekit') ||
+        text.contains('failed to get response from platform') ||
+        text.contains('platform') ||
+        text.contains('unavailable') ||
+        text.contains('timed out') ||
+        text.contains('timeout');
+  }
+
+  bool _isTransientResponseError(ProductDetailsResponse response) {
+    final message = response.error?.message.toLowerCase() ?? '';
+    final code = response.error?.code.toLowerCase() ?? '';
+    return message.contains('failed to get response from platform') ||
+        message.contains('storekit') ||
+        message.contains('platform') ||
+        message.contains('unavailable') ||
+        message.contains('timed out') ||
+        message.contains('timeout') ||
+        code.contains('storekit') ||
+        code.contains('platform') ||
+        code.contains('unavailable');
+  }
+
+  String _friendlyStoreFailure() {
+    return 'App Store şu anda ürün listesini cevaplamadı. Birkaç saniye sonra tekrar dene. '
+        'Devam ederse App Store oturumunu, TestFlight/App Store sürümünü ve internet bağlantını kontrol et.';
+  }
+
+  Future<ProductDetailsResponse> _queryProductDetailsWithRetry(
+    InAppPurchase iap,
+    Set<String> ids,
+  ) async {
+    Object? lastError;
+    ProductDetailsResponse? lastResponse;
+
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        final response = await iap.queryProductDetails(ids);
+        lastResponse = response;
+        if (response.error == null || !_isTransientResponseError(response)) {
+          return response;
+        }
+      } on Object catch (error) {
+        lastError = error;
+        if (!_isTransientStoreKitFailure(error)) rethrow;
+      }
+
+      if (attempt < 2) {
+        await Future<void>.delayed(
+          Duration(milliseconds: 700 * (attempt + 1)),
+        );
+      }
+    }
+
+    if (lastResponse != null) return lastResponse;
+    throw lastError ?? StateError('StoreKit ürün sorgusu cevap vermedi.');
+  }
+
   Future<List<ProductDetails>> loadProducts() async {
     try {
       final iap = _iap;
@@ -91,7 +152,7 @@ class PracticePurchaseService {
         return [];
       }
 
-      final response = await iap.queryProductDetails(productIds);
+      final response = await _queryProductDetailsWithRetry(iap, productIds);
       final products = response.productDetails.toList()
         ..sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
 
@@ -114,19 +175,32 @@ class PracticePurchaseService {
 
       return products;
     } on Object catch (error) {
-      lastPremiumQueryMessage = 'Store ürün sorgusu başarısız: $error';
+      lastPremiumQueryMessage = _isTransientStoreKitFailure(error)
+          ? _friendlyStoreFailure()
+          : 'Store ürün sorgusu başarısız: $error';
       return [];
     }
   }
 
   Future<bool> buy(ProductDetails product) async {
-    final iap = _iap;
-    if (iap == null || !await iap.isAvailable()) return false;
-    final param = PurchaseParam(productDetails: product);
-    if (product.id == lifetimeId) {
+    try {
+      final iap = _iap;
+      if (iap == null || !await iap.isAvailable()) {
+        lastPremiumQueryMessage =
+            'Store bağlantısı şu anda kullanılamıyor. App Store hesabını ve internet bağlantını kontrol et.';
+        return false;
+      }
+      final param = PurchaseParam(productDetails: product);
+      if (product.id == lifetimeId) {
+        return iap.buyNonConsumable(purchaseParam: param);
+      }
       return iap.buyNonConsumable(purchaseParam: param);
+    } on Object catch (error) {
+      lastPremiumQueryMessage = _isTransientStoreKitFailure(error)
+          ? _friendlyStoreFailure()
+          : 'Satın alma başlatılamadı: $error';
+      return false;
     }
-    return iap.buyNonConsumable(purchaseParam: param);
   }
 
   /// Mücevher paketleri (consumable). Store'da ürün tanımlı değilse, billing
@@ -145,7 +219,7 @@ class PracticePurchaseService {
             'Store bağlantısı şu anda kullanılamıyor. Cihazda App Store hesabı, internet ve uygulama imzası kontrol edilmeli.';
         return [];
       }
-      final response = await iap.queryProductDetails(gemProductIds);
+      final response = await _queryProductDetailsWithRetry(iap, gemProductIds);
       final products = response.productDetails.toList()
         ..sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
 
@@ -167,18 +241,31 @@ class PracticePurchaseService {
 
       return products;
     } on Object catch (error) {
-      lastGemQueryMessage = 'Store mücevher sorgusu başarısız: $error';
+      lastGemQueryMessage = _isTransientStoreKitFailure(error)
+          ? _friendlyStoreFailure()
+          : 'Store mücevher sorgusu başarısız: $error';
       return [];
     }
   }
 
   /// Consumable (tekrar alınabilir) satın alma — mücevher paketleri için.
   Future<bool> buyConsumable(ProductDetails product) async {
-    final iap = _iap;
-    if (iap == null || !await iap.isAvailable()) return false;
-    return iap.buyConsumable(
-      purchaseParam: PurchaseParam(productDetails: product),
-    );
+    try {
+      final iap = _iap;
+      if (iap == null || !await iap.isAvailable()) {
+        lastGemQueryMessage =
+            'Store bağlantısı şu anda kullanılamıyor. App Store hesabını ve internet bağlantını kontrol et.';
+        return false;
+      }
+      return iap.buyConsumable(
+        purchaseParam: PurchaseParam(productDetails: product),
+      );
+    } on Object catch (error) {
+      lastGemQueryMessage = _isTransientStoreKitFailure(error)
+          ? _friendlyStoreFailure()
+          : 'Mücevher satın alma başlatılamadı: $error';
+      return false;
+    }
   }
 
   /// Mücevher satın almasını sunucuda doğrula + coin'e çevir.
@@ -195,8 +282,14 @@ class PracticePurchaseService {
   }
 
   Future<void> restorePurchases() async {
-    final iap = _iap;
-    if (iap != null) await iap.restorePurchases();
+    try {
+      final iap = _iap;
+      if (iap != null) await iap.restorePurchases();
+    } on Object catch (error) {
+      lastPremiumQueryMessage = _isTransientStoreKitFailure(error)
+          ? _friendlyStoreFailure()
+          : 'Satın almalar geri yüklenemedi: $error';
+    }
   }
 
   Future<Map<String, dynamic>?> verifyPurchase(PurchaseDetails purchase) async {

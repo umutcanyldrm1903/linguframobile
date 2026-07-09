@@ -114,7 +114,11 @@ class _PracticeShopScreenState extends State<PracticeShopScreen> {
     if (!started && mounted) {
       setState(() => _gemBusy = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Satın alma başlatılamadı.')),
+        SnackBar(
+          content: Text(
+            _purchase.lastGemQueryMessage ?? 'Satın alma başlatılamadı.',
+          ),
+        ),
       );
     }
   }

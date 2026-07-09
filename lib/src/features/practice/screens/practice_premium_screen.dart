@@ -138,7 +138,11 @@ class _PracticePremiumScreenState extends State<PracticePremiumScreen> {
     if (!started && mounted) {
       setState(() => _buying = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Satın alma başlatılamadı.')),
+        SnackBar(
+          content: Text(
+            _purchase.lastPremiumQueryMessage ?? 'Satın alma başlatılamadı.',
+          ),
+        ),
       );
     }
   }
