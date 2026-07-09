@@ -28,6 +28,7 @@ class _PracticeShopScreenState extends State<PracticeShopScreen> {
   bool _loading = true;
   bool _buying = false;
   bool _gemBusy = false;
+  String? _gemQueryMessage;
 
   @override
   void initState() {
@@ -48,12 +49,14 @@ class _PracticeShopScreenState extends State<PracticeShopScreen> {
     final shopData = await _api.getShop();
     final stats = await _repo.fetchStats();
     final gems = await _purchase.loadGemProducts();
+    final gemMessage = _purchase.lastGemQueryMessage;
     if (!mounted) return;
     final raw = shopData?['items'] ?? shopData?['shop_items'];
     setState(() {
       _items = _asList(raw);
       if (_items.isEmpty) _items = _fallbackItems();
       _gemProducts = gems;
+      _gemQueryMessage = gemMessage;
       _stats = {
         'coins': stats.coins,
         'hearts': stats.hearts,
@@ -334,8 +337,10 @@ class _PracticeShopScreenState extends State<PracticeShopScreen> {
                   ),
                   _GemPacksSection(
                     products: _gemProducts,
+                    message: _gemQueryMessage,
                     busy: _gemBusy,
                     onBuy: _buyGem,
+                    onCheck: _load,
                   ),
                   GridView.builder(
                     shrinkWrap: true,
@@ -365,15 +370,12 @@ class _PracticeShopScreenState extends State<PracticeShopScreen> {
 
   List<Map<String, dynamic>> _asList(Object? value) {
     if (value is! List) return [];
-    return value
-        .whereType<Map>()
-        .map((e) {
-          final item = Map<String, dynamic>.from(e);
-          item['name'] ??= item['title'];
-          item['coin_cost'] ??= item['price_coins'];
-          return item;
-        })
-        .toList();
+    return value.whereType<Map>().map((e) {
+      final item = Map<String, dynamic>.from(e);
+      item['name'] ??= item['title'];
+      item['coin_cost'] ??= item['price_coins'];
+      return item;
+    }).toList();
   }
 
   // Sahte ürün gösterme — mağaza API'den (seed'li ürünler) gelir, yoksa boş.
@@ -607,13 +609,17 @@ class _PromoCodeCard extends StatelessWidget {
 class _GemPacksSection extends StatelessWidget {
   const _GemPacksSection({
     required this.products,
+    required this.message,
     required this.busy,
     required this.onBuy,
+    required this.onCheck,
   });
 
   final List<ProductDetails> products;
+  final String? message;
   final bool busy;
   final ValueChanged<ProductDetails> onBuy;
+  final Future<void> Function() onCheck;
 
   @override
   Widget build(BuildContext context) {
@@ -639,20 +645,31 @@ class _GemPacksSection extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: practiceLine, width: 1.5),
             ),
-            child: const Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline_rounded, color: practiceMuted),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Mücevher paketleri, mağaza ürünleri (Google Play / App '
-                    'Store) tanımlanınca burada görünür.',
-                    style: TextStyle(
-                      color: practiceMuted,
-                      fontWeight: FontWeight.w700,
-                      height: 1.3,
+                Row(
+                  children: [
+                    const Icon(Icons.info_outline_rounded,
+                        color: practiceMuted),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        message ??
+                            'Mücevher paketleri, mağaza ürünleri (Google Play / App Store) tanımlanınca burada görünür.',
+                        style: const TextStyle(
+                          color: practiceMuted,
+                          fontWeight: FontWeight.w700,
+                          height: 1.3,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                OutlinedButton(
+                  onPressed: busy ? null : () => onCheck(),
+                  child: const Text('STORE BAĞLANTISINI KONTROL ET'),
                 ),
               ],
             ),

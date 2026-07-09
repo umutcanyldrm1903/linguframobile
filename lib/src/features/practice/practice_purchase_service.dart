@@ -34,14 +34,15 @@ class PracticePurchaseService {
   };
 
   final PracticeApiService api;
+  String? lastPremiumQueryMessage;
+  String? lastGemQueryMessage;
 
   bool get _storeSupported =>
       !kIsWeb &&
       (defaultTargetPlatform == TargetPlatform.android ||
           defaultTargetPlatform == TargetPlatform.iOS);
 
-  InAppPurchase? get _iap =>
-      _storeSupported ? InAppPurchase.instance : null;
+  InAppPurchase? get _iap => _storeSupported ? InAppPurchase.instance : null;
 
   String _provider() =>
       defaultTargetPlatform == TargetPlatform.iOS ? 'app_store' : 'play_store';
@@ -75,11 +76,47 @@ class PracticePurchaseService {
   Future<bool> get isAvailable async => await _iap?.isAvailable() ?? false;
 
   Future<List<ProductDetails>> loadProducts() async {
-    final iap = _iap;
-    if (iap == null || !await iap.isAvailable()) return [];
-    final response = await iap.queryProductDetails(productIds);
-    return response.productDetails.toList()
-      ..sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
+    try {
+      final iap = _iap;
+      if (iap == null) {
+        lastPremiumQueryMessage =
+            'Bu platformda App Store / Play Store satın alma desteklenmiyor.';
+        return [];
+      }
+
+      final available = await iap.isAvailable();
+      if (!available) {
+        lastPremiumQueryMessage =
+            'Store bağlantısı şu anda kullanılamıyor. Cihazda App Store hesabı, internet ve uygulama imzası kontrol edilmeli.';
+        return [];
+      }
+
+      final response = await iap.queryProductDetails(productIds);
+      final products = response.productDetails.toList()
+        ..sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
+
+      if (response.error != null) {
+        lastPremiumQueryMessage =
+            'Store hata döndürdü: ${response.error!.message}';
+      } else if (products.isEmpty) {
+        final missing = response.notFoundIDs.isEmpty
+            ? productIds.join(', ')
+            : response.notFoundIDs.join(', ');
+        lastPremiumQueryMessage =
+            'Store bağlantısı var ama ürün dönmedi. Eksik ürün ID: $missing. App Store Connect ürünleri onaylı olsa bile Paid Apps Agreement, Tax/Banking, bundle ID veya App Store yayılımı kontrol edilmeli.';
+      } else if (response.notFoundIDs.isNotEmpty) {
+        lastPremiumQueryMessage =
+            '${products.length} ürün geldi, şu ID’ler bulunamadı: ${response.notFoundIDs.join(', ')}';
+      } else {
+        lastPremiumQueryMessage =
+            '${products.length} premium ürün App Store’dan başarıyla geldi.';
+      }
+
+      return products;
+    } on Object catch (error) {
+      lastPremiumQueryMessage = 'Store ürün sorgusu başarısız: $error';
+      return [];
+    }
   }
 
   Future<bool> buy(ProductDetails product) async {
@@ -98,11 +135,39 @@ class PracticePurchaseService {
   Future<List<ProductDetails>> loadGemProducts() async {
     try {
       final iap = _iap;
-      if (iap == null || !await iap.isAvailable()) return [];
+      if (iap == null) {
+        lastGemQueryMessage =
+            'Bu platformda App Store / Play Store satın alma desteklenmiyor.';
+        return [];
+      }
+      if (!await iap.isAvailable()) {
+        lastGemQueryMessage =
+            'Store bağlantısı şu anda kullanılamıyor. Cihazda App Store hesabı, internet ve uygulama imzası kontrol edilmeli.';
+        return [];
+      }
       final response = await iap.queryProductDetails(gemProductIds);
-      return response.productDetails.toList()
+      final products = response.productDetails.toList()
         ..sort((a, b) => a.rawPrice.compareTo(b.rawPrice));
-    } on Object {
+
+      if (response.error != null) {
+        lastGemQueryMessage = 'Store hata döndürdü: ${response.error!.message}';
+      } else if (products.isEmpty) {
+        final missing = response.notFoundIDs.isEmpty
+            ? gemProductIds.join(', ')
+            : response.notFoundIDs.join(', ');
+        lastGemQueryMessage =
+            'Store bağlantısı var ama mücevher ürünü dönmedi. Eksik ürün ID: $missing.';
+      } else if (response.notFoundIDs.isNotEmpty) {
+        lastGemQueryMessage =
+            '${products.length} mücevher ürünü geldi, şu ID’ler bulunamadı: ${response.notFoundIDs.join(', ')}';
+      } else {
+        lastGemQueryMessage =
+            '${products.length} mücevher ürünü App Store’dan başarıyla geldi.';
+      }
+
+      return products;
+    } on Object catch (error) {
+      lastGemQueryMessage = 'Store mücevher sorgusu başarısız: $error';
       return [];
     }
   }

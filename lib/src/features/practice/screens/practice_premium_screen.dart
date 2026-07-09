@@ -32,6 +32,7 @@ class _PracticePremiumScreenState extends State<PracticePremiumScreen> {
   bool _routeArgumentsRead = false;
   String? _offerTitle;
   String? _offerSubtitle;
+  String? _storeQueryMessage;
 
   @override
   void initState() {
@@ -60,10 +61,11 @@ class _PracticePremiumScreenState extends State<PracticePremiumScreen> {
     super.dispose();
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool showStoreFeedback = false}) async {
     setState(() => _loading = true);
     final status = await _api.getPremiumStatus();
     final products = await _purchase.loadProducts();
+    final storeMessage = _purchase.lastPremiumQueryMessage;
     if (!mounted) return;
     setState(() {
       _status = status ?? _fallbackStatus();
@@ -73,8 +75,31 @@ class _PracticePremiumScreenState extends State<PracticePremiumScreen> {
           if (b.id == PracticePurchaseService.yearlyId) return 1;
           return a.rawPrice.compareTo(b.rawPrice);
         });
+      _storeQueryMessage = storeMessage;
       _loading = false;
     });
+
+    if (showStoreFeedback && mounted) {
+      _showStoreStatus(
+        storeMessage ?? 'Store bağlantısı kontrol edildi.',
+      );
+    }
+  }
+
+  Future<void> _showStoreStatus(String message) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Store bağlantı sonucu'),
+        content: SingleChildScrollView(child: Text(message)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Tamam'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handlePurchases(List<PurchaseDetails> purchases) async {
@@ -239,7 +264,10 @@ class _PracticePremiumScreenState extends State<PracticePremiumScreen> {
                 ),
                 const SizedBox(height: 10),
                 if (_products.isEmpty)
-                  _StoreSetupCard(onRestore: () => _restore())
+                  _StoreSetupCard(
+                    message: _storeQueryMessage,
+                    onCheck: () => _load(showStoreFeedback: true),
+                  )
                 else
                   for (final product in _products)
                     _ProductCard(
@@ -571,9 +599,13 @@ class _ProductCard extends StatelessWidget {
 }
 
 class _StoreSetupCard extends StatelessWidget {
-  const _StoreSetupCard({required this.onRestore});
+  const _StoreSetupCard({
+    required this.onCheck,
+    this.message,
+  });
 
-  final VoidCallback onRestore;
+  final VoidCallback onCheck;
+  final String? message;
 
   @override
   Widget build(BuildContext context) {
@@ -587,8 +619,10 @@ class _StoreSetupCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Store ürünleri bekleniyor',
+          Text(
+            message == null
+                ? 'Store ürünleri bekleniyor'
+                : 'Store bağlantısı kontrol edildi',
             style: TextStyle(
               color: practiceInk,
               fontSize: 19,
@@ -596,8 +630,9 @@ class _StoreSetupCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'App Store tarafında ürün kimlikleri tanımlanınca paketler burada otomatik görünecek.',
+          Text(
+            message ??
+                'App Store tarafında ürün kimlikleri tanımlanınca paketler burada otomatik görünecek.',
             style: TextStyle(
               color: practiceMuted,
               height: 1.3,
@@ -614,7 +649,7 @@ class _StoreSetupCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           OutlinedButton(
-            onPressed: onRestore,
+            onPressed: onCheck,
             child: const Text('STORE BAĞLANTISINI KONTROL ET'),
           ),
         ],
