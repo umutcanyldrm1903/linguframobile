@@ -29,6 +29,7 @@ class _PracticePremiumScreenState extends State<PracticePremiumScreen> {
   bool _loading = true;
   bool _buying = false;
   bool _rewarding = false;
+  bool _checkingStore = false;
   bool _routeArgumentsRead = false;
   String? _offerTitle;
   String? _offerSubtitle;
@@ -92,6 +93,66 @@ class _PracticePremiumScreenState extends State<PracticePremiumScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Store bağlantı sonucu'),
         content: SingleChildScrollView(child: Text(message)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Tamam'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _checkStoreConnection() async {
+    if (_checkingStore) return;
+    setState(() => _checkingStore = true);
+
+    List<ProductDetails> products = [];
+    String message;
+
+    try {
+      products = await _purchase.loadProducts();
+      products.sort((a, b) {
+        if (a.id == PracticePurchaseService.yearlyId) return -1;
+        if (b.id == PracticePurchaseService.yearlyId) return 1;
+        return a.rawPrice.compareTo(b.rawPrice);
+      });
+      message = _purchase.lastPremiumQueryMessage ??
+          (products.isEmpty
+              ? 'Store bağlantısı kontrol edildi ama ürün dönmedi.'
+              : '${products.length} premium ürünü App Store’dan geldi.');
+    } on Object catch (error) {
+      message = 'Store bağlantısı kontrol edilemedi: $error';
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _products = products;
+      _storeQueryMessage = message;
+      _checkingStore = false;
+    });
+
+    final detail = [
+      message,
+      '',
+      'Beklenen ürün kimlikleri:',
+      ...PracticePurchaseService.productIds.map((id) => '• $id'),
+      if (products.isNotEmpty) ...[
+        '',
+        'App Store’dan gelen ürünler:',
+        ...products.map((product) => '• ${product.id} - ${product.price}'),
+      ],
+    ].join('\n');
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Store bağlantı sonucu'),
+        content: SingleChildScrollView(child: Text(detail)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -270,7 +331,8 @@ class _PracticePremiumScreenState extends State<PracticePremiumScreen> {
                 if (_products.isEmpty)
                   _StoreSetupCard(
                     message: _storeQueryMessage,
-                    onCheck: () => _load(showStoreFeedback: true),
+                    checking: _checkingStore,
+                    onCheck: _checkStoreConnection,
                   )
                 else
                   for (final product in _products)
@@ -605,10 +667,12 @@ class _ProductCard extends StatelessWidget {
 class _StoreSetupCard extends StatelessWidget {
   const _StoreSetupCard({
     required this.onCheck,
+    required this.checking,
     this.message,
   });
 
   final VoidCallback onCheck;
+  final bool checking;
   final String? message;
 
   @override
@@ -652,8 +716,12 @@ class _StoreSetupCard extends StatelessWidget {
                 .toList(),
           ),
           const SizedBox(height: 8),
+          if (checking) ...[
+            const LinearProgressIndicator(minHeight: 3),
+            const SizedBox(height: 8),
+          ],
           OutlinedButton(
-            onPressed: onCheck,
+            onPressed: checking ? null : onCheck,
             child: const Text('STORE BAĞLANTISINI KONTROL ET'),
           ),
         ],

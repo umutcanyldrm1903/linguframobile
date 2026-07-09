@@ -74,7 +74,14 @@ class PracticePurchaseService {
   Stream<List<PurchaseDetails>> get purchaseStream =>
       _iap?.purchaseStream ?? const Stream<List<PurchaseDetails>>.empty();
 
-  Future<bool> get isAvailable async => await _iap?.isAvailable() ?? false;
+  Future<bool> get isAvailable async {
+    try {
+      return await _iap?.isAvailable().timeout(const Duration(seconds: 8)) ??
+          false;
+    } on Object {
+      return false;
+    }
+  }
 
   bool _isTransientStoreKitFailure(Object? error) {
     final text = error.toString().toLowerCase();
@@ -115,7 +122,9 @@ class PracticePurchaseService {
 
     for (var attempt = 0; attempt < 3; attempt++) {
       try {
-        final response = await iap.queryProductDetails(ids);
+        final response = await iap
+            .queryProductDetails(ids)
+            .timeout(const Duration(seconds: 10));
         lastResponse = response;
         if (response.error == null || !_isTransientResponseError(response)) {
           return response;
@@ -145,7 +154,8 @@ class PracticePurchaseService {
         return [];
       }
 
-      final available = await iap.isAvailable();
+      final available =
+          await iap.isAvailable().timeout(const Duration(seconds: 8));
       if (!available) {
         lastPremiumQueryMessage =
             'Store bağlantısı şu anda kullanılamıyor. Cihazda App Store hesabı, internet ve uygulama imzası kontrol edilmeli.';
@@ -185,7 +195,8 @@ class PracticePurchaseService {
   Future<bool> buy(ProductDetails product) async {
     try {
       final iap = _iap;
-      if (iap == null || !await iap.isAvailable()) {
+      if (iap == null ||
+          !await iap.isAvailable().timeout(const Duration(seconds: 8))) {
         lastPremiumQueryMessage =
             'Store bağlantısı şu anda kullanılamıyor. App Store hesabını ve internet bağlantını kontrol et.';
         return false;
@@ -214,7 +225,7 @@ class PracticePurchaseService {
             'Bu platformda App Store / Play Store satın alma desteklenmiyor.';
         return [];
       }
-      if (!await iap.isAvailable()) {
+      if (!await iap.isAvailable().timeout(const Duration(seconds: 8))) {
         lastGemQueryMessage =
             'Store bağlantısı şu anda kullanılamıyor. Cihazda App Store hesabı, internet ve uygulama imzası kontrol edilmeli.';
         return [];
@@ -252,7 +263,8 @@ class PracticePurchaseService {
   Future<bool> buyConsumable(ProductDetails product) async {
     try {
       final iap = _iap;
-      if (iap == null || !await iap.isAvailable()) {
+      if (iap == null ||
+          !await iap.isAvailable().timeout(const Duration(seconds: 8))) {
         lastGemQueryMessage =
             'Store bağlantısı şu anda kullanılamıyor. App Store hesabını ve internet bağlantını kontrol et.';
         return false;
@@ -284,7 +296,9 @@ class PracticePurchaseService {
   Future<void> restorePurchases() async {
     try {
       final iap = _iap;
-      if (iap != null) await iap.restorePurchases();
+      if (iap != null) {
+        await iap.restorePurchases().timeout(const Duration(seconds: 12));
+      }
     } on Object catch (error) {
       lastPremiumQueryMessage = _isTransientStoreKitFailure(error)
           ? _friendlyStoreFailure()
