@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:in_app_purchase_storekit/in_app_purchase_storekit.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_currency_provider.dart';
 import 'package:lingufranca_mobile/src/core/localization/app_locale_provider.dart';
@@ -38,12 +40,29 @@ import 'package:lingufranca_mobile/src/features/payment/payment_native_service.d
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await _configureIosStoreKit();
   AppTelemetryService.instance.initialize();
   // Initialize the platform channel early so deep-links aren't missed.
   PaymentNativeService.deepLinkStream.listen((_) {});
 
   runApp(const ProviderScope(child: LingufrancaApp()));
   unawaited(_runStartupTask('warmup', _warmUpAppServices));
+}
+
+Future<void> _configureIosStoreKit() async {
+  if (kIsWeb || defaultTargetPlatform != TargetPlatform.iOS) return;
+
+  try {
+    // StoreKit 2 can return an empty platform response for otherwise valid
+    // App Store products. Re-register the official plugin with its StoreKit 1
+    // compatibility path before any purchase stream or product query starts.
+    // ignore: deprecated_member_use
+    await InAppPurchaseStoreKitPlatform.enableStoreKit1();
+    InAppPurchaseStoreKitPlatform.registerPlatform();
+  } catch (error, stackTrace) {
+    debugPrint('StoreKit compatibility setup failed: $error');
+    debugPrintStack(stackTrace: stackTrace);
+  }
 }
 
 Future<void> _warmUpAppServices() async {
